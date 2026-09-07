@@ -15,18 +15,16 @@
 .handset[aria-pressed="true"] .hs{background:#4E5F45}
 .hslabel{font-family:var(--sans);font-size:.86rem;font-weight:500;color:#F0E8DA}
 
-.readout{background:#1B1814;border:1px solid #4A4136;border-radius:6px;padding:16px;
-  min-height:96px;color:#CFC6B6;font-size:.9rem;line-height:1.6;
-  display:flex;flex-direction:column;justify-content:center;text-align:center}
-.readout b{color:var(--lamp);font-family:var(--serif);font-size:1.05rem}
-.readout.on{border-color:#6E6153}
-.readout.bad{border-color:#7A3D34;color:#E0AFA6}
-.readout .bignum{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:2.1rem;
-  font-weight:700;letter-spacing:.08em;color:#F2E7CF;font-variant-numeric:tabular-nums}
-.readout .gone{display:inline-block;margin-top:8px;font-size:.82rem;color:#8A7F6E}
-.readout .small{font-size:.8rem;opacity:.8}
-.dialed{font-family:var(--mono);font-size:1.15rem;letter-spacing:.14em;text-align:center;
-  color:#4A4136;min-height:1.4em;font-variant-numeric:tabular-nums}
+/* 이 전화기에는 화면이 없다. 귀로 알 수 있는 것만 한 줄로 적는다. */
+.line{color:#4A4136;font-size:.92rem;text-align:center;padding:10px 4px;min-height:2.6em;
+  display:flex;align-items:center;justify-content:center;
+  border-top:1px solid #A99C86;border-bottom:1px solid #A99C86}
+.cc{align-self:center;background:none;border:1px solid #8A7D69;color:#5E5446;border-radius:3px;
+  font-family:var(--sans);font-size:.74rem;padding:5px 12px;cursor:pointer}
+.cc[aria-pressed="true"]{background:#8A7D69;color:#F3ECDE}
+.caption{background:#1B1814;border-radius:6px;padding:12px 14px;color:#CFC6B6;
+  font-size:.88rem;line-height:1.6;text-align:center}
+.dialhint{text-align:center;margin-top:8px}
 
 .dialcol{justify-self:center}
 .dialplate{position:relative;width:238px;height:238px;border-radius:50%;
