@@ -74,9 +74,57 @@ async function submit(row, msgEl) {
   }
   msgEl.textContent = "보내는 중…";
   msgEl.className = "savemsg";
+  const full = { team: me.team, name: me.name, ...row, at: new Date().toLocaleString("ko-KR") };
   const ok = await saveRun({ team: me.team, name: me.name, ...row });
+  keep(full);
   msgEl.textContent = ok ? "제출되었습니다" : "저장 실패 — 다시 눌러 보십시오";
   msgEl.className = "savemsg " + (ok ? "ok" : "bad");
+}
+
+/* ── 내 기록 ──────────────────────────────────────────
+   보고서에 자기 숫자를 옮겨 적어야 하므로, 제출한 회차를
+   이 기기에도 쌓아 두었다가 CSV 한 장으로 내보낸다. */
+const MINE = "myruns";
+const mine = () => { try { return JSON.parse(localStorage.getItem(MINE)) || []; } catch (e) { return []; } };
+
+function keep(row) {
+  try {
+    const all = mine();
+    all.push(row);
+    localStorage.setItem(MINE, JSON.stringify(all.slice(-40)));
+  } catch (e) { /* 저장 공간이 없어도 실습은 계속된다 */ }
+}
+
+const COLS = [
+  ["team", "조"], ["name", "이름"], ["station", "스테이션"], ["mode", "기기"],
+  ["totalSec", "총 시간(초)"], ["ops", "조작 수"],
+  ["findSec", "찾기(초)"], ["moveSec", "이동(초)"], ["waitSec", "기다림(초)"],
+  ["returnSec", "복귀(초)"], ["askSec", "번호 듣기(초)"], ["callSec", "통화(초)"],
+  ["answerSec", "답 적기(초)"], ["waitOps", "기다리다 돌린 채널"],
+  ["misdials", "헛걸기"], ["infoCalls", "114 재통화"], ["at", "제출 시각"],
+];
+const KO = { radio: "라디오", tv: "텔레비전", phone: "전화기" };
+
+function downloadMine(tipEl) {
+  const rows = mine();
+  if (!rows.length) {
+    tipEl.textContent = "아직 제출한 회차가 없습니다. 과업을 마치고 제출하면 쌓입니다.";
+    tipEl.className = "tip bad"; return;
+  }
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const body = rows.map(r => COLS.map(([c]) =>
+    q(c === "station" ? (KO[r.station] || r.station)
+      : c === "mode" ? (r.mode === "1988" ? "1988" : "지금") : r[c])).join(","));
+  // 엑셀이 한글을 깨뜨리지 않도록 표식을 앞에 붙인다
+  const blob = new Blob(["﻿" + [COLS.map(c => c[1]).join(","), ...body].join("\r\n")],
+    { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `내기록_${(me.team || "조").replace(/\s/g, "")}_${(me.name || "이름").replace(/\s/g, "")}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  tipEl.textContent = `${rows.length}개 회차를 내려받았습니다.`;
+  tipEl.className = "tip ok";
 }
 
 function renderRoom() {
@@ -100,6 +148,11 @@ function renderRoom() {
     tip.className = "tip " + (me.team && me.name ? "ok" : "");
     beat("거실");
   });
+  const mtip = document.getElementById("minetip");
+  const kept = mine().length;
+  if (kept) mtip.textContent = `제출한 회차 ${kept}개가 쌓여 있습니다. 보고서를 쓸 때 내려받으십시오.`;
+  document.getElementById("f-csv").addEventListener("click", () => downloadMine(mtip));
+
   view.querySelectorAll(".spot").forEach(b =>
     b.addEventListener("click", () => go(b.dataset.go)));
 }

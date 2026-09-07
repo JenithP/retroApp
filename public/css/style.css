@@ -115,3 +115,7 @@ tr.hi td{color:var(--lamp)}
 .building{border:1px dashed var(--line);border-radius:8px;padding:36px 24px;text-align:center;
   color:var(--ui-soft)}
 .building b{display:block;font-family:var(--serif);font-size:1.1rem;color:var(--ui);margin-bottom:8px}
+
+/* 학생이 자기 기록만 따로 챙겨 가는 자리 — 보고서를 쓰려면 숫자가 필요하다 */
+.mine{display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex-basis:100%}
+.mine .tip{margin:0}
