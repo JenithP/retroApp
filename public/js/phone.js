@@ -161,11 +161,17 @@ export function mountPhone(ui) {
     h.addEventListener("pointerdown", e => {
       if (S.off || busy) return;
       e.preventDefault(); h.setPointerCapture(e.pointerId);
-      dragging = { d: parseInt(h.dataset.d), target: angleFor(parseInt(h.dataset.d)), from: ang(e) };
+      const d = parseInt(h.dataset.d);
+      dragging = { d, target: angleFor(d), prev: ang(e), acc: 0 };
     });
     h.addEventListener("pointermove", e => {
       if (!dragging) return;
-      setRot(Math.max(0, Math.min(dragging.target, norm(ang(e) - dragging.from))));
+      // 시작점과 견주면 180도를 넘는 순간 부호가 뒤집힌다(7·8·9·0).
+      // 그래서 직전 위치와의 차이만 재서 쌓는다. 한 번에 도는 각은 늘 작다.
+      const a = ang(e);
+      dragging.acc = Math.max(0, Math.min(dragging.target, dragging.acc + norm(a - dragging.prev)));
+      dragging.prev = a;
+      setRot(dragging.acc);
     });
     const up = e => {
       if (!dragging) return;
