@@ -1,0 +1,93 @@
+/* ── 교수용 현황판. 교실 뒤에서도 읽히도록 숫자를 크게 잡는다 ────────── */
+:root{
+  /* 1988년 쪽은 방의 램프 빛, 지금 쪽은 차가운 화면 빛. 두 세계를 색으로 가른다. */
+  --old:#D9A441;
+  --now:#7E9FBF;
+}
+body.board main{max-width:1600px;padding:20px 22px 70px}
+
+/* 머리 — 수업 시계 */
+.clockbox{display:flex;align-items:center;gap:12px;margin-left:26px}
+.clockread{display:flex;flex-direction:column;line-height:1.25}
+.clockread b{font-family:var(--serif);font-size:1rem;font-weight:700}
+.clockread span{font-family:var(--mono);font-size:.82rem;color:var(--ui-soft);
+  font-variant-numeric:tabular-nums}
+
+/* 자리를 넘길 때 뜨는 띠 */
+.callout{position:sticky;top:52px;z-index:19;margin:0;padding:13px 18px;text-align:center;
+  font-family:var(--serif);font-size:1.3rem;font-weight:700;color:#1A1409;background:var(--lamp)}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:18px 20px 22px;margin-bottom:20px}
+.panel h2{font-family:var(--serif);font-size:1.16rem;font-weight:700;margin:0 0 5px}
+.panel .sub{margin:0 0 16px;font-size:.85rem;color:var(--ui-soft);max-width:76ch}
+.empty{color:var(--ui-soft);font-size:.9rem;margin:0}
+
+/* ── 지금 어디에 있는가 ──────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.tile{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:15px 17px;
+  display:flex;flex-direction:column;gap:3px}
+.tile.hot{border-color:var(--warn)}
+.tile .n{font-family:var(--mono);font-size:2.9rem;font-weight:700;line-height:1;
+  font-variant-numeric:tabular-nums}
+.tile .lab{font-size:.94rem;font-weight:500}
+.tile .who2{font-size:.78rem;color:var(--ui-soft);min-height:1.5em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.hot .n{color:var(--warn)}
+
+/* ── 조별 진행 ───────────────────────────────────────── */
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:13px}
+.team{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:12px 14px 13px}
+.team.away{opacity:.55}
+.thead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px}
+.tname{font-family:var(--serif);font-size:1.12rem;font-weight:700}
+.tmeta{font-size:.74rem;color:var(--ui-soft);text-align:right;white-space:nowrap}
+.trow{display:grid;grid-template-columns:4.6em 1fr 1fr;gap:6px;align-items:center;
+  padding:3px 0;font-size:.8rem}
+.trow .st{color:var(--ui-soft)}
+.cell{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.96rem;font-weight:600;
+  text-align:center;border-radius:3px;padding:2px 0;background:#141110;color:var(--ui-soft);
+  border:1px solid var(--line)}
+.cell.part{color:#1A1409;background:var(--old);border-color:var(--old)}
+.cell.part.now{background:var(--now);border-color:var(--now)}
+.cell.full{color:#12180F;background:var(--ok);border-color:var(--ok)}
+.tkey{display:grid;grid-template-columns:4.6em 1fr 1fr;gap:6px;margin-bottom:4px;
+  font-size:.68rem;letter-spacing:.06em;color:var(--ui-soft);text-align:center}
+.tkey span:first-child{text-align:left}
+
+/* ── 1988년과 지금 ───────────────────────────────────── */
+.tablewrap{overflow-x:auto}
+table.cmp{border-collapse:collapse;width:100%;min-width:760px}
+table.cmp th,table.cmp td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+table.cmp thead th{font-size:.78rem;font-weight:500;color:var(--ui-soft);background:#191512}
+table.cmp th.old{color:var(--old)} table.cmp th.now{color:var(--now)}
+table.cmp th.lead,table.cmp td.lead{text-align:left;font-family:var(--serif);font-size:1rem;
+  font-weight:700;color:var(--ui)}
+table.cmp td{font-family:var(--mono);font-size:1.28rem;font-weight:600;
+  font-variant-numeric:tabular-nums}
+table.cmp td.dim{color:var(--ui-soft);font-size:1rem;font-weight:400}
+table.cmp td.ratio{color:var(--lamp);font-size:1.5rem}
+.notes{margin-top:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px}
+.note{background:#191512;border:1px solid var(--line);border-left:3px solid var(--lamp);
+  border-radius:4px;padding:11px 14px;font-size:.85rem;line-height:1.55}
+.note b{font-family:var(--mono);font-size:1.15rem;font-variant-numeric:tabular-nums;color:var(--ui)}
+
+/* ── 최근 제출 ───────────────────────────────────────── */
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.feed li{display:grid;grid-template-columns:5.4em minmax(9em,15em) 6.4em 4.4em 5.2em;
+  justify-content:start;gap:14px;align-items:baseline;
+  padding:7px 10px;font-size:.86rem;background:#191512;border-radius:3px}
+.feed li.empty{display:block;background:none;padding:0}
+.feed .t{font-family:var(--mono);color:var(--ui-soft);font-variant-numeric:tabular-nums}
+.feed .w{font-weight:500}
+.feed .m{font-family:var(--mono);font-size:.76rem;letter-spacing:.04em;text-align:center;
+  border-radius:2px;padding:1px 0}
+.feed .m.old{color:#1A1409;background:var(--old)}
+.feed .m.now{color:#0E1419;background:var(--now)}
+.feed .num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+
+@media(max-width:900px){
+  .clockbox{margin-left:12px}
+  .feed li{grid-template-columns:4.6em 1fr 5.4em;}
+  .feed li .num{display:none}
+}

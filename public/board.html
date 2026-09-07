@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>실습 현황판 — HCI와 커뮤니케이션 2주차</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/board.css">
+</head>
+<body class="board">
+
+<header id="bar">
+  <div class="who">
+    <span class="brand">실습 현황판</span>
+    <span class="whoami">1988년 거실 · 2주차 오프라인</span>
+  </div>
+
+  <div class="clockbox">
+    <button id="clockbtn" class="homebtn">수업 시작</button>
+    <div class="clockread">
+      <b id="phase">시작 전</b>
+      <span id="elapsed">—</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <button id="csv" class="homebtn">CSV 내려받기</button>
+    <span id="netdot" class="dot" title="연결 상태"></span>
+    <span id="netmsg" class="netmsg">연결 중</span>
+  </div>
+</header>
+
+<div id="callout" class="callout" hidden>자리를 넘기십시오</div>
+
+<main>
+
+  <section class="panel">
+    <h2>지금 어디에 있는가</h2>
+    <p class="sub" id="livesum">아직 아무도 들어오지 않았습니다.</p>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="panel">
+    <h2>조별 진행</h2>
+    <p class="sub">칸은 제출된 회차 수입니다. 왼쪽이 1988년 기기, 오른쪽이 지금 기기입니다.
+      조원 수만큼 채워지면 초록으로 바뀝니다.</p>
+    <div class="teams" id="teams">
+      <p class="empty">제출이 들어오면 여기에 조가 나타납니다.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>1988년과 지금</h2>
+    <p class="sub">디브리핑용 숫자입니다. 시간은 짧아졌는데 손이 덜 갔는지 함께 보십시오.</p>
+    <div class="tablewrap">
+      <table class="cmp" id="cmp">
+        <thead>
+          <tr>
+            <th rowspan="2" class="lead">스테이션</th>
+            <th colspan="3" class="old">1988년 기기</th>
+            <th colspan="3" class="now">지금 기기</th>
+            <th rowspan="2">시간 배수</th>
+          </tr>
+          <tr>
+            <th class="old">건수</th><th class="old">평균 시간</th><th class="old">평균 조작</th>
+            <th class="now">건수</th><th class="now">평균 시간</th><th class="now">평균 조작</th>
+          </tr>
+        </thead>
+        <tbody id="cmpbody"></tbody>
+      </table>
+    </div>
+    <div class="notes" id="loadnotes"></div>
+  </section>
+
+  <section class="panel">
+    <h2>최근 제출</h2>
+    <ol class="feed" id="feed"><li class="empty">아직 제출이 없습니다.</li></ol>
+  </section>
+
+</main>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

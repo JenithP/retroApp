@@ -21,6 +21,15 @@ const STATIONS = {
 
 let leave = null;                     // 스테이션을 떠날 때 정리하는 함수
 
+// 자리를 옮길 때만 알리면, 한 스테이션에 오래 앉은 학생은 현황판에서 사라져 보인다.
+// 그래서 머무는 동안에도 일 분에 한 번씩 지금 자리를 알린다.
+let heart = null;
+function beat(where) {
+  clearInterval(heart);
+  ping(me.team, me.name, where);
+  heart = setInterval(() => ping(me.team, me.name, where), 60000);
+}
+
 function showWho() {
   document.getElementById("whoami").textContent =
     me.team || me.name ? `${me.team} ${me.name}`.trim() : "";
@@ -36,7 +45,7 @@ function render() {
   view.innerHTML = "";
   homeBtn.hidden = where === "room";
 
-  if (where === "room" || !STATIONS[where]) { renderRoom(); ping(me.team, me.name, "거실"); return; }
+  if (where === "room" || !STATIONS[where]) { renderRoom(); beat("거실"); return; }
 
   const st = STATIONS[where];
   view.appendChild(tpl("t-station"));
@@ -53,7 +62,7 @@ function render() {
     saveMsg:  document.getElementById("savemsg"),
     submit,
   }) || null;
-  ping(me.team, me.name, st.title);
+  beat(st.title);
 }
 
 /** 스테이션이 회차를 끝내면 이걸 부른다. */
@@ -89,7 +98,7 @@ function renderRoom() {
       ? `${me.team} ${me.name} 으로 기록됩니다.`
       : "조와 이름을 모두 적어 주십시오.";
     tip.className = "tip " + (me.team && me.name ? "ok" : "");
-    ping(me.team, me.name, "거실");
+    beat("거실");
   });
   view.querySelectorAll(".spot").forEach(b =>
     b.addEventListener("click", () => go(b.dataset.go)));

@@ -2,7 +2,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, setDoc, serverTimestamp }
+import { getFirestore, collection, addDoc, doc, setDoc, serverTimestamp,
+         onSnapshot, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const config = {
@@ -66,4 +67,23 @@ export async function ping(team, name, where) {
     await setDoc(doc(db, "presence", state.uid),
       { team, name, where, at: serverTimestamp() }, { merge: true });
   } catch (e) { /* 현황판용이라 실패해도 무시한다 */ }
+}
+
+/* ── 교수용 현황판이 읽는 통로 ─────────────────────────
+   학생 화면은 쓰기만 하고, 읽기는 현황판에서만 한다. */
+
+/** 제출된 회차를 들어온 순서대로 지켜본다. */
+export async function watchRuns(cb) {
+  await whenReady();
+  return onSnapshot(query(collection(db, "runs"), orderBy("createdAt")),
+    s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+    e => console.error(e));
+}
+
+/** 지금 누가 어느 자리에 있는지 지켜본다. */
+export async function watchPresence(cb) {
+  await whenReady();
+  return onSnapshot(collection(db, "presence"),
+    s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+    e => console.error(e));
 }
