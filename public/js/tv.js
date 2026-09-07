@@ -130,7 +130,17 @@ export function mountTv(ui) {
   const vid = $("#vid");
   let hasVideo = false, lastKey = null;
   vid.addEventListener("loadeddata", () => { hasVideo = true; vid.hidden = false; });
-  vid.addEventListener("error", () => { hasVideo = false; vid.hidden = true; });
+  let vidRetried = "";
+  vid.addEventListener("error", () => {
+    // 전송망이 한 번 잘못 내주는 경우가 있다. 같은 파일이면 한 번만 다시 받아 본다.
+    const base = vid.src.split("?")[0];
+    if (vidRetried !== base) {
+      vidRetried = base; vid.src = base + "?r=" + Date.now();
+      vid.play().catch(() => { hasVideo = false; vid.hidden = true; });
+      return;
+    }
+    hasVideo = false; vid.hidden = true;
+  });
 
   function paint() {
     $("#clock").textContent = hhmm(S.min);

@@ -97,7 +97,17 @@ export function mountRadio(ui) {
       const el = new Audio(st.file);
       el.loop = true; el.crossOrigin = "anonymous"; el.preload = "auto";
       el.addEventListener("canplay", () => { usingFiles = true; }, { once:true });
-      el.addEventListener("error", () => { if (!synth.has(st.f)) synth.set(st.f, buildSynth(st, buf)); });
+      // 배포 직후 전송망이 파일을 잘못 내주는 일이 드물게 있다. 한 번은 다시 받아 본다.
+      let retried = false;
+      el.addEventListener("error", () => {
+        if (!retried) {
+          retried = true;
+          el.src = st.file + "?r=" + Date.now(); el.load();
+          if (S.on) el.play().catch(() => {});
+          return;
+        }
+        if (!synth.has(st.f)) synth.set(st.f, buildSynth(st, buf));   // 그래도 안 되면 합성음
+      });
       const g = AC.createGain(); g.gain.value = 0;
       try { AC.createMediaElementSource(el).connect(g).connect(master); } catch(e) {}
       media.set(st.f, { el, g });
