@@ -1,0 +1,55 @@
+/* ══ 전화기 ═══════════════════════════════════════ */
+.phoneset{background:linear-gradient(174deg,#DCD3C4 0%,#C8BCA8 36%,#9A8D79 100%);
+  border-radius:14px;padding:20px;color:var(--ink);user-select:none;
+  box-shadow:0 26px 50px -18px #000,inset 0 1px 0 #EFE7D9,inset 0 -3px 8px -2px #796D5B}
+.phonebody{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:start}
+@media(max-width:620px){.phonebody{grid-template-columns:1fr}}
+
+.handsetcol{display:flex;flex-direction:column;gap:14px;min-width:0}
+.handset{display:flex;align-items:center;gap:12px;background:#7C7060;border:0;border-radius:8px;
+  padding:12px 16px;cursor:pointer;box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
+.handset .hs{width:56px;height:20px;border-radius:10px;background:#2E2A24;position:relative;flex:none}
+.handset .hs::before,.handset .hs::after{content:"";position:absolute;top:-7px;width:15px;height:15px;
+  border-radius:4px;background:#2E2A24}
+.handset .hs::before{left:-3px} .handset .hs::after{right:-3px}
+.handset[aria-pressed="true"] .hs{background:#4E5F45}
+.hslabel{font-family:var(--sans);font-size:.86rem;font-weight:500;color:#F0E8DA}
+
+.readout{background:#1B1814;border:1px solid #4A4136;border-radius:6px;padding:16px;
+  min-height:96px;color:#CFC6B6;font-size:.9rem;line-height:1.6;
+  display:flex;flex-direction:column;justify-content:center;text-align:center}
+.readout b{color:var(--lamp);font-family:var(--serif);font-size:1.05rem}
+.readout.on{border-color:#6E6153}
+.readout.bad{border-color:#7A3D34;color:#E0AFA6}
+.readout .bignum{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:2.1rem;
+  font-weight:700;letter-spacing:.08em;color:#F2E7CF;font-variant-numeric:tabular-nums}
+.readout .gone{display:inline-block;margin-top:8px;font-size:.82rem;color:#8A7F6E}
+.readout .small{font-size:.8rem;opacity:.8}
+.dialed{font-family:var(--mono);font-size:1.15rem;letter-spacing:.14em;text-align:center;
+  color:#4A4136;min-height:1.4em;font-variant-numeric:tabular-nums}
+
+.dialcol{justify-self:center}
+.dialplate{position:relative;width:238px;height:238px;border-radius:50%;
+  background:radial-gradient(circle at 40% 32%,#F0E9DC 0%,#D9CFBC 55%,#A99C86 100%);
+  box-shadow:0 8px 20px rgba(0,0,0,.4),inset 0 2px 4px #FFF8EC,inset 0 -4px 10px rgba(0,0,0,.25)}
+@media(max-width:620px){.dialplate{width:210px;height:210px}}
+/* 손가락이 걸리는 스토퍼 — 5시 방향에 둔다 */
+.dialplate .stop{position:absolute;left:73%;top:89%;width:15px;height:32px;border-radius:4px;
+  background:linear-gradient(180deg,#6E6153,#453D33);z-index:3;
+  transform:translate(-50%,-50%) rotate(150deg);box-shadow:0 2px 5px rgba(0,0,0,.45)}
+.dialplate .center{position:absolute;left:50%;top:50%;width:74px;height:74px;border-radius:50%;
+  transform:translate(-50%,-50%);background:radial-gradient(circle at 38% 30%,#EFE7D8,#B8AC96);
+  box-shadow:inset 0 1px 2px #fff,0 2px 5px rgba(0,0,0,.25);z-index:2}
+.ring{position:absolute;inset:0;transform-origin:50% 50%}
+.hole{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+  border:0;cursor:pointer;font-family:var(--mono);font-size:1.1rem;font-weight:700;
+  color:#3A332B;background:radial-gradient(circle at 40% 34%,#8E8271,#5E5446);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.55);display:grid;place-items:center;touch-action:none}
+.hole::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#EDE5D6;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.25);z-index:-1}
+.hole:hover{filter:brightness(1.12)}
+@media(max-width:620px){.hole{width:38px;height:38px;margin:-19px 0 0 -19px;font-size:.98rem}}
+
+.search{width:100%;background:#12100E;border:1px solid var(--line);color:var(--ui);
+  border-radius:4px;padding:10px 12px;font-family:var(--sans);font-size:.9rem;margin-bottom:12px}
+.applist button[disabled]{opacity:.5;cursor:default}
