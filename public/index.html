@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>1988년 거실 — HCI와 커뮤니케이션 2주차 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/station.css">
+</head>
+<body>
+
+<header id="bar">
+  <button id="home" class="homebtn" hidden>← 거실로</button>
+  <div class="who">
+    <span class="brand">1988년 거실</span>
+    <span id="whoami" class="whoami"></span>
+  </div>
+  <div class="right">
+    <span id="netdot" class="dot" title="연결 상태"></span>
+    <span id="netmsg" class="netmsg">연결 중</span>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<!-- ══ 거실 ══════════════════════════════════════════ -->
+<template id="t-room">
+  <section class="room">
+    <div class="roomwrap">
+      <img src="img/room.jpg" alt="1988년 거실. 장식장 위에 전화기와 라디오, 텔레비전이 놓여 있다." id="roomimg">
+      <button class="spot" data-go="phone" style="--l:11.5%;--t:41%;--w:17%;--h:19%">
+        <span class="tag">전화기</span></button>
+      <button class="spot" data-go="radio" style="--l:29%;--t:39.5%;--w:27.5%;--h:19%">
+        <span class="tag">라디오</span></button>
+      <button class="spot" data-go="tv" style="--l:56%;--t:22.5%;--w:40%;--h:40%">
+        <span class="tag">텔레비전</span></button>
+    </div>
+    <div class="roomfoot">
+      <p class="lead">1988년 9월 10일 토요일 저녁입니다. 기기를 눌러 들어가십시오.</p>
+      <div class="idform">
+        <input id="f-team" placeholder="조 (예: 7조)" autocomplete="off" inputmode="text">
+        <input id="f-name" placeholder="이름" autocomplete="off">
+        <button id="f-save" class="btn go">저장</button>
+      </div>
+      <p class="tip" id="idtip">조와 이름을 먼저 적어 주십시오. 기록이 그 이름으로 남습니다.</p>
+    </div>
+  </section>
+</template>
+
+<!-- ══ 스테이션 껍데기 ═══════════════════════════════ -->
+<template id="t-station">
+  <section class="station">
+    <div class="col-main"><div id="stage"></div>
+      <p class="note" id="stagenote"></p></div>
+    <div class="col-side">
+      <div class="panel">
+        <div class="phead"><h2 id="task-title">과업</h2>
+          <span class="mono" id="elapsed">00.0초</span></div>
+        <div class="pbody">
+          <div id="steps"></div>
+          <div class="foot">
+            <button class="btn go" id="start">시작</button>
+            <button class="btn" id="reset">처음부터</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h2>기록</h2></div>
+        <div class="pbody">
+          <table id="log"><tbody></tbody></table>
+          <div class="foot">
+            <button class="btn" id="save">이 회차 제출</button>
+            <span class="savemsg" id="savemsg"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+/* ── 1988년 거실. 어두운 방에 놓인 기기들 ────────────────── */
+:root{
+  --stage:#171310; --stage-2:#221C17;
+  --ui:#E8E1D4; --ui-soft:#9C9184; --line:#38302A;
+  --panel:#1F1A16; --panel-2:#2A2320;
+  --lamp:#D9A441; --ok:#7FA86B; --warn:#C98A3C; --bad:#B4574A;
+  --ink:#231E18;
+  --serif:"Gowun Batang",serif;
+  --sans:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+  --mono:"Archivo Narrow","Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--stage);color:var(--ui);font-family:var(--sans);font-weight:300;
+  line-height:1.6;-webkit-text-size-adjust:100%;
+  background-image:radial-gradient(120% 80% at 50% 0%,var(--stage-2) 0%,var(--stage) 62%)}
+
+/* 머리 */
+#bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;
+  padding:11px 18px;background:rgba(23,19,16,.94);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line)}
+.homebtn{font-family:var(--sans);font-size:.85rem;font-weight:500;color:var(--ui);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
+  padding:7px 14px;cursor:pointer}
+.homebtn:hover{background:#3A302A}
+.homebtn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+.who{display:flex;align-items:baseline;gap:12px;min-width:0}
+.brand{font-family:var(--serif);font-weight:700;font-size:1rem;white-space:nowrap}
+.whoami{font-size:.82rem;color:var(--ui-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+.netmsg{font-size:.76rem;color:var(--ui-soft)}
+
+main{max-width:1240px;margin:0 auto;padding:22px 18px 60px}
+
+/* ── 거실 ─────────────────────────────────────────── */
+.roomwrap{position:relative;max-width:1000px;margin:0 auto;border-radius:8px;overflow:hidden;
+  box-shadow:0 26px 54px -20px #000;border:1px solid var(--line)}
+.roomwrap img{width:100%;display:block}
+.spot{position:absolute;left:var(--l);top:var(--t);width:var(--w);height:var(--h);
+  background:transparent;border:2px solid transparent;border-radius:6px;cursor:pointer;
+  display:grid;place-items:end center;padding-bottom:6px;transition:background .16s,border-color .16s}
+.spot:hover,.spot:focus-visible{background:rgba(217,164,65,.16);border-color:var(--lamp)}
+.spot .tag{opacity:0;font-family:var(--sans);font-size:.82rem;font-weight:500;color:#1A1409;
+  background:var(--lamp);border-radius:3px;padding:3px 10px;transition:opacity .16s;
+  transform:translateY(6px)}
+.spot:hover .tag,.spot:focus-visible .tag{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.spot,.spot .tag{transition:none}}
+
+.roomfoot{max-width:1000px;margin:20px auto 0;display:flex;flex-wrap:wrap;gap:14px;
+  align-items:center;justify-content:space-between}
+.lead{margin:0;font-family:var(--serif);font-size:1.02rem}
+.idform{display:flex;gap:8px;flex-wrap:wrap}
+.idform input{background:#12100E;border:1px solid var(--line);color:var(--ui);border-radius:4px;
+  padding:9px 12px;font-family:var(--sans);font-size:.9rem;width:150px}
+.tip{flex-basis:100%;margin:0;font-size:.8rem;color:var(--ui-soft)}
+.tip.ok{color:var(--ok)}
+
+/* ── 스테이션 ─────────────────────────────────────── */
+.station{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.95fr);gap:24px;
+  align-items:start}
+@media(max-width:900px){.station{grid-template-columns:1fr}}
+.note{margin-top:18px;color:var(--ui-soft);font-size:.8rem;border-top:1px solid var(--line);
+  padding-top:13px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.panel + .panel{margin-top:18px}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:var(--panel-2)}
+.phead h2{font-family:var(--serif);font-size:1rem;font-weight:700;margin:0}
+.pbody{padding:16px}
+.mono{font-family:var(--mono);font-size:.8rem;color:var(--ui-soft);font-variant-numeric:tabular-nums}
+
+.step{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step .mark{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:grid;
+  place-items:center;font-family:var(--mono);font-size:.82rem;color:var(--ui-soft)}
+.step.on .mark{border-color:var(--lamp);color:var(--lamp)}
+.step.done .mark{background:var(--ok);border-color:var(--ok);color:#12180E}
+.step p{margin:0;font-size:.88rem;color:var(--ui-soft)}
+.step.on p{color:var(--ui)}
+.step .t{font-family:var(--mono);font-size:.76rem;color:var(--ui-soft);margin-top:5px;
+  font-variant-numeric:tabular-nums}
+.answer{display:flex;gap:8px;margin-top:9px}
+.answer input{flex:1;min-width:0;background:#12100E;border:1px solid var(--line);color:var(--ui);
+  padding:8px 11px;border-radius:4px;font-family:var(--sans);font-size:.88rem}
+
+.btn{font-family:var(--sans);font-size:.84rem;font-weight:500;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--ui);padding:8px 14px;border-radius:4px;cursor:pointer}
+.btn:hover{background:#332A25}
+.btn.go{background:var(--lamp);border-color:var(--lamp);color:#1A1409;font-weight:700}
+.btn.go:hover{background:#E5B052}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.foot{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.savemsg{font-size:.8rem;color:var(--ui-soft)}
+.savemsg.ok{color:var(--ok)} .savemsg.bad{color:var(--bad)}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-weight:600;font-size:.74rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ui-soft)}
+td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--ui)}
+td.key{color:var(--ui-soft)}
+tr.hi td{color:var(--lamp)}
+.sub{font-size:.76rem;opacity:.6}
+
+/* 모드 전환 */
+.modes{display:flex;gap:2px;background:var(--panel);padding:3px;border-radius:3px;
+  border:1px solid var(--line);margin-bottom:16px;width:max-content;max-width:100%;flex-wrap:wrap}
+.modes button{font-family:var(--sans);font-size:.82rem;font-weight:500;color:var(--ui-soft);
+  background:none;border:0;padding:8px 16px;border-radius:2px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--lamp);color:#1A1409}
+
+.building{border:1px dashed var(--line);border-radius:8px;padding:36px 24px;text-align:center;
+  color:var(--ui-soft)}
+.building b{display:block;font-family:var(--serif);font-size:1.1rem;color:var(--ui);margin-bottom:8px}
