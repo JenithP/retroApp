@@ -25,7 +25,8 @@ SRC  = os.path.join(ROOT, "media_src")
 DST  = os.path.join(ROOT, "public", "media")
 
 TV_CAP_MB    = 5.0        # 영상 한 개가 넘지 않을 크기
-RADIO_CAP_MB = 1.6        # 음원 한 개가 넘지 않을 크기
+RADIO_CAP_MB = 1.6        # 방송 음원 한 개가 넘지 않을 크기
+PHONE_CAP_MB = 0.5        # 전화 음성 한 개가 넘지 않을 크기
 TV_HEIGHT    = 360
 VID_MIN, VID_MAX = 110, 420   # kbps 하한과 상한
 
@@ -60,11 +61,11 @@ def do_video(src, dst):
     print(f"  {os.path.basename(dst):12s} {d:6.1f}초  영상 {v:3d}kbps  "
           f"{os.path.getsize(src)/1e6:6.1f}MB → {os.path.getsize(dst)/1e6:4.1f}MB")
 
-def do_audio(src, dst):
+def do_audio(src, dst, cap=None):
     d = duration(src)
     if not d:
         print(f"  {os.path.basename(src)} — 길이를 못 읽어 건너뜁니다"); return
-    k = int(max(40, min(96, RADIO_CAP_MB * 8192 / d)))
+    k = int(max(40, min(96, (cap or RADIO_CAP_MB) * 8192 / d)))
     run([FF, "-y", "-hide_banner", "-loglevel", "error", "-i", src,
          "-c:a", "libmp3lame", "-b:a", f"{k}k", "-ac", "1", "-ar", "32000", dst])
     print(f"  {os.path.basename(dst):12s} {d:6.1f}초  {k:2d}kbps  "
@@ -83,7 +84,9 @@ def sweep(kind, exts, worker, out_ext):
         worker(os.path.join(s, f), os.path.join(d, os.path.splitext(f)[0] + out_ext))
 
 sweep("tv", {".mp4", ".mov", ".m4v", ".avi", ".mkv"}, do_video, ".mp4")
-sweep("radio", {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}, do_audio, ".mp3")
+AUD = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}
+sweep("radio", AUD, do_audio, ".mp3")
+sweep("phone", AUD, lambda a, b: do_audio(a, b, PHONE_CAP_MB), ".mp3")
 
 if os.path.isdir(DST):
     tot = sum(os.path.getsize(os.path.join(r, f))

@@ -158,7 +158,7 @@ export function mountTv(ui) {
     stopSynth();
     if (p.file) {
       const into = (S.min - p.start);                  // 이미 지나간 만큼 건너뛴다
-      if (!vid.src.endsWith(p.file)) vid.src = p.file;
+      if (!vid.src.endsWith(p.file)) { hasVideo = false; vid.src = p.file; }
       vid.muted = false; vid.loop = true;
       vid.play().then(() => {
         if (isFinite(vid.duration) && vid.duration > 0)
