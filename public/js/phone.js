@@ -193,12 +193,17 @@ export function mountPhone(ui) {
   function spring(d, from) {
     busy = true; stopTone();
     const pulses = d === 0 ? 10 : d, ms = pulses * 95, t0 = performance.now();
+    let done = false;
+    const finish = () => { if (done) return; done = true; setRot(0); busy = false; register(d); };
     (function step(now) {
-      const p = Math.min(1, (now - t0) / ms);
+      if (done) return;
+      const p = Math.min(1, ((now || performance.now()) - t0) / ms);
       setRot(from * (1 - p));
-      if (p < 1) requestAnimationFrame(step);
-      else { setRot(0); busy = false; register(d); }
+      if (p < 1) requestAnimationFrame(step); else finish();
     })(t0);
+    // 다른 탭으로 넘어가면 화면 갱신이 멈춰 다이얼이 돌아오다 굳는다.
+    // 그러면 전화기가 통째로 잠기므로, 시간이 되면 반드시 제자리로 돌린다.
+    setTimeout(finish, ms + 250);
     let i = 0;
     const iv = setInterval(() => { click(); S.pulses++; if (++i >= pulses) clearInterval(iv); }, 95);
   }
