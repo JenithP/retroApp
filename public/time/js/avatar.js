@@ -91,6 +91,7 @@ export function makeAvatar(o = {}) {
       if (walking) phase += dt * (3.2 + A.speed * 0.9);
       const sw = walking ? Math.sin(phase) * Math.min(1, A.speed / 3) * 0.75 : 0;
 
+      let gNow = null;                         // 이번 프레임의 몸짓 — GLB 모델도 이걸 보고 따라 한다
       // 기본 자세 — 걷거나 숨 쉬거나
       legs[0].rotation.x = sw; legs[1].rotation.x = -sw;
       arms[0].rotation.set(-sw * 0.85, 0, 0.06); arms[1].rotation.set(sw * 0.85, 0, -0.06);
@@ -102,6 +103,7 @@ export function makeAvatar(o = {}) {
       if (gest) {
         gest.t += dt;
         const k = gest.t / gest.dur, e = Math.sin(Math.min(1, k) * Math.PI);
+        gNow = { name: gest.name, t: gest.t, e };
         switch (gest.name) {
           case "tilt":     // 갸웃 — 못 알아들었다
             head.rotation.z = 0.42 * e; arms[1].rotation.set(-1.9 * e, 0, -0.5 * e); break;
@@ -147,7 +149,7 @@ export function makeAvatar(o = {}) {
       eyes.forEach(e => (e.scale.y = shut ? 0.15 : 1));
       if (blinkT < 0) blinkT = 2.5 + Math.random() * 3.5;
 
-      if (A.glb) A.glb.update(dt, A.speed, lookYaw);
+      if (A.glb) A.glb.update(dt, A.speed, lookYaw, gNow, walking ? phase : null);
     },
   };
   return A;
@@ -172,10 +174,14 @@ export async function trySwapGLB(A, url) {
   const bb = new THREE.Box3().setFromObject(model);
   const h = bb.max.y - bb.min.y || 1;
   const s = A.height / A.root.scale.y / h;
+  const waist = A.height / A.root.scale.y * 0.42;
   model.scale.setScalar(s);
-  model.position.y = -bb.min.y * s;
+  model.position.y = -bb.min.y * s - waist;
+  const holder = new THREE.Group();          // 허리 높이 받침 — 여기서 기울이고 뛴다
+  holder.position.y = waist;
+  holder.add(model);
   A.body.visible = false;
-  A.root.add(model);
+  A.root.add(holder);
 
   let headBone = null;
   model.traverse(o => { if (!headBone && o.isBone && /head/i.test(o.name)) headBone = o; });
@@ -188,16 +194,38 @@ export async function trySwapGLB(A, url) {
     if (w) { walk = mixer.clipAction(w); walk.play(); walk.weight = 0; }
     if (i) { idle = mixer.clipAction(i); idle.play(); idle.weight = 1; }
   }
+  let breathe = Math.random() * 10;
   A.glb = {
-    update(dt, speed, yaw) {
+    update(dt, speed, yaw, g, phase) {
+      breathe += dt;
       if (mixer) {
         const k = Math.min(1, speed / 2.5);
         if (walk) walk.weight = k;
         if (idle) idle.weight = 1 - k;
         mixer.update(dt);
-      } else {
-        model.position.y = -bb.min.y * s + (speed > 0.15 ? Math.abs(Math.sin(performance.now() / 110)) * 0.05 : 0);
       }
+      // 뼈대가 없는 모델도 몸 전체로 몸짓을 한다 — 갸웃·끄덕·뛰기가 곧 이 장의 대사다
+      let rx = 0, ry = 0, rz = 0, y = waist, sq = 1;
+      if (phase !== null && !mixer) {          // 걸음 — 좌우로 뒤뚱이며 통통 튄다
+        rz = 0.07 * Math.sin(phase); y += Math.abs(Math.sin(phase)) * 0.06;
+      } else if (!mixer) {                     // 서 있을 때 — 숨 쉬듯 살짝
+        sq = 1 + 0.012 * Math.sin(breathe * 1.8);
+      }
+      if (g) {
+        const { name, t, e } = g;
+        if (name === "tilt")   { rz += 0.24 * e; ry += 0.12 * e; }
+        if (name === "nod")    { rx += 0.14 * Math.abs(Math.sin(t * 9)) * e; }
+        if (name === "joy")    { y += Math.abs(Math.sin(t * 9)) * 0.3 * e; sq = 1 + 0.06 * Math.sin(t * 18) * e; }
+        if (name === "thump")  { y += Math.abs(Math.sin(t * 10)) * 0.05 * e; rx -= 0.08 * e; }
+        if (name === "rub")    { rx += 0.2 * e; rz += 0.05 * Math.sin(t * 22) * e; }
+        if (name === "blow")   { rx += 0.3 * e; }
+        if (name === "cough")  { rx += 0.22 * Math.abs(Math.sin(t * 7)) * e; }
+        if (name === "point")  { ry += 0.35 * e; }
+        if (name === "forget") { rz -= 0.2 * e; ry += 0.08 * Math.sin(t * 5) * e; }
+      }
+      holder.position.y = y;
+      holder.rotation.set(rx, ry + (headBone ? 0 : yaw * 0.7), rz);   // 머리 뼈가 없으면 몸째로 돌아본다
+      holder.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
       if (headBone) headBone.rotation.y = yaw;
     },
   };
