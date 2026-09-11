@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>활자의 문 — HCI와 커뮤니케이션 3주차 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/time.css">
+<script type="importmap">
+{ "imports": {
+    "three": "./vendor/three.module.min.js",
+    "three/addons/": "./vendor/addons/"
+} }
+</script>
+</head>
+<body>
+
+<canvas id="view"></canvas>
+
+<!-- 머리 — 지금 어느 장, 무엇을 할지 -->
+<header id="hud" hidden>
+  <div class="chap">
+    <b id="chapname">1장 · 말만 있던 시대</b>
+    <span id="objective">덤불 사이의 소년에게 다가가 보십시오</span>
+  </div>
+  <div class="tools">
+    <span id="teamtag"></span>
+    <button id="mute" class="tool" aria-pressed="false" title="소리">소리 켜짐</button>
+    <button id="helpbtn" class="tool" title="조작법">조작법</button>
+  </div>
+</header>
+
+<!-- 대화 -->
+<section id="talk" hidden>
+  <div class="who" id="talkwho"></div>
+  <p class="line" id="talkline"></p>
+  <div class="choices" id="talkchoices"></div>
+  <div class="next" id="talknext">▼</div>
+</section>
+
+<!-- 가까이 가면 뜨는 행동 단추 -->
+<button id="act" hidden>말 걸기 <kbd>E</kbd></button>
+
+<!-- 터치 조이스틱 -->
+<div id="stick" hidden><div id="knob"></div></div>
+
+<!-- 미니게임을 띄우는 자리 -->
+<section id="mini" hidden></section>
+
+<!-- 조작법 -->
+<section id="help" hidden>
+  <div class="card">
+    <h2>조작법</h2>
+    <dl>
+      <dt>걷기</dt><dd>W A S D 또는 화살표 · 태블릿은 왼쪽 아래 원을 끌기</dd>
+      <dt>둘러보기</dt><dd>화면을 끌기</dd>
+      <dt>말 걸기 · 줍기</dt><dd>E 키 또는 오른쪽 아래 단추</dd>
+      <dt>대사 넘기기</dt><dd>대화창을 누르기 · 스페이스</dd>
+    </dl>
+    <p>한 조가 노트북 한 대를 함께 씁니다. 조종은 한 사람이, 고르기는 넷이 의논해서.</p>
+    <button class="big" id="helpclose">알겠습니다</button>
+  </div>
+</section>
+
+<!-- 시작 -->
+<section id="start">
+  <div class="card title">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 3주차 오프라인</p>
+    <h1>활자의 문</h1>
+    <p class="lead">고인쇄 박물관에서 옛 금속활자를 만진 순간, 조원 넷은 낯선 숲에서 눈을 떴다.</p>
+    <label class="field">조 이름
+      <input id="teamin" placeholder="예: 7조" maxlength="20" autocomplete="off">
+    </label>
+    <button class="big" id="go">문을 연다</button>
+    <p class="tip">소리가 있는 게임입니다. 노트북 소리를 켜 두십시오.</p>
+  </div>
+</section>
+
+<!-- 장이 끝났을 때 -->
+<section id="done" hidden>
+  <div class="card">
+    <p class="eyebrow" id="doneeyebrow">1장 ① 완료</p>
+    <h2 id="donetitle">마을에 첫 불이 붙었다</h2>
+    <table class="stats" id="donestats"></table>
+    <p class="tip" id="donetip"></p>
+    <button class="big" id="donenext">다음으로</button>
+  </div>
+</section>
+
+<div id="loading">숲을 불러오는 중…</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -8,7 +8,7 @@
     ],
     "rewrites": [
       {
-        "source": "!/media/**",
+        "source": "!/@(media|time)/**",
         "destination": "/index.html"
       }
     ],

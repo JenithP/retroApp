@@ -67,22 +67,23 @@ function ready(ms) {
   ]);
 }
 
-async function write(id, row) {
+async function write(id, row, coll = "runs") {
   await ready(9000);
-  await setDoc(doc(db, "runs", id), { ...row, uid: state.uid, createdAt: serverTimestamp() });
+  await setDoc(doc(db, coll, id), { ...row, uid: state.uid, createdAt: serverTimestamp() });
 }
 
-/** 한 회차를 남긴다. 돌려주는 값 — "ok" 보냄 · "queued" 담아 둠 · "denied" 규칙이 거절함 */
-export async function saveRun(row) {
+/** 한 회차를 남긴다. 돌려주는 값 — "ok" 보냄 · "queued" 담아 둠 · "denied" 규칙이 거절함
+ *  coll 은 모음 이름 — 2주차 거실은 runs, 3주차 활자의 문은 time */
+export async function saveRun(row, coll = "runs") {
   const id = newId();
   try {
-    await write(id, row);
+    await write(id, row, coll);
     flush();                                  // 밀린 것이 있으면 이참에 같이 보낸다
     return "ok";
   } catch (e) {
     console.error("saveRun", e.code || e.message, e);
     if (e.code === "permission-denied") return "denied";   // 다시 해도 소용없다
-    setPend([...pend(), { id, row }]);
+    setPend([...pend(), { id, row, coll }]);
     return "queued";
   }
 }
@@ -96,7 +97,7 @@ export async function flush() {
   flushing = true;
   const left = [];
   for (const it of q) {
-    try { await write(it.id, it.row); }
+    try { await write(it.id, it.row, it.coll || "runs"); }
     catch (e) { if (e.code !== "permission-denied") left.push(it); }
   }
   setPend(left);
