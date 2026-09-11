@@ -46,19 +46,66 @@ function net(cls, msg) {
   if (m) m.textContent = msg;
 }
 
-/** 한 회차 기록을 남긴다. 실패해도 실습은 계속되어야 하므로 던지지 않는다. */
+/* ── 회차 저장 ────────────────────────────────────────
+   교실 무선망은 자주 끊긴다. 끊겼다고 학생의 기록이 사라지면 안 되므로,
+   못 보낸 것은 담아 두었다가 연결되면 스스로 다시 보낸다. */
+
+const PEND = "pending_runs";
+const pend = () => { try { return JSON.parse(localStorage.getItem(PEND)) || []; } catch (e) { return []; } };
+const setPend = a => { try { localStorage.setItem(PEND, JSON.stringify(a.slice(-80))); } catch (e) {} };
+export const pendingCount = () => pend().length;
+
+/** 회차마다 이름표를 하나 만든다. 다시 보내도 같은 이름표라 겹쳐 쌓이지 않는다. */
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+
+/** 인증을 무한정 기다리지 않는다. 기다리기만 하면 학생은 멈춘 화면만 본다. */
+function ready(ms) {
+  return Promise.race([
+    whenReady(),
+    new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("연결이 늦습니다"),
+      { code: "auth-timeout" })), ms)),
+  ]);
+}
+
+async function write(id, row) {
+  await ready(9000);
+  await setDoc(doc(db, "runs", id), { ...row, uid: state.uid, createdAt: serverTimestamp() });
+}
+
+/** 한 회차를 남긴다. 돌려주는 값 — "ok" 보냄 · "queued" 담아 둠 · "denied" 규칙이 거절함 */
 export async function saveRun(row) {
+  const id = newId();
   try {
-    await whenReady();
-    await addDoc(collection(db, "runs"), {
-      ...row, uid: state.uid, createdAt: serverTimestamp(),
-    });
-    return true;
+    await write(id, row);
+    flush();                                  // 밀린 것이 있으면 이참에 같이 보낸다
+    return "ok";
   } catch (e) {
-    console.error(e);
-    return false;
+    console.error("saveRun", e.code || e.message, e);
+    if (e.code === "permission-denied") return "denied";   // 다시 해도 소용없다
+    setPend([...pend(), { id, row }]);
+    return "queued";
   }
 }
+
+let flushing = false;
+/** 담아 둔 회차를 다시 보낸다. 이미 들어간 것은 규칙이 막아 주므로 그대로 버린다. */
+export async function flush() {
+  if (flushing) return;
+  const q = pend();
+  if (!q.length) return;
+  flushing = true;
+  const left = [];
+  for (const it of q) {
+    try { await write(it.id, it.row); }
+    catch (e) { if (e.code !== "permission-denied") left.push(it); }
+  }
+  setPend(left);
+  flushing = false;
+}
+
+addEventListener("online", flush);
+setInterval(flush, 30000);
+whenReady().then(flush);
 
 /** 지금 어느 스테이션에 있는지 — 교수용 현황판이 읽는다. */
 export async function ping(team, name, where) {

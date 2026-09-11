@@ -1,5 +1,5 @@
 // 거실과 스테이션 사이를 오가는 라우터. 학생 정보와 진행 상태를 들고 있는다.
-import { saveRun, ping } from "./firebase.js";
+import { saveRun, ping, pendingCount, flush } from "./firebase.js";
 import { mountRadio } from "./radio.js";
 import { mountTv } from "./tv.js";
 import { mountPhone } from "./phone.js";
@@ -75,10 +75,15 @@ async function submit(row, msgEl) {
   msgEl.textContent = "보내는 중…";
   msgEl.className = "savemsg";
   const full = { team: me.team, name: me.name, ...row, at: new Date().toLocaleString("ko-KR") };
-  const ok = await saveRun({ team: me.team, name: me.name, ...row });
-  keep(full);
-  msgEl.textContent = ok ? "제출되었습니다" : "저장 실패 — 다시 눌러 보십시오";
-  msgEl.className = "savemsg " + (ok ? "ok" : "bad");
+  keep(full);                                   // 보내지든 말든 내 기록에는 남는다
+  const r = await saveRun({ team: me.team, name: me.name, ...row });
+  const say = {
+    ok:     ["제출되었습니다", "ok"],
+    queued: ["제출됨 — 연결이 돌아오면 자동으로 보냅니다", "ok"],
+    denied: ["조와 이름을 30자 안으로 줄여 다시 눌러 주십시오", "bad"],
+  }[r];
+  msgEl.textContent = say[0];
+  msgEl.className = "savemsg " + say[1];
 }
 
 /* ── 내 기록 ──────────────────────────────────────────
@@ -149,8 +154,12 @@ function renderRoom() {
     beat("거실");
   });
   const mtip = document.getElementById("minetip");
-  const kept = mine().length;
+  const kept = mine().length, waiting = pendingCount();
   if (kept) mtip.textContent = `제출한 회차 ${kept}개가 쌓여 있습니다. 보고서를 쓸 때 내려받으십시오.`;
+  if (waiting) {
+    flush();
+    mtip.textContent += `  (아직 못 보낸 ${waiting}개는 자동으로 다시 보냅니다)`;
+  }
   document.getElementById("f-csv").addEventListener("click", () => downloadMine(mtip));
 
   view.querySelectorAll(".spot").forEach(b =>
