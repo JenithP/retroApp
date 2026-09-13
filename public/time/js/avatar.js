@@ -2,6 +2,7 @@
 // 몸짓이 곧 대사인 장이라, 갸웃·끄덕·기뻐 뛰기·가슴 치기·비비기·기침을 넣었다.
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { makeRig } from "./rig.js";
 
 const box = (w, h, d, color) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
@@ -183,8 +184,7 @@ export async function trySwapGLB(A, url) {
   A.body.visible = false;
   A.root.add(holder);
 
-  let headBone = null;
-  model.traverse(o => { if (!headBone && o.isBone && /head/i.test(o.name)) headBone = o; });
+  const rig = makeRig(model);                  // 뼈대가 있으면 팔다리를 직접 움직인다
 
   let mixer = null, walk = null, idle = null;
   if (gltf.animations?.length) {
@@ -196,8 +196,17 @@ export async function trySwapGLB(A, url) {
   }
   let breathe = Math.random() * 10;
   A.glb = {
+    rigged: !!rig,
     update(dt, speed, yaw, g, phase) {
       breathe += dt;
+      if (rig) {                                 // 뼈가 있으면 뼈로 — 걷기 위에 몸짓을 얹는다
+        rig.begin();
+        if (phase !== null) rig.walk(phase, Math.min(1, speed / 3));
+        else rig.idle(breathe);
+        rig.look(yaw);
+        if (g) rig.gesture(g.name, g.t, g.e);
+        rig.apply();
+      }
       if (mixer) {
         const k = Math.min(1, speed / 2.5);
         if (walk) walk.weight = k;
@@ -206,12 +215,13 @@ export async function trySwapGLB(A, url) {
       }
       // 뼈대가 없는 모델도 몸 전체로 몸짓을 한다 — 갸웃·끄덕·뛰기가 곧 이 장의 대사다
       let rx = 0, ry = 0, rz = 0, y = waist, sq = 1;
-      if (phase !== null && !mixer) {          // 걸음 — 좌우로 뒤뚱이며 통통 튄다
-        rz = 0.07 * Math.sin(phase); y += Math.abs(Math.sin(phase)) * 0.06;
-      } else if (!mixer) {                     // 서 있을 때 — 숨 쉬듯 살짝
+      if (phase !== null && !mixer) {          // 걸음 — 통통 튄다 (뼈가 없으면 좌우로 뒤뚱까지)
+        if (!rig) rz = 0.07 * Math.sin(phase);
+        y += Math.abs(Math.sin(phase)) * (rig ? 0.03 : 0.06);
+      } else if (!mixer && !rig) {             // 서 있을 때 — 숨 쉬듯 살짝
         sq = 1 + 0.012 * Math.sin(breathe * 1.8);
       }
-      if (g) {
+      if (g && !rig) {
         const { name, t, e } = g;
         if (name === "tilt")   { rz += 0.24 * e; ry += 0.12 * e; }
         if (name === "nod")    { rx += 0.14 * Math.abs(Math.sin(t * 9)) * e; }
@@ -223,10 +233,10 @@ export async function trySwapGLB(A, url) {
         if (name === "point")  { ry += 0.35 * e; }
         if (name === "forget") { rz -= 0.2 * e; ry += 0.08 * Math.sin(t * 5) * e; }
       }
+      if (rig && g && g.name === "joy") y += Math.abs(Math.sin(g.t * 9)) * 0.3 * g.e;   // 펄쩍
       holder.position.y = y;
-      holder.rotation.set(rx, ry + (headBone ? 0 : yaw * 0.7), rz);   // 머리 뼈가 없으면 몸째로 돌아본다
+      holder.rotation.set(rx, ry + (rig ? 0 : yaw * 0.7), rz);        // 뼈가 없으면 몸째로 돌아본다
       holder.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
-      if (headBone) headBone.rotation.y = yaw;
     },
   };
   return true;

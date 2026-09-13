@@ -24,6 +24,17 @@ DST  = os.path.join(ROOT, "public", "time", "models")
 
 # 캐릭터는 면을 넉넉히, 소품은 더 줄인다
 PROPS = {"hut", "firekit", "drum", "desk", "press", "typecase"}
+# 게임이 찾는 이름. nu_walk.glb 처럼 뒤에 뭐가 붙어 있어도 알아서 맞춘다.
+KNOWN = ["student", "nu", "elder", "woman", "hunter", "kid", "bear",
+         "novice", "abbot", "apprentice", "printer", "scholar"] + sorted(PROPS)
+
+
+def game_name(stem):
+    low = stem.lower()
+    for k in KNOWN:
+        if low == k or low.startswith(k + "_") or low.startswith(k + "-"):
+            return k
+    return stem
 TARGET_TRIS = {"char": 45000, "prop": 10000}   # 캐릭터 4.5만 — 누로 눈으로 확인한 품질
 
 GT = ["npx", "--yes", "@gltf-transform/cli@4"]
@@ -75,13 +86,13 @@ def main():
     if not files:
         print("GLB 파일이 없습니다:", SRC); return
     for f in files:
-        name = os.path.splitext(f)[0]
+        name = game_name(os.path.splitext(f)[0])
         kind = "prop" if name in PROPS else "char"
-        src, dst = os.path.join(SRC, f), os.path.join(DST, f)
+        src, dst = os.path.join(SRC, f), os.path.join(DST, name + ".glb")
         try:
             n = optimize(src, dst, kind)
             if os.path.getsize(dst) > 4e6: print(f"  ! {f} 가 여전히 4MB 가 넘습니다 — 확인이 필요합니다")
-            print(f"  {f:16s} 면 {n:>8,} → 약 {TARGET_TRIS[kind]:,}   "
+            print(f"  {f:16s} → {name}.glb  면 {n:>8,} → 약 {TARGET_TRIS[kind]:,}   "
                   f"{os.path.getsize(src)/1e6:6.1f}MB → {os.path.getsize(dst)/1e6:4.2f}MB")
         except Exception as e:
             print(f"  {f:16s} 실패 — {e}")
