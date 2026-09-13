@@ -31,7 +31,8 @@ export async function chapter1(G) {
       if (o.kind === "situ") S.situ++;
       if (o.kind === "demo") S.demo++;
       const ok = await o.then();
-      if (ok) return o.kind;
+      if (ok) { G.hit(o.kind === "demo" ? "보여 주니 통했다" : "통했다"); return o.kind; }
+      G.miss(o.kind === "paper" ? "적을 곳이 없다" : o.kind === "explain" ? "한 번 말해서는 남지 않는다" : "말이 통하지 않았다");
       if (!used.includes(i)) used.push(i);
     }
   }

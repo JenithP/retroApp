@@ -24,6 +24,7 @@
   <div class="chap">
     <b id="chapname">1장 · 말만 있던 시대</b>
     <span id="objective">덤불 사이의 소년에게 다가가 보십시오</span>
+    <span id="misses" hidden></span>
   </div>
   <div class="tools">
     <span id="teamtag"></span>
@@ -39,6 +40,9 @@
   <div class="choices" id="talkchoices"></div>
   <div class="next" id="talknext">▼</div>
 </section>
+
+<!-- 통했다 · 통하지 않았다 -->
+<div id="toast" hidden></div>
 
 <!-- 가까이 가면 뜨는 행동 단추 -->
 <button id="act" hidden>말 걸기 <kbd>E</kbd></button>
@@ -73,6 +77,9 @@
     <label class="field">조 이름
       <input id="teamin" placeholder="예: 7조" maxlength="20" autocomplete="off">
     </label>
+    <div class="field">누가 조종할까요 — 넷 중 하나를 고르십시오
+      <div class="crew" id="crewpick"></div>
+    </div>
     <button class="big" id="go">문을 연다</button>
     <p class="tip">소리가 있는 게임입니다. 노트북 소리를 켜 두십시오.</p>
   </div>

@@ -126,3 +126,25 @@ kbd{font-family:var(--sans);font-size:.72em;border:1px solid currentColor;border
 @media (prefers-reduced-motion:reduce){
   #act,#talk .next{animation:none}
 }
+
+/* ── 통했다 · 통하지 않았다 ─────────────────────────── */
+#toast{position:fixed;left:50%;top:19%;transform:translateX(-50%);z-index:7;
+  font-family:var(--serif);font-size:1.5rem;font-weight:700;padding:12px 26px;border-radius:8px;
+  box-shadow:0 12px 30px -10px rgba(0,0,0,.7);animation:pop .25s ease-out}
+#toast.bad{background:var(--rust);color:#FFF1EC}
+#toast.good{background:#4d7f3f;color:#F2FBEE}
+#toast small{display:block;font-family:var(--sans);font-size:.82rem;font-weight:400;opacity:.92;
+  margin-top:2px;letter-spacing:0}
+@keyframes pop{from{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96)}}
+#misses{display:inline-block;margin-top:6px;font-size:.8rem;font-weight:700;color:var(--rust);
+  background:#fff;border:1px solid var(--rust);border-radius:20px;padding:2px 10px}
+@media (prefers-reduced-motion:reduce){ #toast{animation:none} }
+
+/* ── 주인공 고르기 ─────────────────────────────────── */
+.crew{display:flex;gap:10px;margin-top:2px}
+.crew button{flex:1;background:#fffaf0;border:2px solid var(--edge);border-radius:8px;padding:9px 4px 7px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--sans);font-size:.76rem;
+  font-weight:500;color:var(--ink-soft)}
+.crew button:hover{border-color:var(--rust)}
+.crew button[aria-pressed="true"]{border-color:var(--ink);background:#fff;color:var(--ink);font-weight:700}
+.crew .who3{width:34px;height:34px;border-radius:8px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}

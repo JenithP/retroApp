@@ -186,6 +186,16 @@ export async function trySwapGLB(A, url) {
 
   const rig = makeRig(model);                  // 뼈대가 있으면 팔다리를 직접 움직인다
 
+  // 발을 땅에 붙이기 위해, 가만히 선 자세에서 발목이 뿌리보다 얼마나 위인지 재 둔다
+  const feet = rig ? ["lFoot", "rFoot", "lShin", "rShin"].map(k => rig.bones[k]).filter(Boolean) : [];
+  const vA = new THREE.Vector3(), vB = new THREE.Vector3();
+  let restAnkle = 0;
+  if (feet.length) {
+    A.root.updateMatrixWorld(true);
+    const rootY = A.root.getWorldPosition(vA).y;
+    restAnkle = Math.min(...feet.map(b => b.getWorldPosition(vB).y)) - rootY;
+  }
+
   let mixer = null, walk = null, idle = null;
   if (gltf.animations?.length) {
     mixer = new THREE.AnimationMixer(model);
@@ -215,9 +225,9 @@ export async function trySwapGLB(A, url) {
       }
       // 뼈대가 없는 모델도 몸 전체로 몸짓을 한다 — 갸웃·끄덕·뛰기가 곧 이 장의 대사다
       let rx = 0, ry = 0, rz = 0, y = waist, sq = 1;
-      if (phase !== null && !mixer) {          // 걸음 — 통통 튄다 (뼈가 없으면 좌우로 뒤뚱까지)
-        if (!rig) rz = 0.07 * Math.sin(phase);
-        y += Math.abs(Math.sin(phase)) * (rig ? 0.03 : 0.06);
+      if (phase !== null && !mixer && !rig) {  // 뼈가 없으면 좌우로 뒤뚱이며 통통 튄다
+        rz = 0.07 * Math.sin(phase);
+        y += Math.abs(Math.sin(phase)) * 0.06;
       } else if (!mixer && !rig) {             // 서 있을 때 — 숨 쉬듯 살짝
         sq = 1 + 0.012 * Math.sin(breathe * 1.8);
       }
@@ -233,10 +243,18 @@ export async function trySwapGLB(A, url) {
         if (name === "point")  { ry += 0.35 * e; }
         if (name === "forget") { rz -= 0.2 * e; ry += 0.08 * Math.sin(t * 5) * e; }
       }
-      if (rig && g && g.name === "joy") y += Math.abs(Math.sin(g.t * 9)) * 0.3 * g.e;   // 펄쩍
       holder.position.y = y;
       holder.rotation.set(rx, ry + (rig ? 0 : yaw * 0.7), rz);        // 뼈가 없으면 몸째로 돌아본다
       holder.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
+
+      // 발 붙이기 — 다리를 접으면 그만큼 몸을 낮춰야 한다. 안 그러면 허공을 걷는 것처럼 보인다.
+      if (feet.length) {
+        A.root.updateMatrixWorld(true);
+        const rootY = A.root.getWorldPosition(vA).y;
+        const low = Math.min(...feet.map(b => b.getWorldPosition(vB).y)) - rootY;
+        holder.position.y += (restAnkle - low) / (A.root.scale.y || 1);
+      }
+      if (rig && g && g.name === "joy") holder.position.y += Math.abs(Math.sin(g.t * 9)) * 0.3 * g.e;   // 펄쩍
     },
   };
   return true;

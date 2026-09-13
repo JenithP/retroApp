@@ -53,31 +53,45 @@ function spawnActor(opts, x, z, faceYaw = 0) {
   return { avatar: a, get pos() { return a.root.position; }, path: null };
 }
 
-// 우리 넷 — 조종하는 한 명과 뒤따르는 셋
-const player = spawnActor({ shirt: "#2f4a78", pants: "#3a3f4a", hair: "#1f1712" }, SPAWN.x, SPAWN.z - 2, Math.PI);
-const mates = [
-  spawnActor({ shirt: "#b0503a", pants: "#3a3f4a", hair: "#3a2616" }, SPAWN.x - 2.3, SPAWN.z - 1.5),
-  spawnActor({ shirt: "#e0c35a", pants: "#444", hair: "#140f0b" }, SPAWN.x + 2.3, SPAWN.z - 1.5),
-  spawnActor({ shirt: "#4f8a6a", pants: "#2e3540", hair: "#5a3a22" }, SPAWN.x - 3.4, SPAWN.z - 0.1),
+// 우리 넷 — 박물관에서 함께 빨려 들어온 조원들. 그중 하나를 조종한다.
+const CREW = [
+  { name: "남색",  shirt: "#2f4a78", pants: "#3a3f4a", hair: "#1f1712" },
+  { name: "빨강",  shirt: "#b0503a", pants: "#3a3f4a", hair: "#3a2616" },
+  { name: "노랑",  shirt: "#e0c35a", pants: "#444444", hair: "#140f0b" },
+  { name: "초록",  shirt: "#4f8a6a", pants: "#2e3540", hair: "#5a3a22" },
 ];
-mates.forEach((m, i) => { m.offset = [[-2.3, 0.5], [2.3, 0.5], [-3.4, 1.9]][i]; });   // 카메라 줄을 비켜 양옆에
+const SPOTS = [[0, -2], [-2.3, -1.5], [2.3, -1.5], [-3.4, -0.1]];
+const crew = CREW.map((c, i) =>
+  spawnActor(c, SPAWN.x + SPOTS[i][0], SPAWN.z + SPOTS[i][1], Math.PI));
+crew.forEach(a => trySwapGLB(a.avatar, "models/student.glb"));
 
-/** 조원이 서야 할 자리 — 조종하는 사람의 뒤 옆 */
-const TALK_SLOTS = [[-1.8, -0.5], [1.8, -0.5], [-3.0, 0.3]];   // 대화할 땐 앞 옆으로 비켜 선다 — 카메라를 가리지 않게
+let player = crew[0];
+let mates = crew.slice(1);
+const OFFSETS = [[-2.3, 0.5], [2.3, 0.5], [-3.4, 1.9]];   // 카메라 줄을 비켜 양옆에
+
+/** 누가 조종할지 정한다. 나머지 셋은 뒤따른다. */
+function pickCrew(i) {
+  player = crew[i];
+  mates = crew.filter((_, k) => k !== i);
+  mates.forEach((m, k) => (m.offset = OFFSETS[k]));
+  mates.forEach(m => { const [x, z] = mateSpot(m); m.pos.set(x, heightAt(x, z), z); });
+}
+
+const TALK_SLOTS = [[-1.8, -0.5], [1.8, -0.5], [-3.0, 0.3]];   // 대화할 땐 앞 옆으로 비켜 선다
 let talkingNow = false;                                          // 매 프레임 tick() 이 채운다
+/** 조원이 서야 할 자리 — 조종하는 사람의 뒤 옆 */
 function mateSpot(m) {
   const py = player.avatar.root.rotation.y;
   const [ox, oz] = talkingNow ? TALK_SLOTS[mates.indexOf(m)] : m.offset;
   return [player.pos.x - Math.sin(py) * oz + Math.cos(py) * ox,
           player.pos.z - Math.cos(py) * oz - Math.sin(py) * ox];
 }
-// 처음부터 제자리에 세운다 — 좌우가 엇갈리면 가운데서 서로 부딪혀 멈춘다
-mates.forEach(m => { const [x, z] = mateSpot(m); m.pos.set(x, heightAt(x, z), z); m.avatar.root.rotation.y = Math.PI; });
+pickCrew(0);
 
 // 마을 사람들 — 가죽옷 빛깔
 const hide = "#8a6a45", hide2 = "#7a5536";
 const npc = {
-  nu: spawnActor({ skin: "#c89067", shirt: hide, pants: hide2, hair: "#241710", scale: 0.74,
+  nu: spawnActor({ skin: "#c89067", shirt: hide, pants: hide2, hair: "#241710", scale: 0.92,
     extra: ({ torso, box }) => { const p = box(0.22, 0.2, 0.12, "#5a3d25"); p.position.set(0.3, -0.35, 0.26); torso.add(p); } },
     4.2, 23.3, Math.PI * 0.9),
   elder: spawnActor({ skin: "#b98a66", shirt: "#6e5a44", pants: "#5c4a37", hair: "#cfcac2", beard: "#d8d3ca", scale: 0.93 },
@@ -91,8 +105,7 @@ const npc = {
 };
 
 // Tripo 모델이 폴더에 있으면 갈아 끼운다. 없으면 블록 인형 그대로.
-const GLB = { player: "student", nu: "nu", elder: "elder", woman: "woman", hunter: "hunter" };
-trySwapGLB(player.avatar, "models/student.glb");
+const GLB = { nu: "nu", elder: "elder", woman: "woman", hunter: "hunter", kid: "kid" };
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
 const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
@@ -109,9 +122,28 @@ let focus = null, wasTalking = false;      // 대화 상대 — 이 사람과 �
 let shot = null;                           // 연출 카메라 — { pos, at } 가 있으면 그 자리에서 그곳을 본다
 
 const G = {
-  scene, world, talk, input, player, npc, fire, stats: {},
+  scene, world, talk, input, npc, fire, stats: {},
+  get player() { return player; },
   pathToVillage: [],
   objective(t) { $("#objective").textContent = t; },
+  misses: 0,
+  /** 말이 통하지 않았다 — 몇 번째인지 화면에 남긴다 */
+  miss(why = "말이 통하지 않았다") {
+    G.misses++;
+    const m = $("#misses");
+    m.hidden = false;
+    m.textContent = `말이 안 통한 횟수 ${G.misses}`;
+    G.toast(why, "bad", "누가 알아듣지 못했습니다");
+  },
+  hit(msg = "통했다") { G.toast(msg, "good"); },
+  toast(text, kind, sub = "") {
+    const t = $("#toast");
+    t.className = kind;
+    t.innerHTML = text + (sub ? `<small>${sub}</small>` : "");
+    t.hidden = false;
+    clearTimeout(G._toast);
+    G._toast = setTimeout(() => { t.hidden = true; }, 1600);
+  },
   lock(v) { locked = v; },
   wait: s => new Promise(r => setTimeout(r, s * 1000)),
   until: pred => new Promise(res => waits.push({ pred, res })),
@@ -359,6 +391,22 @@ $("#mute").addEventListener("click", e => {
 });
 $("#helpbtn").addEventListener("click", () => { $("#help").hidden = false; });
 $("#helpclose").addEventListener("click", () => { $("#help").hidden = true; });
+
+// 주인공 고르기 — 고른 사람이 조종하고 나머지 셋은 뒤따른다
+let picked = 0;
+try { picked = Math.min(3, Math.max(0, parseInt(localStorage.getItem("crew") || "0", 10) || 0)); } catch (e) {}
+const pickEl = $("#crewpick");
+pickEl.innerHTML = CREW.map((c, i) =>
+  `<button data-i="${i}" aria-pressed="${i === picked}">
+     <span class="who3" style="background:${c.shirt}"></span>${c.name}</button>`).join("");
+pickEl.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  picked = +b.dataset.i;
+  try { localStorage.setItem("crew", String(picked)); } catch (err) {}
+  pickEl.querySelectorAll("button").forEach((x, i) => x.setAttribute("aria-pressed", String(i === picked)));
+  pickCrew(picked);
+});
+pickCrew(picked);
 
 $("#go").addEventListener("click", async () => {
   const team = teamIn.value.trim();
