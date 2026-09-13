@@ -63,28 +63,24 @@ const CREW = [
 const SPOTS = [[0, -2], [-2.3, -1.5], [2.3, -1.5], [-3.4, -0.1]];
 const crew = CREW.map((c, i) =>
   spawnActor(c, SPAWN.x + SPOTS[i][0], SPAWN.z + SPOTS[i][1], Math.PI));
-crew.forEach(a => trySwapGLB(a.avatar, "models/student.glb"));
+// 고를 수 있는 넷. student1~4.glb 가 있으면 각각, 없으면 student.glb 하나로, 그것도 없으면 블록 인형.
+crew.forEach((a, i) =>
+  trySwapGLB(a.avatar, `models/student${i + 1}.glb`)
+    .then(ok => ok || trySwapGLB(a.avatar, "models/student.glb")));
 
 let player = crew[0];
-let mates = crew.slice(1);
-const OFFSETS = [[-2.3, 0.5], [2.3, 0.5], [-3.4, 1.9]];   // 카메라 줄을 비켜 양옆에
+const mates = [];                 // 조원은 한 조에 한 화면이라 실제로 들어가는 사람은 하나다
+let talkingNow = false;           // 매 프레임 tick() 이 채운다
 
-/** 누가 조종할지 정한다. 나머지 셋은 뒤따른다. */
+/** 누가 들어갈지 정한다. 고른 사람만 숲에 서고 나머지는 보이지 않는다. */
 function pickCrew(i) {
   player = crew[i];
-  mates = crew.filter((_, k) => k !== i);
-  mates.forEach((m, k) => (m.offset = OFFSETS[k]));
-  mates.forEach(m => { const [x, z] = mateSpot(m); m.pos.set(x, heightAt(x, z), z); });
-}
-
-const TALK_SLOTS = [[-1.8, -0.5], [1.8, -0.5], [-3.0, 0.3]];   // 대화할 땐 앞 옆으로 비켜 선다
-let talkingNow = false;                                          // 매 프레임 tick() 이 채운다
-/** 조원이 서야 할 자리 — 조종하는 사람의 뒤 옆 */
-function mateSpot(m) {
-  const py = player.avatar.root.rotation.y;
-  const [ox, oz] = talkingNow ? TALK_SLOTS[mates.indexOf(m)] : m.offset;
-  return [player.pos.x - Math.sin(py) * oz + Math.cos(py) * ox,
-          player.pos.z - Math.cos(py) * oz - Math.sin(py) * ox];
+  crew.forEach((a, k) => {
+    a.avatar.root.visible = k === i;
+    if (k !== i) a.pos.set(SPAWN.x, -50, SPAWN.z);        // 멀리 치워 부딪히지 않게
+  });
+  player.pos.set(SPAWN.x, heightAt(SPAWN.x, SPAWN.z - 2), SPAWN.z - 2);
+  player.avatar.root.rotation.y = Math.PI;
 }
 pickCrew(0);
 
@@ -261,14 +257,6 @@ function tick() {
     player.avatar.root.rotation.y = turn(player.avatar.root.rotation.y, Math.atan2(dx, dz), 1 - Math.exp(-dt * 12));
     player.avatar.speed = sp;
   } else player.avatar.speed = 0;
-
-  // 뒤따르는 조원 셋
-  for (const m of mates) {
-    const [tx, tz] = mateSpot(m);
-    const far = Math.hypot(tx - m.pos.x, tz - m.pos.z);
-    if (stepToward(m, tx, tz, far > 3 ? 5.2 : 3.4, dt, 0.6)) m.avatar.lookAt(npc.nu.pos);
-    else m.avatar.lookAt(null);
-  }
 
   // 마을 사람 — 길을 걷거나, 가까이 온 우리를 돌아본다
   for (const [k, o] of Object.entries(npc)) {
