@@ -171,23 +171,71 @@ export async function trySwapGLB(A, url) {
   } catch (e) { return false; }
 
   const model = gltf.scene;
-  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  const bb = new THREE.Box3().setFromObject(model);
+  model.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    // 믹사모 FBX 를 거쳐 오면 재질이 「금속 100% · 반투명」으로 잡힌다. 비출 주변 환경이 없는
+    // 이 화면에서 금속은 새까맣게 보이고, 반투명은 몸이 겹쳐 비친다. 천·피부로 되돌린다.
+    for (const m of [].concat(o.material)) {
+      if (!m) continue;
+      m.metalness = 0;
+      m.roughness = Math.max(0.7, m.roughness ?? 0.8);
+      m.metalnessMap = null;
+      if ("specularIntensity" in m) m.specularIntensity = 0.3;
+      m.transparent = false; m.opacity = 1; m.depthWrite = true;
+      m.needsUpdate = true;
+    }
+  });
+  // 키는 뼈대가 움직인 뒤의 실제 몸으로 잰다. 뼈대 전 원본으로 재면 믹사모(센티미터 단위) 모델은
+  // 엉뚱하게 작게 잡혀, 목표 키에 맞추느라 거인이 된다.
+  model.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(model, true);
   const h = bb.max.y - bb.min.y || 1;
   const s = A.height / A.root.scale.y / h;
   const waist = A.height / A.root.scale.y * 0.42;
   model.scale.setScalar(s);
   model.position.y = -bb.min.y * s - waist;
-  const holder = new THREE.Group();          // 허리 높이 받침 — 여기서 기울이고 뛴다
+  const holder = new THREE.Group();          // 허리 높이 받침 — 뼈대가 없는 모델은 여기서 기울이고 뛴다
   holder.position.y = waist;
   holder.add(model);
   A.body.visible = false;
   A.root.add(holder);
 
-  const rig = makeRig(model);                  // 뼈대가 있으면 팔다리를 직접 움직인다
+  const rig = makeRig(model);                  // 뼈대가 있으면 팔다리를 직접 움직일 수 있다
 
-  // 발을 땅에 붙이기 위해, 가만히 선 자세에서 발목이 뿌리보다 얼마나 위인지 재 둔다
-  const feet = rig ? ["lFoot", "rFoot", "lShin", "rShin"].map(k => rig.bones[k]).filter(Boolean) : [];
+  /* ── 동작 클립 (믹사모에서 받은 것) ─────────────────── */
+  const clips = {};
+  for (const c of gltf.animations || []) {
+    const n = c.name.toLowerCase();
+    const k = /idle|breath/.test(n) ? "idle" : /walk/.test(n) ? "walk" : /talk/.test(n) ? "talk"
+            : /cheer/.test(n) ? "cheer" : /victor/.test(n) ? "victory" : /jump/.test(n) ? "jump"
+            : /danc/.test(n) ? "dance" : null;
+    if (k && !clips[k]) clips[k] = c;
+  }
+  if (clips.walk) stripRootMotion(clips.walk);   // 앞으로 나아가는 이동은 게임이 맡는다
+  const mixer = Object.keys(clips).length ? new THREE.AnimationMixer(model) : null;
+  const act = {};
+  if (mixer) for (const [k, c] of Object.entries(clips)) act[k] = mixer.clipAction(c);
+  if (act.idle) act.idle.play();
+  if (act.walk) { act.walk.play(); act.walk.setEffectiveWeight(0); }
+  const joy = act.cheer || act.victory || act.jump || act.dance || null;   // 알아들었을 때 한 번
+  if (joy) { joy.setLoop(THREE.LoopOnce, 1); joy.clampWhenFinished = false; }
+
+  // 믹사모 동작은 뼈 위치까지 움직여 몸 크기가 달라진다. 동작을 한 번 걸어 본 자세로 키를 다시 잰다.
+  if (mixer) {
+    mixer.update(0);
+    holder.remove(model);
+    model.scale.setScalar(1); model.position.set(0, 0, 0); model.rotation.set(0, 0, 0);
+    model.updateMatrixWorld(true);
+    const b2 = new THREE.Box3().setFromObject(model, true);
+    const s2 = A.height / A.root.scale.y / ((b2.max.y - b2.min.y) || 1);
+    model.scale.setScalar(s2);
+    model.position.y = -b2.min.y * s2 - waist;
+    holder.add(model);
+  }
+
+  // 클립이 없을 때만 — 가만히 선 자세의 발목 높이를 재어 두고 걸을 때 발을 땅에 붙인다
+  const feet = (!mixer && rig) ? ["lFoot", "rFoot", "lShin", "rShin"].map(k => rig.bones[k]).filter(Boolean) : [];
   const vA = new THREE.Vector3(), vB = new THREE.Vector3();
   let restAnkle = 0;
   if (feet.length) {
@@ -196,20 +244,35 @@ export async function trySwapGLB(A, url) {
     restAnkle = Math.min(...feet.map(b => b.getWorldPosition(vB).y)) - rootY;
   }
 
-  let mixer = null, walk = null, idle = null;
-  if (gltf.animations?.length) {
-    mixer = new THREE.AnimationMixer(model);
-    const find = re => gltf.animations.find(c => re.test(c.name));
-    const w = find(/walk|run/i), i = find(/idle|stand|breath/i) || gltf.animations[0];
-    if (w) { walk = mixer.clipAction(w); walk.play(); walk.weight = 0; }
-    if (i) { idle = mixer.clipAction(i); idle.play(); idle.weight = 1; }
-  }
-  let breathe = Math.random() * 10;
+  let breathe = Math.random() * 10, prevG = null;
   A.glb = {
-    rigged: !!rig,
+    rigged: !!rig, clips: Object.keys(clips),
     update(dt, speed, yaw, g, phase) {
       breathe += dt;
-      if (rig) {                                 // 뼈가 있으면 뼈로 — 걷기 위에 몸짓을 얹는다
+      const gName = g ? g.name : null;
+
+      if (mixer) {
+        // 알아들었을 때 — 기뻐하는 클립을 처음부터 한 번
+        if (gName === "joy" && prevG !== "joy" && joy) joy.reset().setEffectiveWeight(1).fadeIn(0.15).play();
+        const joyOn = !!(joy && joy.isRunning());
+        const k = Math.min(1, speed / 2.2), base = joyOn ? 0.1 : 1;
+        if (act.walk) act.walk.setEffectiveWeight(k * base);
+        if (act.idle) act.idle.setEffectiveWeight((act.walk ? 1 - k : 1) * base);
+        if (act.walk) act.walk.timeScale = speed > 0.15 ? Math.max(0.7, Math.min(1.6, speed / 2.6)) : 1;
+        if (rig) rig.reset();
+        mixer.update(dt);
+        if (rig) {                             // 클립 위에 고개 돌리기와 몸짓을 얹는다
+          rig.begin();
+          rig.look(yaw * 0.8);
+          if (g && !(gName === "joy" && joy)) rig.gesture(g.name, g.t, g.e);
+          rig.applyAdditive();
+        }
+        holder.position.y = waist; holder.rotation.set(0, 0, 0); holder.scale.set(1, 1, 1);
+        prevG = gName;
+        return;
+      }
+
+      if (rig) {                               // 뼈만 있으면 뼈로 걷고 몸짓한다
         rig.begin();
         if (phase !== null) rig.walk(phase, Math.min(1, speed / 3));
         else rig.idle(breathe);
@@ -217,45 +280,56 @@ export async function trySwapGLB(A, url) {
         if (g) rig.gesture(g.name, g.t, g.e);
         rig.apply();
       }
-      if (mixer) {
-        const k = Math.min(1, speed / 2.5);
-        if (walk) walk.weight = k;
-        if (idle) idle.weight = 1 - k;
-        mixer.update(dt);
-      }
-      // 뼈대가 없는 모델도 몸 전체로 몸짓을 한다 — 갸웃·끄덕·뛰기가 곧 이 장의 대사다
+
+      // 뼈대도 클립도 없는 조각상 — 몸 전체로 몸짓한다
       let rx = 0, ry = 0, rz = 0, y = waist, sq = 1;
-      if (phase !== null && !mixer && !rig) {  // 뼈가 없으면 좌우로 뒤뚱이며 통통 튄다
-        rz = 0.07 * Math.sin(phase);
-        y += Math.abs(Math.sin(phase)) * 0.06;
-      } else if (!mixer && !rig) {             // 서 있을 때 — 숨 쉬듯 살짝
-        sq = 1 + 0.012 * Math.sin(breathe * 1.8);
-      }
-      if (g && !rig) {
-        const { name, t, e } = g;
-        if (name === "tilt")   { rz += 0.24 * e; ry += 0.12 * e; }
-        if (name === "nod")    { rx += 0.14 * Math.abs(Math.sin(t * 9)) * e; }
-        if (name === "joy")    { y += Math.abs(Math.sin(t * 9)) * 0.3 * e; sq = 1 + 0.06 * Math.sin(t * 18) * e; }
-        if (name === "thump")  { y += Math.abs(Math.sin(t * 10)) * 0.05 * e; rx -= 0.08 * e; }
-        if (name === "rub")    { rx += 0.2 * e; rz += 0.05 * Math.sin(t * 22) * e; }
-        if (name === "blow")   { rx += 0.3 * e; }
-        if (name === "cough")  { rx += 0.22 * Math.abs(Math.sin(t * 7)) * e; }
-        if (name === "point")  { ry += 0.35 * e; }
-        if (name === "forget") { rz -= 0.2 * e; ry += 0.08 * Math.sin(t * 5) * e; }
+      if (!rig) {
+        if (phase !== null) { rz = 0.07 * Math.sin(phase); y += Math.abs(Math.sin(phase)) * 0.06; }
+        else sq = 1 + 0.012 * Math.sin(breathe * 1.8);
+        if (g) {
+          const { name, t, e } = g;
+          if (name === "tilt")   { rz += 0.24 * e; ry += 0.12 * e; }
+          if (name === "nod")    { rx += 0.14 * Math.abs(Math.sin(t * 9)) * e; }
+          if (name === "joy")    { y += Math.abs(Math.sin(t * 9)) * 0.3 * e; sq = 1 + 0.06 * Math.sin(t * 18) * e; }
+          if (name === "thump")  { y += Math.abs(Math.sin(t * 10)) * 0.05 * e; rx -= 0.08 * e; }
+          if (name === "rub")    { rx += 0.2 * e; rz += 0.05 * Math.sin(t * 22) * e; }
+          if (name === "blow")   { rx += 0.3 * e; }
+          if (name === "cough")  { rx += 0.22 * Math.abs(Math.sin(t * 7)) * e; }
+          if (name === "point")  { ry += 0.35 * e; }
+          if (name === "forget") { rz -= 0.2 * e; ry += 0.08 * Math.sin(t * 5) * e; }
+        }
       }
       holder.position.y = y;
-      holder.rotation.set(rx, ry + (rig ? 0 : yaw * 0.7), rz);        // 뼈가 없으면 몸째로 돌아본다
+      holder.rotation.set(rx, ry + (rig ? 0 : yaw * 0.7), rz);
       holder.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
 
-      // 발 붙이기 — 다리를 접으면 그만큼 몸을 낮춰야 한다. 안 그러면 허공을 걷는 것처럼 보인다.
-      if (feet.length) {
+      if (feet.length) {                       // 다리를 접은 만큼 몸을 낮춘다 — 허공을 걷지 않게
         A.root.updateMatrixWorld(true);
         const rootY = A.root.getWorldPosition(vA).y;
         const low = Math.min(...feet.map(b => b.getWorldPosition(vB).y)) - rootY;
         holder.position.y += (restAnkle - low) / (A.root.scale.y || 1);
       }
-      if (rig && g && g.name === "joy") holder.position.y += Math.abs(Math.sin(g.t * 9)) * 0.3 * g.e;   // 펄쩍
+      if (rig && gName === "joy") holder.position.y += Math.abs(Math.sin(g.t * 9)) * 0.3 * g.e;
+      prevG = gName;
     },
   };
   return true;
+}
+
+/** 믹사모 걷기에는 앞으로 나아가는 이동이 들어 있다. 가장 크게 움직이는 축을 첫 값에 묶는다. */
+function stripRootMotion(clip) {
+  const t = clip.tracks.find(tr => /hips/i.test(tr.name) && tr.name.endsWith(".position"));
+  if (!t) return;
+  const v = t.values, n = v.length / 3;
+  const span = c => {
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < n; i++) { const x = v[i * 3 + c]; if (x < lo) lo = x; if (x > hi) hi = x; }
+    return hi - lo;
+  };
+  const spans = [0, 1, 2].map(span);
+  const best = spans.indexOf(Math.max(...spans));
+  const other = Math.max(...spans.filter((_, c) => c !== best));
+  if (spans[best] < other * 4) return;         // 제자리 걷기라면 건드리지 않는다
+  const first = v[best];
+  for (let i = 0; i < n; i++) v[i * 3 + best] = first;
 }

@@ -148,3 +148,6 @@ kbd{font-family:var(--sans);font-size:.72em;border:1px solid currentColor;border
 .crew button:hover{border-color:var(--rust)}
 .crew button[aria-pressed="true"]{border-color:var(--ink);background:#fff;color:var(--ink);font-weight:700}
 .crew .who3{width:34px;height:34px;border-radius:8px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
+.crew button{padding:4px}
+.crew button img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:cover;border-radius:5px}
+.crew button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--gold)}

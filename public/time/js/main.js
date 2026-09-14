@@ -84,24 +84,25 @@ function pickCrew(i) {
 }
 pickCrew(0);
 
-// 마을 사람들 — 가죽옷 빛깔
+// 마을 사람들 — 가죽옷 빛깔. 키 순서는 아빠 > 할아버지 > 엄마 = 학생 > 누
 const hide = "#8a6a45", hide2 = "#7a5536";
 const npc = {
-  nu: spawnActor({ skin: "#c89067", shirt: hide, pants: hide2, hair: "#241710", scale: 0.92,
+  nu: spawnActor({ skin: "#c89067", shirt: hide, pants: hide2, hair: "#241710", scale: 0.84,
     extra: ({ torso, box }) => { const p = box(0.22, 0.2, 0.12, "#5a3d25"); p.position.set(0.3, -0.35, 0.26); torso.add(p); } },
     4.2, 23.3, Math.PI * 0.9),
-  elder: spawnActor({ skin: "#b98a66", shirt: "#6e5a44", pants: "#5c4a37", hair: "#cfcac2", beard: "#d8d3ca", scale: 0.93 },
+  elder: spawnActor({ skin: "#b98a66", shirt: "#6e5a44", pants: "#5c4a37", hair: "#cfcac2", beard: "#d8d3ca", scale: 1.05 },
     VILLAGE.x - 4.2, VILLAGE.z - 2.2, 0.9),
-  woman: spawnActor({ skin: "#c4906a", shirt: "#9a7650", pants: "#7a5a3a", hair: "#2a1a10", scale: 0.92 },
+  woman: spawnActor({ skin: "#c4906a", shirt: "#9a7650", pants: "#7a5a3a", hair: "#2a1a10", scale: 1.0 },
     VILLAGE.x + 5, VILLAGE.z - 3.5, -1.0),
-  hunter: spawnActor({ skin: "#b9835c", shirt: "#6d5a3e", pants: "#5a4530", hair: "#1d140d", beard: "#2a1d12" },
+  hunter: spawnActor({ skin: "#b9835c", shirt: "#6d5a3e", pants: "#5a4530", hair: "#1d140d", beard: "#2a1d12", scale: 1.12 },
     VILLAGE.x + 3.5, VILLAGE.z + 4.5, -2.4),
   kid: spawnActor({ skin: "#c89067", shirt: "#a0805a", pants: hide2, hair: "#2e1d12", scale: 0.62 },
     VILLAGE.x - 3, VILLAGE.z + 4, 2.4),
 };
 
 // Tripo 모델이 폴더에 있으면 갈아 끼운다. 없으면 블록 인형 그대로.
-const GLB = { nu: "nu", elder: "elder", woman: "woman", hunter: "hunter", kid: "kid" };
+// 교수님이 믹사모로 만든 모델 — 할아버지는 granpa, 엄마는 mama, 아빠(사냥꾼)는 papa
+const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid" };
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
 const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
@@ -385,8 +386,8 @@ let picked = 0;
 try { picked = Math.min(3, Math.max(0, parseInt(localStorage.getItem("crew") || "0", 10) || 0)); } catch (e) {}
 const pickEl = $("#crewpick");
 pickEl.innerHTML = CREW.map((c, i) =>
-  `<button data-i="${i}" aria-pressed="${i === picked}">
-     <span class="who3" style="background:${c.shirt}"></span>${c.name}</button>`).join("");
+  `<button data-i="${i}" aria-pressed="${i === picked}" aria-label="${i + 1}번 학생">
+     <img src="img/student${i + 1}.webp" alt="" width="240" height="360"></button>`).join("");
 pickEl.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   picked = +b.dataset.i;

@@ -74,7 +74,22 @@ export function makeRig(model) {
   };
   begin();
 
-  return { bones: found, set, begin, apply,
+  /** 동작 클립이 도는 모델용 — 뼈를 원래 자세로 되돌려 둔다 (클립이 안 건드리는 뼈가 누적되지 않게) */
+  const reset = () => { for (const b of Object.values(found)) b.quaternion.copy(b.userData.rig.rest); };
+  /** 동작 클립 위에 얹는다 — 원래 자세 대신 클립이 만든 지금 자세를 바탕으로 삼는다 */
+  const Q = new THREE.Quaternion();
+  const applyAdditive = () => {
+    for (const [slot, b] of Object.entries(found)) {
+      const p = pose[slot];
+      if (!p || (!p[0] && !p[1] && !p[2])) continue;
+      const g = b.userData.rig;
+      R.setFromEuler(E.set(p[0], p[1], p[2]));
+      Q.copy(b.quaternion);
+      b.quaternion.copy(g.Pinv).multiply(R).multiply(g.P).multiply(Q);
+    }
+  };
+
+  return { bones: found, set, begin, apply, reset, applyAdditive,
     has: s => !!found[s],
     /** 걷기 — 다리와 팔이 엇갈려 흔들린다 */
     walk(phase, amt) {
