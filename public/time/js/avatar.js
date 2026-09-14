@@ -159,7 +159,7 @@ export function makeAvatar(o = {}) {
 /* ── Tripo GLB로 갈아 끼우기 ─────────────────────────────
    파일이 없으면 조용히 블록 인형으로 남는다. 파일이 있으면 키를 맞추고,
    걷기·서 있기 동작이 들어 있으면 속도에 따라 섞어 튼다. */
-const loader = new GLTFLoader();
+export const loader = new GLTFLoader();
 
 export async function trySwapGLB(A, url) {
   let gltf;
@@ -207,7 +207,7 @@ export async function trySwapGLB(A, url) {
   const clips = {};
   for (const c of gltf.animations || []) {
     const n = c.name.toLowerCase();
-    const k = /idle|breath/.test(n) ? "idle" : /walk/.test(n) ? "walk" : /talk/.test(n) ? "talk"
+    const k = /idle|breath/.test(n) ? "idle" : /walk/.test(n) ? "walk" : /talk|argu/.test(n) ? "talk"
             : /cheer/.test(n) ? "cheer" : /victor/.test(n) ? "victory" : /jump/.test(n) ? "jump"
             : /danc/.test(n) ? "dance" : /punch/.test(n) ? "punch" : null;
     if (k && !clips[k]) clips[k] = c;
@@ -218,6 +218,7 @@ export async function trySwapGLB(A, url) {
   if (mixer) for (const [k, c] of Object.entries(clips)) act[k] = mixer.clipAction(c);
   if (act.idle) act.idle.play();
   if (act.walk) { act.walk.play(); act.walk.setEffectiveWeight(0); }
+  if (act.talk) { act.talk.play(); act.talk.setEffectiveWeight(0); }   // 이 사람이 말하는 동안만 켠다
   const joy = act.cheer || act.victory || act.jump || act.dance || null;   // 알아들었을 때 한 번
   if (joy) { joy.setLoop(THREE.LoopOnce, 1); joy.clampWhenFinished = false; }
 
@@ -232,6 +233,18 @@ export async function trySwapGLB(A, url) {
     model.scale.setScalar(s2);
     model.position.y = -b2.min.y * s2 - waist;
     holder.add(model);
+
+    // 옷자락이 땅에 끌리는 모델(수도원장·문지기·수도승)은 겉모습 맨 아래가 옷단이라 발이 떠 보인다.
+    // 발가락 뼈 높이로 한 번 더 맞춘다 — 보통 캐릭터는 발가락 뼈가 키의 0.7% 쯤에 있다.
+    const toes = [];
+    model.traverse(o => { if (o.isBone && /(toebase|toe_end|foot)$/i.test(o.name)) toes.push(o); });
+    if (toes.length) {
+      A.root.updateMatrixWorld(true);
+      const v = new THREE.Vector3(), baseY = A.root.getWorldPosition(v).y;
+      const low = Math.min(...toes.map(b => b.getWorldPosition(v).y)) - baseY;
+      const want = A.height * 0.007;
+      if (Math.abs(low - want) > A.height * 0.006) model.position.y -= (low - want) / (A.root.scale.y || 1);
+    }
   }
 
   // 클립이 없을 때만 — 가만히 선 자세의 발목 높이를 재어 두고 걸을 때 발을 땅에 붙인다
@@ -246,7 +259,7 @@ export async function trySwapGLB(A, url) {
 
   let breathe = Math.random() * 10, prevG = null;
   // 대본이 켜고 끄는 동작 — 후드 쓴 자의 주먹질처럼 서 있기·걷기 대신 되풀이한다
-  let special = null, spAct = null, spW = 0;
+  let special = null, spAct = null, spW = 0, tW = 0;
   A.glb = {
     rigged: !!rig, clips: Object.keys(clips),
     /** 이름 붙은 동작을 되풀이한다. null 이면 서 있기로 돌아온다 */
@@ -282,8 +295,11 @@ export async function trySwapGLB(A, url) {
         }
         yaw *= 1 - spW;                          // 주먹질하는 동안엔 고개를 따로 돌리지 않는다
         const k = Math.min(1, speed / 2.2), base = (joyOn ? 0.1 : 1) * (1 - spW);
+        // 대사창에 이 사람 이름이 뜨면 말하는 동작으로 — A.talking 은 main.js 가 켜고 끈다
+        tW += ((A.talking && act.talk && speed < 0.3 ? 1 : 0) - tW) * Math.min(1, dt * 5);
         if (act.walk) act.walk.setEffectiveWeight(k * base);
-        if (act.idle) act.idle.setEffectiveWeight((act.walk ? 1 - k : 1) * base);
+        if (act.talk) act.talk.setEffectiveWeight((1 - k) * base * tW);
+        if (act.idle) act.idle.setEffectiveWeight((act.walk ? 1 - k : 1) * base * (act.talk ? 1 - tW : 1));
         if (act.walk) act.walk.timeScale = speed > 0.15 ? Math.max(0.7, Math.min(1.6, speed / 2.6)) : 1;
         if (rig) rig.reset();
         mixer.update(dt);

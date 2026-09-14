@@ -41,6 +41,7 @@ export class Talk {
   _type(who, text) {
     this.box.hidden = false;
     this.who.textContent = who || "";
+    this.onSpeak?.(who);                       // 말하는 사람이 말하는 동작을 하게
     this.choicesEl.innerHTML = "";
     this.nextEl.hidden = true;
     const chars = [...text], pitch = this.voices[who];
@@ -89,16 +90,17 @@ export class Talk {
   }
 
   /** 물음을 보여 주고, 직접 쓴 말을 돌려준다. 몸짓 보기는 없다 — 말로만 전해야 한다. */
-  async ask(who, text, { prefill = "", placeholder = "누에게 할 말을 쓰십시오" } = {}) {
+  async ask(who, text, { prefill = "", placeholder = "누에게 할 말을 쓰십시오", button = "누에게 말하기" } = {}) {
     await this._type(who, text);
     this._click = null;
     return new Promise(res => {
       this.choicesEl.innerHTML = `<form class="say">
         <textarea maxlength="300" rows="2" aria-label="누에게 할 말"></textarea>
-        <div class="sayrow"><small class="cnt"></small><button type="submit">누에게 말하기 <kbd>Enter</kbd></button></div>
+        <div class="sayrow"><small class="cnt"></small><button type="submit"><span class="lbl"></span> <kbd>Enter</kbd></button></div>
       </form>`;
       const form = this.choicesEl.querySelector("form"), ta = form.querySelector("textarea"),
             cnt = form.querySelector(".cnt");
+      form.querySelector(".lbl").textContent = button;
       ta.placeholder = placeholder;
       ta.value = prefill;
       const count = () => { cnt.textContent = `${ta.value.length} / 300`; };
@@ -131,5 +133,5 @@ export class Talk {
     this._click = null;
   }
 
-  close() { this.box.hidden = true; this._click = null; this._pick = null; }
+  close() { this.box.hidden = true; this._click = null; this._pick = null; this.onSpeak?.(null); }
 }

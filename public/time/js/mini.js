@@ -294,3 +294,152 @@ function traceLine(text, li, n, title, need, t0, note) {
     if (window.__G) window.__finishMini = () => { targets.fill(1); covered = targets.length; drawn = 1; off = 0; done.click(); };   // 시험 주소에서만
   });
 }
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/** 조판 — 거울 글자를 조판 막대의 오른쪽 끝부터 끼운다. 교정지를 찍어 틀린 글자를 찾는다.
+ *  찍으면 좌우가 뒤집히므로, 막대 오른쪽 끝의 활자가 종이에서는 맨 왼쪽 글자가 된다. */
+export function compose(line, decoys) {
+  const chars = [...line], N = chars.length;
+  const pieces = shuffle([...chars.map((c, i) => ({ c, id: `t${i}` })), ...decoys.map((c, i) => ({ c, id: `d${i}` }))]);
+  const slots = new Array(N).fill(null);
+  const m = open(`
+    <h3>조판 — 거울 활자를 오른쪽부터</h3>
+    <p class="how">찍혀 나올 글은 <b>「${esc(line)}」</b>입니다. 활자는 찍었을 때 바로 읽히도록 <b>거울처럼 뒤집혀</b> 있습니다.
+      활자를 누르면 조판 막대의 <b>오른쪽 끝부터</b> 한 칸씩 끼워집니다. 빈칸도 「빈 활자」로 끼웁니다. 끼운 활자를 누르면 빠집니다.</p>
+    <div class="stickwrap"><div class="stick" id="cstick"></div><span class="stickhint">여기부터 채워집니다 →</span></div>
+    <div class="tray" id="tray"></div>
+    <div class="proof" id="proof" hidden></div>
+    <div class="trow"><span class="mstate" id="cst">비슷하게 생긴 활자가 섞여 있습니다. 뒤집힌 모양을 잘 보십시오.</span><span class="ttime" id="ctime"></span></div>
+    <div class="tbtns"><button class="tool" id="cclear">모두 빼기</button><button class="big" id="cproof" disabled>교정지 찍어 보기</button></div>`);
+  m.querySelector(".mcard").classList.add("wide");
+  // 「stick」 이름은 터치 조이스틱이 이미 쓰고 있어 cstick — 같은 이름이면 조이스틱 모양이 씌워진다
+  const stick = m.querySelector("#cstick"), tray = m.querySelector("#tray"), proof = m.querySelector("#proof");
+  const st = m.querySelector("#cst"), tm = m.querySelector("#ctime"), pbtn = m.querySelector("#cproof");
+  const face = p => p.c === " " ? `<span class="sp">빈 활자</span>` : `<span class="mir">${esc(p.c)}</span>`;
+  const t0 = performance.now();
+  let proofs = 0, firstTypos = null;
+
+  const render = () => {
+    const used = new Set(slots.filter(Boolean).map(p => p.id));
+    let next = -1; for (let i = N - 1; i >= 0; i--) if (!slots[i]) { next = i; break; }
+    stick.innerHTML = slots.map((p, i) => p
+      ? `<button class="type" data-slot="${i}" aria-label="끼운 활자 ${esc(p.c === " " ? "빈칸" : p.c)}">${face(p)}</button>`
+      : `<span class="slot${i === next ? " next" : ""}"></span>`).join("");
+    tray.innerHTML = pieces.filter(p => !used.has(p.id)).map(p =>
+      `<button class="type" data-id="${p.id}" aria-label="활자 ${esc(p.c === " " ? "빈칸" : p.c)}">${face(p)}</button>`).join("");
+    pbtn.disabled = next !== -1;
+  };
+  render();
+  tray.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    let next = -1; for (let i = N - 1; i >= 0; i--) if (!slots[i]) { next = i; break; }
+    if (next < 0) return;
+    slots[next] = pieces.find(p => p.id === b.dataset.id);
+    audio.blip(320); proof.hidden = true; render();
+  });
+  stick.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    slots[+b.dataset.slot] = null; proof.hidden = true; render();
+  });
+  m.querySelector("#cclear").addEventListener("click", () => { slots.fill(null); proof.hidden = true; render(); });
+  const clock = setInterval(() => {
+    const s = (performance.now() - t0) / 1000;
+    tm.textContent = `${Math.floor(s / 60)}분 ${String(Math.floor(s % 60)).padStart(2, "0")}초째`;
+  }, 250);
+
+  return new Promise(res => {
+    pbtn.addEventListener("click", () => {
+      const printed = slots.slice().reverse().map(p => p.c);   // 종이에 찍히면 좌우가 뒤집힌다
+      const bad = printed.map((c, i) => c !== chars[i]);
+      const typos = bad.filter(Boolean).length;
+      proofs++;
+      if (firstTypos === null) firstTypos = typos;
+      proof.hidden = false;
+      proof.innerHTML = printed.map((c, i) => `<span class="${bad[i] ? "bad" : ""}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")
+        + `<small>교정지 ${proofs}번째 — 종이에 찍힌 모양</small>`;
+      if (!typos) {
+        audio.chime(); st.textContent = "한 글자도 틀리지 않았다!";
+        clearInterval(clock);
+        setTimeout(() => { close(); res({ secs: Math.round((performance.now() - t0) / 1000), firstTypos, proofs }); }, 1400);
+      } else {
+        audio.huh();
+        st.textContent = `틀린 글자 ${typos}개 — 막대에서 눌러 빼고 다시 끼우십시오. 이대로 찍으면 수백 장이 모두 이렇게 나옵니다.`;
+      }
+    });
+    if (window.__G) window.__finishMini = () => {        // 시험 주소에서만
+      const left = pieces.slice();
+      chars.forEach((c, i) => { const k = left.findIndex(p => p.c === c); slots[N - 1 - i] = left.splice(k, 1)[0]; });
+      render(); pbtn.click();
+    };
+  });
+}
+
+/** 인쇄기 — 잉크 바르기(누르고 있기) → 종이 얹기 → 레버 당기기를 정해진 시간 동안 되풀이한다 */
+export function press(secs = 40) {
+  const m = open(`
+    <h3>인쇄기 돌리기</h3>
+    <p class="how">① 잉크 바르기(<b>누르고 있기</b>) → ② 종이 얹기 → ③ 레버 당기기. 순서대로 되풀이해
+      <b>${secs}초 동안</b> 되도록 많이 찍으십시오. 키보드는 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>.</p>
+    <div class="presscount"><b id="pn">0</b><span>장</span><span class="ttime" id="pt">${secs}초 남음</span></div>
+    <div class="meter"><i id="pink"></i></div>
+    <div class="pbtns">
+      <button class="pstep on" data-s="0">① 잉크 바르기</button>
+      <button class="pstep" data-s="1">② 종이 얹기</button>
+      <button class="pstep" data-s="2">③ 레버 당기기</button>
+    </div>
+    <p class="mstate" id="pst">잉크 공으로 활자판을 두드리십시오 — 누르고 있으면 잉크가 고르게 묻습니다</p>`);
+  const btns = [...m.querySelectorAll(".pstep")], pn = m.querySelector("#pn"), pt = m.querySelector("#pt");
+  const ink = m.querySelector("#pink"), st = m.querySelector("#pst");
+  let step = 0, lvl = 0, held = false, sheets = 0, started = null, over = false;
+  const HINT = ["잉크 공으로 활자판을 두드리십시오 — 누르고 있으면 잉크가 고르게 묻습니다",
+                "축축한 종이를 판 위에 얹으십시오", "레버를 힘껏 당기십시오!"];
+  const go = s => { step = s; btns.forEach((b, i) => b.classList.toggle("on", i === s)); st.textContent = HINT[s]; };
+  const act = s => {
+    if (over) return;
+    if (started === null) started = performance.now();
+    if (s !== step) { audio.huh(); st.textContent = `순서가 틀렸다 — 지금은 ${btns[step].textContent}`; return; }
+    if (s === 1) { audio.blip(420); go(2); }
+    else if (s === 2) { sheets++; pn.textContent = sheets; audio.blip(160); lvl = 0; ink.style.width = "0%"; go(0); }
+  };
+  btns.forEach((b, i) => {
+    b.addEventListener("pointerdown", e => { e.preventDefault(); if (i === 0 && step === 0) { if (started === null) started = performance.now(); held = true; } else act(i); });
+    b.addEventListener("pointerup", () => { held = false; });
+    b.addEventListener("pointerleave", () => { held = false; });
+  });
+  const kd = e => {
+    if (!["1", "2", "3"].includes(e.key)) return;
+    e.preventDefault();
+    const i = +e.key - 1;
+    if (i === 0 && step === 0) { if (started === null) started = performance.now(); held = true; } else if (!e.repeat) act(i);
+  };
+  const ku = e => { if (e.key === "1") held = false; };
+  addEventListener("keydown", kd); addEventListener("keyup", ku);
+
+  return new Promise(res => {
+    let prev = performance.now();
+    const end = () => {
+      over = true;
+      removeEventListener("keydown", kd); removeEventListener("keyup", ku);
+      audio.chime(); st.textContent = `시간 끝 — ${sheets}장을 찍었다`;
+      setTimeout(() => { close(); res({ sheets, secs }); }, 1200);
+    };
+    if (window.__G) window.__finishMini = () => { sheets = 12; end(); };   // 시험 주소에서만
+    const frame = now => {
+      if (over) return;
+      const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
+      if (held && step === 0) {
+        lvl = Math.min(1, lvl + dt * 2.2); ink.style.width = (lvl * 100) + "%";
+        if (lvl >= 1) { held = false; audio.blip(260); go(1); }
+      }
+      if (started !== null) {
+        const left = Math.max(0, secs - (now - started) / 1000);
+        pt.textContent = `${Math.ceil(left)}초 남음`;
+        if (left <= 0) return end();
+      } else pt.textContent = `${secs}초 — 첫 단추를 누르면 시작`;
+      next(frame);
+    };
+    next(frame);
+  });
+}

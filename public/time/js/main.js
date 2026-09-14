@@ -8,13 +8,16 @@ import { audio } from "./audio.js";
 import { makeFire, makeSparkle } from "./fx.js";
 import { chapter1 } from "./ch1.js";
 import { chapter2 } from "./ch2.js";
+import { chapter3, ending } from "./ch3.js";
+import { placeProp, buildPrintshop } from "./props.js";
 import { saveRun } from "../../js/firebase.js";   // 2주차 거실과 같은 저장 통로 — 끊겨도 담아 두었다 다시 보낸다
 
 const $ = s => document.querySelector(s);
 
 /* ── 그리기 ─────────────────────────────────────────── */
 const canvas = $("#view");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+renderer.setClearColor(0x000000, 0);          // 박물관 끝 장면에서는 뒤에 깐 사진 위에 사람만 그린다
 const touchy = matchMedia("(pointer: coarse)").matches;
 renderer.setPixelRatio(Math.min(devicePixelRatio, touchy ? 1.4 : 1.75));
 renderer.shadowMap.enabled = true;
@@ -44,7 +47,7 @@ addEventListener("resize", resize); resize();
 
 /* ── 세상과 사람들 ──────────────────────────────────── */
 const world = buildWorld(scene);
-const colliders = world.colliders;
+let colliders = world.colliders;              // 3장 인쇄소에 들어가면 방의 것으로 바뀐다
 
 function spawnActor(opts, x, z, faceYaw = 0) {
   const a = makeAvatar(opts);
@@ -102,11 +105,21 @@ const npc = {
   // 2장 숲길의 후드 쓴 자 — 1장 동안에는 지도 밖에서 기다린다
   villain: spawnActor({ skin: "#c9a080", shirt: "#1d1a1a", pants: "#1a1716", hair: "#111111", scale: 1.1 },
     58, 58, 0),
+  // 2장 수도원 — 누를 닮은 견습 수도사, 수도원장, 옆 수도원 문지기
+  abbot:      spawnActor({ skin: "#d9b08c", shirt: "#4a3526", pants: "#4a3526", hair: "#dddddd", beard: "#e0e0e0", scale: 1.02 }, 60, 52, 0),
+  monk:       spawnActor({ skin: "#c89067", shirt: "#3d3a36", pants: "#3d3a36", hair: "#241710", scale: 0.84 }, 62, 52, 0),
+  gatekeeper: spawnActor({ skin: "#d4a482", shirt: "#6f6a62", pants: "#6f6a62", hair: "#3a2a1c", scale: 1.0 }, 58, 50, 0),
+  // 3장 인쇄소 — 주인과 누를 닮은 도제 소년
+  printer:    spawnActor({ skin: "#d0a07a", shirt: "#e8dcc4", pants: "#4b3a2a", hair: "#2a1d14", beard: "#2a1d14", scale: 1.08 }, 56, 52, 0),
+  apprentice: spawnActor({ skin: "#c89067", shirt: "#e4d7bd", pants: "#5a4430", hair: "#3a2414", scale: 0.84 }, 54, 52, 0),
+  // 끝 — 박물관 해설사, 누와 똑같은 얼굴
+  guide:      spawnActor({ skin: "#c89067", shirt: "#2d3a4a", pants: "#2a2a2a", hair: "#241710", scale: 0.95 }, 52, 52, 0),
 };
 
 // Tripo 모델이 폴더에 있으면 갈아 끼운다. 없으면 블록 인형 그대로.
 // 교수님이 믹사모로 만든 모델 — 할아버지는 granpa, 엄마는 mama, 아빠(사냥꾼)는 papa, 후드 쓴 자는 villain
-const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid", villain: "villain" };
+const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid", villain: "villain",
+              abbot: "abbot", monk: "nu_monk", gatekeeper: "gatekeeper", printer: "printer", apprentice: "nu_print", guide: "nu_modern" };
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
 const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
@@ -114,7 +127,18 @@ const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector
 /* ── 도우미 — 퀘스트 대본이 부르는 것들 ─────────────────── */
 const input = new Input(canvas, $("#stick"), $("#knob"), $("#act"));
 const talk = new Talk();
-talk.voices = { "빠른 발 누": 560, "할아버지": 200, "후드 쓴 자": 150, "수도원장": 230, "옆 수도원 문지기": 280 };
+talk.voices = { "빠른 발 누": 560, "할아버지": 200, "후드 쓴 자": 150, "수도원장": 230, "옆 수도원 문지기": 280,
+                "견습 수도사": 520, "인쇄소 주인": 210, "도제 소년": 540, "해설사": 470 };
+// 대사창에 이름이 뜬 사람이 말하는 동작을 한다
+const SPEAKERS = { "빠른 발 누": "nu", "할아버지": "elder", "후드 쓴 자": "villain", "수도원장": "abbot", "견습 수도사": "monk",
+                   "옆 수도원 문지기": "gatekeeper", "인쇄소 주인": "printer", "도제 소년": "apprentice", "해설사": "guide" };
+talk.onSpeak = who => {
+  for (const o of [player, ...Object.values(npc)]) o.avatar.talking = false;
+  if (who === "우리") player.avatar.talking = true;
+  else if (SPEAKERS[who]) npc[SPEAKERS[who]].avatar.talking = true;
+};
+const ABBEY = new THREE.Vector3(0, 0, 39.5);    // 2장 수도원 — 숲길 들머리, 문이 숲길 쪽을 본다
+const MEDIEVAL = new Set(["villain", "abbot", "monk", "gatekeeper"]);
 
 const waits = [];            // until() 대기열 — 매 프레임 조건을 본다
 const reach = [];            // interact() 대기열 — 가까이 가서 행동 단추를 누르면 풀린다
@@ -206,9 +230,17 @@ const G = {
   /** 한 사건을 현황판으로 — 끊겨도 담아 두었다 다시 보낸다 */
   log(row) { if (G.team) saveRun({ team: G.team, ...row }, "time"); },
   chapter(t) { $("#chapname").textContent = t; $("#misses").hidden = true; G.misses = 0; },
-  /** 원시 마을을 치운다 — 2장은 중세 숲길 */
-  enterMedieval() {
-    for (const [k, o] of Object.entries(npc)) if (k !== "villain") { o.path = null; o.pos.set(60 + Math.random() * 2, 0, -60); }
+  /** 온 화면을 덮는 그림 — 실내 장면. under 면 3D 사람을 그림 앞에 세운다 */
+  backdrop(name, { under = false } = {}) {
+    const b = $("#backdrop");
+    if (!name) { b.hidden = true; b.classList.remove("under"); return; }
+    b.style.backgroundImage = `url(img/${name}.webp)`;
+    b.classList.toggle("under", under);
+    b.hidden = false;
+  },
+  /** 원시 마을을 치우고 수도원·옆 수도원 문·이정표를 세운다 — 2장은 중세 숲길 */
+  async enterMedieval() {
+    for (const [k, o] of Object.entries(npc)) if (!MEDIEVAL.has(k)) { o.path = null; o.pos.set(58 + Math.random() * 3, 0, -58); }
     for (const h of world.huts || []) if (h && h.isObject3D) h.visible = false;
     world.firePit.visible = false;
     world.sticks.forEach(s => (s.visible = false));
@@ -216,11 +248,31 @@ const G = {
     world.typeStone.position.set(0, -50, 0);
     sparkles.forEach(s => (s.level = 0));
     G.fireLit = true;                          // 마을 사람들이 우리를 돌아보는 버릇을 끈다
+    if (G.medieval) return;
+    G.medieval = true;
+    const at = (x, z) => heightAt(x, z) - 0.25;
+    const gz = G.gatePos.z - 0.9;
+    await Promise.all([
+      placeProp(world.group, "abbey", { height: 10, x: ABBEY.x, z: ABBEY.z, y: at(ABBEY.x, ABBEY.z), rotY: Math.PI, colliders: world.colliders, maxR: 5 }),
+      placeProp(world.group, "abbey_gate", { height: 5.4, x: G.gatePos.x, z: gz, y: at(G.gatePos.x, gz), rotY: 0 }),
+      placeProp(world.group, "signpost", { height: 3, x: 3.8, z: 19, y: at(3.8, 19), rotY: -0.5, colliders: world.colliders, maxR: 0.35 }),
+    ]);
   },
-  /** 편지를 품고 숲길 들머리에 선다. 후드 쓴 자는 길 한가운데 나무 사이에 */
+  /** 수도원 문 앞 — 수도원장과 견습 수도사가 맞는다 */
+  atAbbey() {
+    player.pos.set(ABBEY.x, 0, ABBEY.z - 11.5);
+    player.avatar.root.rotation.y = 0;
+    player.avatar.root.visible = true;
+    input.yaw = Math.PI;
+    npc.abbot.pos.set(ABBEY.x - 1.8, 0, ABBEY.z - 8.4);
+    npc.monk.pos.set(ABBEY.x + 2.1, 0, ABBEY.z - 8.8);
+    G.faceTo(npc.abbot, player.pos); G.faceTo(npc.monk, player.pos);
+    npc.villain.pos.set(58, 0, 58);
+    npc.gatekeeper.pos.set(58, 0, 50);
+  },
+  /** 편지를 품고 수도원 문을 나선다. 후드 쓴 자는 길 한가운데 나무 사이에, 문지기는 길 끝 문 옆에 */
   placeForest() {
-    player.pos.set(SPAWN.x, 0, SPAWN.z - 2);
-    player.avatar.root.rotation.y = Math.PI;
+    player.pos.set(ABBEY.x, 0, ABBEY.z - 9.5);
     player.avatar.root.visible = true;
     input.yaw = 0;
     const h = npc.villain;
@@ -228,9 +280,74 @@ const G = {
     h.pos.set(2.4, 0, 10);
     h.avatar.root.rotation.y = 0;
     h.avatar.glb?.action(null);
+    const k = npc.gatekeeper;
+    k.pos.set(G.gatePos.x + 2.1, 0, G.gatePos.z + 1.2);
+    k.avatar.root.rotation.y = 0.2;
   },
-  /** 편지를 빼앗겼다 — 후드 쓴 자는 숲 밖으로 사라진다 */
-  backToAbbey() { npc.villain.pos.set(58, 0, 58); G.shot(null); player.avatar.root.visible = true; },
+  /** 편지를 빼앗겼다 — 후드 쓴 자는 숲 밖으로 사라지고, 우리는 수도원 문 앞으로 */
+  backToAbbey() {
+    npc.villain.pos.set(58, 0, 58);
+    G.shot(null);
+    player.avatar.root.visible = true;
+    player.pos.set(ABBEY.x, 0, ABBEY.z - 9);
+    player.avatar.root.rotation.y = 0;
+    input.yaw = Math.PI;
+  },
+  /** 3장 — 숲을 감추고 인쇄소 방에 들어선다 */
+  async enterPrintshop() {
+    for (const [k, o] of Object.entries(npc)) if (k !== "printer" && k !== "apprentice") { o.path = null; o.pos.set(58, 0, -58); }
+    world.group.visible = false;
+    scene.background = new THREE.Color("#1d140c");
+    scene.fog = null;
+    if (!G.shop) {
+      G.shop = buildPrintshop();
+      scene.add(G.shop.group);
+      const C = G.shop.colliders;
+      await Promise.all([
+        placeProp(G.shop.group, "press", { height: 4.6, x: G.pressPos.x, z: G.pressPos.z, rotY: 0, colliders: C, maxR: 1.6 }),
+        placeProp(G.shop.group, "typecase", { height: 2.4, x: -6.2, z: -3.2, rotY: 0.55, colliders: C, maxR: 1.2 }),
+        placeProp(G.shop.group, "ink_table", { height: 1.5, x: 4.2, z: -3.6, rotY: -0.3, colliders: C, maxR: 1.0 }),
+        placeProp(G.shop.group, "drying_rack", { height: 3.4, x: 6.6, z: -5.2, rotY: -0.5, colliders: C, maxR: 1.2 }),
+        placeProp(G.shop.group, "pamphlets", { height: 1.5, x: 6.4, z: 3.4, rotY: 0.8, colliders: C, maxR: 0.9 }),
+      ]);
+    }
+    G.shop.group.visible = true;
+    colliders = G.shop.colliders;
+    G.floorY = 0;
+    G.bounds = G.shop.bounds;
+    player.pos.set(0, 0, 5);
+    player.avatar.root.rotation.y = Math.PI;
+    player.avatar.root.visible = true;
+    input.yaw = 0;
+    npc.printer.pos.set(2.2, 0, -1.6); G.faceTo(npc.printer, player.pos);
+    npc.apprentice.pos.set(-5.0, 0, -1.2); G.faceTo(npc.apprentice, player.pos);
+  },
+  pressPos: new THREE.Vector3(0, 0, -4),
+  async pressGlow() {
+    const p = G.pressPos.clone().add(new THREE.Vector3(0, 3.4, 0));
+    const sp = makeSparkle(scene, p); sp.level = 1; sparkles.push(sp);
+    audio.shimmer();
+    G.shot(p.clone().add(new THREE.Vector3(3.2, 0.4, 6.5)), p);
+    await G.wait(2.6);
+    sp.level = 0;
+    G.shot(null);
+  },
+  /** 끝 — 박물관 사진 앞에 해설사만 세운다 */
+  enterMuseum() {
+    G.backdrop("museum", { under: true });
+    world.group.visible = false;
+    if (G.shop) G.shop.group.visible = false;
+    scene.background = null;
+    scene.fog = null;
+    colliders = []; G.bounds = null; G.floorY = 0;
+    const guide = npc.guide;
+    guide.path = null;
+    guide.pos.set(0.7, 0, 0);
+    guide.avatar.root.rotation.y = -0.2;
+    G.only = new Set([guide]);
+    player.avatar.root.visible = false;
+    G.shot(new THREE.Vector3(-0.3, 1.9, 5.4), new THREE.Vector3(0.4, 1.5, 0));
+  },
   faceTo(a, p) { a.avatar.root.rotation.y = Math.atan2(p.x - a.pos.x, p.z - a.pos.z); a.avatar.lookAt(p); },
   /** 말하는 사람을 화면 가득 — null 이면 평소 카메라 */
   closeUp(a) {
@@ -284,6 +401,10 @@ function collide(p, r, self) {
     if (d2 < m * m && d2 > 1e-8) { const d = Math.sqrt(d2); p.x = o.pos.x + dx / d * m; p.z = o.pos.z + dz / d * m; }
   }
   p.x = Math.max(-62, Math.min(62, p.x)); p.z = Math.max(-62, Math.min(62, p.z));
+  if (G.bounds) {                              // 방 안에서는 벽 너머로 나가지 않는다
+    const B = G.bounds;
+    p.x = Math.max(B.x0, Math.min(B.x1, p.x)); p.z = Math.max(B.z0, Math.min(B.z1, p.z));
+  }
 }
 
 const turn = (a, want, k) => { const d = Math.atan2(Math.sin(want - a), Math.cos(want - a)); return a + d * k; };
@@ -318,7 +439,7 @@ function tick() {
     const sp = 4.6 * ml;
     const n = new THREE.Vector3(player.pos.x + dx * sp * dt, 0, player.pos.z + dz * sp * dt);
     collide(n, 0.45, player);
-    if (heightAt(n.x, n.z) > -0.7) { player.pos.x = n.x; player.pos.z = n.z; }   // 물에는 들어가지 않는다
+    if (G.floorY != null || heightAt(n.x, n.z) > -0.7) { player.pos.x = n.x; player.pos.z = n.z; }   // 물에는 들어가지 않는다
     player.avatar.root.rotation.y = turn(player.avatar.root.rotation.y, Math.atan2(dx, dz), 1 - Math.exp(-dt * 12));
     player.avatar.speed = sp;
   } else player.avatar.speed = 0;
@@ -345,7 +466,7 @@ function tick() {
 
   // 모두 땅 높이에 발을 붙인다
   for (const o of [player, ...mates, ...Object.values(npc)]) {
-    o.pos.y = heightAt(o.pos.x, o.pos.z);
+    o.pos.y = G.floorY ?? heightAt(o.pos.x, o.pos.z);
     o.avatar.update(dt);
   }
 
@@ -390,7 +511,12 @@ function tick() {
     camTarget.x + Math.sin(yaw) * Math.cos(pitch) * dist,
     camTarget.y + Math.sin(pitch) * dist,
     camTarget.z + Math.cos(yaw) * Math.cos(pitch) * dist);
-  want.y = Math.max(want.y, heightAt(want.x, want.z) + 0.8);
+  want.y = Math.max(want.y, (G.floorY ?? heightAt(want.x, want.z)) + 0.8);
+  if (G.bounds) {                              // 방 안에서는 카메라도 벽 안쪽에
+    const B = G.bounds;
+    want.x = Math.max(B.x0, Math.min(B.x1, want.x)); want.z = Math.max(B.z0, Math.min(B.z1, want.z));
+    want.y = Math.min(want.y, 5);
+  }
   // 움집처럼 큰 것 뒤로 카메라가 들어가면 그 앞까지 당겨 온다 — 지붕 속이 화면을 가리지 않게
   if (want.y < 4.6) {
     const vx = want.x - camTarget.x, vz = want.z - camTarget.z, L = Math.hypot(vx, vz) || 1;
@@ -423,7 +549,7 @@ function tick() {
       const off = Math.abs(px * sz - pz * sx) / sl;           // 시선에서 옆으로 얼마나 비켜 있나
       hide = along > 0.3 && along < sl + 0.8 && off < 1.1;
     }
-    o.avatar.root.visible = !hide;
+    o.avatar.root.visible = !hide && !(G.only && !G.only.has(o));
   }
 
   // 해는 우리를 따라다닌다 — 그림자 상자를 좁게 쓰려고
@@ -470,14 +596,15 @@ $("#go").addEventListener("click", async () => {
   $("#start").hidden = true;
   $("#teamtag").textContent = team;
 
-  // ?ch=2 — 1장을 건너뛰고 2장부터 (수업 시간이 모자랄 때, 시험할 때)
+  // ?ch=2 · ?ch=3 — 앞 장을 건너뛴다 (수업 시간이 모자랄 때, 시험할 때)
   const params = new URLSearchParams(location.search);
-  const from = params.get("ch") === "2" ? 2 : 1;
+  const from = Math.max(1, Math.min(3, parseInt(params.get("ch") || "1", 10) || 1));
   G.log({ kind: "start", crew: picked + 1, from });
   if (!params.has("skipintro")) await intro(from);
   $("#hud").hidden = false;
+  const all = {};
 
-  if (from === 1) {
+  if (from <= 1) {
     const s = await chapter1(G);
     G.log({ kind: "chapter", chapter: "1-fire", ...s });
     await showCard({
@@ -493,26 +620,62 @@ $("#go").addEventListener("click", async () => {
          + "그리고 적어 둘 곳이 없으니, 여러 번 되풀이한 노래만 기억에 남았습니다.",
       next: "2장으로",
     });
+    all.ch1 = s;
   }
 
-  const s2 = await chapter2(G);
-  const avg = Math.round(s2.copySecs.reduce((a, b) => a + b, 0) / s2.copySecs.length);
+  if (from <= 2) {
+    const s2 = await chapter2(G);
+    const avg = avgOf(s2.copySecs);
+    G.copyAvg = avg;
+    all.ch2 = s2;
+    await showCard({
+      eyebrow: "2장 완료", title: "편지가 옆 수도원에 닿았다",
+      rows: [
+        ["베낀 편지", "빼앗길 때마다 처음부터 다시", `${s2.copies}부`],
+        ["한 부를 베끼는 데", "평균", mmss(avg)],
+        ["후드 쓴 자의 문제", "통과하기까지", `${s2.quizTries}번`],
+        ["걸린 시간", "", mmss(s2.secs)],
+      ],
+      tip: "필사본은 한 부뿐이라, 빼앗기면 그 시간이 통째로 사라졌습니다. "
+         + "같은 판본을 한꺼번에 여러 부 만드는 인쇄의 「표준화」와 「고정성」이 아직 없던 시대입니다.",
+      next: "3장으로",
+    });
+  }
+
+  const s3 = await chapter3(G);
+  all.ch3 = s3;
   await showCard({
-    eyebrow: "2장 완료", title: "편지가 옆 수도원에 닿았다",
+    eyebrow: "3장 완료", title: "같은 글이 수백 곳에 닿았다",
     rows: [
-      ["베낀 편지", "빼앗길 때마다 처음부터 다시", `${s2.copies}부`],
-      ["한 부를 베끼는 데", "평균", mmss(avg)],
-      ["후드 쓴 자의 문제", "통과하기까지", `${s2.quizTries}번`],
-      ["걸린 시간", "", mmss(s2.secs)],
+      ["처음 교정지의 틀린 활자", "그대로 돌렸으면 수백 장이 똑같이 틀렸다", `${s3.firstTypos}개`],
+      ["교정지를 찍은 횟수", "틀린 곳을 모두 고치기까지", `${s3.proofs}번`],
+      ["인쇄기로 찍은 장", `${s3.pressSecs}초 동안`, `${s3.sheets}장`],
+      ["한 장을 찍는 데", "평균", `${s3.secsPerSheet}초`],
     ],
-    tip: "필사본은 한 부뿐이라, 빼앗기면 그 시간이 통째로 사라졌습니다. "
-       + "같은 판본을 한꺼번에 여러 부 만드는 인쇄의 「표준화」와 「고정성」이 아직 없던 시대입니다.",
-    next: "계속",
+    tip: "조판에서 한 글자가 틀리면 수백 장이 모두 똑같이 틀립니다. 한 번 바로 짜면 수백 장이 모두 똑같이 옳습니다. "
+       + "아이젠슈타인이 말한 인쇄의 「표준화」입니다.",
+    next: "눈을 뜬다",
   });
-  G.objective("3장 인쇄는 곧 이어집니다.");
+
+  await ending(G);
+  const copyAvg = G.copyAvg || null;
+  G.log({ kind: "chapter", chapter: "end", copyAvg, secsPerSheet: s3.secsPerSheet });
+  await showCard({
+    eyebrow: "활자의 문 · 끝", title: "우리 조가 지나온 세 시대",
+    rows: [
+      ["말만 있던 시대", "누에게 건넨 말", all.ch1 ? `${all.ch1.tries}번` : "–"],
+      ["손으로 베끼던 시대", "편지 한 부를 베끼는 데", copyAvg ? mmss(copyAvg) : "–"],
+      ["찍어 내던 시대", "한 장을 찍는 데", `${s3.secsPerSheet}초`],
+      ["한 부 베낄 시간에 찍는 장", "필사 한 부 ÷ 인쇄 한 장", copyAvg ? `${Math.round(copyAvg / Math.max(0.1, s3.secsPerSheet))}장` : "–"],
+    ],
+    tip: "해설사의 질문을 들고 디브리핑으로 갑니다 — 기술이 사회를 바꾸는가, 사회가 기술을 고르는가.",
+    next: "닫기",
+  });
+  G.objective("강의실 디브리핑으로 돌아갑니다.");
 });
 
 const mmss = s => `${Math.floor(s / 60)}분 ${s % 60}초`;
+const avgOf = a => Math.round(a.reduce((x, y) => x + y, 0) / (a.length || 1));
 
 /** 장이 끝났을 때의 카드. 다음 단추를 누르면 풀린다 */
 function showCard({ eyebrow, title, rows, tip, next = "다음으로" }) {
@@ -533,11 +696,81 @@ const SLIDES = [
   { img: "hand",   text: "판 위에는 쇠로 된 활자가 빼곡했다.\n「만지지 마시오」 팻말을 보지 못한 누군가가, 인쇄기에 손을 댔다." },
   { img: "hand",   glow: true, text: "차가운 쇠가 순간 뜨거워지더니,\n활자 사이로 빛이 새어 나와 손끝을 타고 올라왔다." },
 ];
+const WAKE = {
+  1: "…눈을 뜨니 낯선 숲이었다.\n발밑에서 활자 하나가 희미하게 빛나고 있었다.",
+  2: "…눈을 뜨니 숲 속 돌 수도원 앞이었다.\n멀리서 종이 한 번 울렸다.",
+  3: "…눈을 뜨니 잉크 냄새가 코를 찔렀다.\n어디선가 쿵, 쿵 나무 기계 소리가 났다.",
+};
+
+/** 들어가며 — 박물관 영상. 영상이 없거나 못 틀면 사진 넉 장으로 대신한다 */
 function intro(from) {
+  const box = $("#intro"), vid = $("#ivid"), tx = $("#itext"), flash = $("#iflash");
+  box.hidden = false; box.classList.remove("clear");
+  const icap = box.querySelector(".icap");
+  return new Promise(done => {
+    let typing = null, full = "", stage = "video", cap = -1;
+    const type = text => {
+      full = text; let k = 0;
+      clearInterval(typing); tx.textContent = "";
+      typing = setInterval(() => { tx.textContent = full.slice(0, ++k); if (k >= full.length) { clearInterval(typing); typing = null; } }, 38);
+    };
+    const cleanup = () => {
+      clearInterval(typing);
+      vid.pause(); vid.onended = vid.ontimeupdate = vid.onerror = null;
+      box.removeEventListener("click", onClick); removeEventListener("keydown", onKey);
+    };
+    const finish = () => { cleanup(); box.hidden = true; box.classList.remove("clear"); flash.classList.remove("on"); vid.hidden = false; icap.hidden = false; done(); };
+    const wake = () => {                          // 빛에 삼켜졌다가 뒤에 그려진 시대가 드러난다
+      stage = "wake"; vid.pause();
+      flash.classList.add("on");
+      setTimeout(() => { vid.hidden = true; box.classList.add("clear"); flash.classList.remove("on"); }, 800);
+      type(WAKE[from]);
+    };
+    // 이야기 순서대로 — 박물관 사진 위에 자막 셋(손을 대기까지)을 한 줄씩, 그다음 빨려 드는 영상, 그리고 깨어남.
+    // 영상은 10초라 그 위에 자막을 얹으면 읽을 틈이 없어 영상 동안에는 자막을 감춘다.
+    const bg = $("#ibg");
+    const BEFORE = SLIDES.filter(s => !s.glow);          // 빛이 번지는 마지막 자막은 영상이 대신한다
+    const playVideo = () => {
+      stage = "video"; icap.hidden = true;
+      bg.style.opacity = 0;
+      vid.hidden = false;
+      vid.currentTime = 0;
+      vid.muted = false;
+      vid.play().catch(() => { vid.muted = true; vid.play().catch(slides); });
+    };
+    const caption = () => {
+      cap++;
+      if (cap >= BEFORE.length) return playVideo();
+      const s = BEFORE[cap];
+      bg.style.opacity = 1;
+      bg.style.backgroundImage = `url(img/${s.img}.webp)`;
+      icap.hidden = false;
+      type(s.text);
+    };
+    const adv = () => {
+      if (typing) { clearInterval(typing); typing = null; tx.textContent = full; return; }
+      if (stage === "story") caption();
+      else if (stage === "wake") finish();
+    };
+    const onClick = e => { if (!e.target.closest("#iskip")) adv(); };
+    const onKey = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); adv(); } };
+    $("#iskip").onclick = finish;
+    box.addEventListener("click", onClick); addEventListener("keydown", onKey);
+
+    const slides = () => { cleanup(); vid.hidden = true; icap.hidden = false; bg.style.opacity = 1; slideIntro(from).then(done); };
+    vid.onerror = slides;
+    vid.onended = wake;
+    vid.hidden = true;
+    vid.load();                                   // 자막을 읽는 동안 미리 받아 둔다
+    stage = "story";
+    caption();
+  });
+}
+
+/** 영상을 틀 수 없을 때 — 사진 넉 장과 자막 */
+function slideIntro(from) {
   const box = $("#intro"), bg = $("#ibg"), tx = $("#itext"), flash = $("#iflash");
-  const slides = [...SLIDES, { img: null, flash: true, text: from === 2
-    ? "…눈을 뜨니 돌벽과 촛불이 보였다.\n손끝에 아직 쇠 활자의 온기가 남아 있었다."
-    : "…눈을 뜨니 낯선 숲이었다.\n발밑에서 활자 하나가 희미하게 빛나고 있었다." }];
+  const slides = [...SLIDES, { img: null, flash: true, text: WAKE[from] }];
   box.hidden = false; box.classList.remove("clear");
   return new Promise(done => {
     let i = -1, typing = null, full = "", img = "";

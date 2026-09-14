@@ -19,6 +19,9 @@
 
 <canvas id="view"></canvas>
 
+<!-- 실내 장면 그림 — 필사실, 인쇄소, 박물관 -->
+<div id="backdrop" hidden></div>
+
 <!-- 머리 — 지금 어느 장, 무엇을 할지 -->
 <header id="hud" hidden>
   <div class="chap">
@@ -99,6 +102,7 @@
 <!-- 들어가며 — 인쇄 박물관 -->
 <section id="intro" hidden>
   <div class="ibg" id="ibg"></div>
+  <video id="ivid" class="ivid" playsinline preload="auto" src="media/intro.mp4" hidden></video>
   <div class="iflash" id="iflash"></div>
   <div class="icap"><p id="itext"></p><span class="inext">누르거나 스페이스 ▼</span></div>
   <button class="tool iskip" id="iskip">건너뛰기</button>

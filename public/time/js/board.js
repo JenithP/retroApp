@@ -7,7 +7,8 @@ const $ = s => document.querySelector(s);
 const P = new URLSearchParams(location.search);
 const DEMO = P.has("demo"), ALL = P.has("all");
 const PROBE = /^(연결확인|test|테스트)$/i;           // 시험 삼아 넣은 조는 빼고 센다
-const STEP = { intro: "소개", fireName: "불 이름", material: "무엇으로", method: "어떻게", ember: "그다음", remember: "잊지 않게" };
+const STEP = { intro: "소개", fireName: "불 이름", material: "무엇으로", method: "어떻게", ember: "그다음", remember: "잊지 않게",
+               reflect: "해설사의 질문" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const ms = r => r.createdAt?.toMillis ? r.createdAt.toMillis() : (r.at || Date.now());
@@ -24,7 +25,7 @@ function build(all) {
   const teams = new Map();
   const T = name => {
     if (!teams.has(name)) teams.set(name, { name, last: 0, stage: "시작", cls: "", tries: 0, misses: 0,
-      ch1: null, copies: 0, copySecs: [], quizTries: 0, pass: false, ch2: null });
+      ch1: null, copies: 0, copySecs: [], quizTries: 0, pass: false, ch2: null, typos: null, sheets: null });
     return teams.get(name);
   };
   const feed = [];
@@ -52,14 +53,20 @@ function build(all) {
         const p = r.picks?.[i]; if (p != null && p < s.picks.length) s.picks[p]++;
       });
     }
-    else if (kind === "chapter" && r.chapter === "2-copy") { t.ch2 = r; t.stage = "2장 완료"; t.cls = "done"; }
+    else if (kind === "chapter" && r.chapter === "2-copy") { t.ch2 = r; t.stage = "3장 · 인쇄소"; t.cls = "s3"; }
+    else if (kind === "compose") { t.typos = r.firstTypos; t.stage = "3장 · 인쇄기"; t.cls = "s3"; }
+    else if (kind === "press") { t.sheets = r.sheets; t.stage = "3장 · 퍼져 나감"; t.cls = "s3"; }
+    else if (kind === "chapter" && r.chapter === "3-print") { t.stage = "박물관 · 해설사의 질문"; t.cls = "done"; }
+    else if (kind === "reflect") { feed.push({ ...r, step: "reflect" }); t.stage = "끝"; t.cls = "done"; }
   }
   return { teams: [...teams.values()].sort((a, b) => a.name.localeCompare(b.name, "ko", { numeric: true })), feed, qs: [...qs.values()] };
 }
 
 function render() {
   const { teams, feed, qs } = build(rows);
-  const said = feed.length, ok = feed.filter(r => r.ok).length;
+  const answers = feed.filter(r => r.step !== "reflect");
+  const said = answers.length, ok = answers.filter(r => r.ok).length;
+  const sheets = teams.reduce((a, t) => a + (t.sheets || 0), 0);
   const copies = teams.reduce((a, t) => a + t.copies, 0);
   const passed = teams.filter(t => t.pass).length;
 
@@ -68,6 +75,7 @@ function render() {
     [said, "누에게 건넨 말"],
     [said ? `${Math.round(ok / said * 100)}%` : "–", "그중 통한 말"],
     [copies, "손으로 베낀 편지"],
+    [sheets, "인쇄기로 찍은 장"],
     [`${passed}<small style="font-size:.5em;color:var(--dim)"> / ${teams.length}</small>`, "후드 쓴 자를 통과한 조"],
   ].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
 
@@ -81,14 +89,15 @@ function render() {
         <dt>1장 걸린 시간</dt><dd>${t.ch1?.secs ? mmss(t.ch1.secs) : "–"}</dd>
         <dt>베낀 편지 · 한 부 평균</dt><dd>${t.copies}부 · ${avg}</dd>
         <dt>문제 도전</dt><dd>${t.quizTries ? `${t.quizTries}번 ${t.pass ? "· 통과" : ""}` : "–"}</dd>
+        <dt>틀린 활자 · 찍은 장</dt><dd>${t.typos ?? "–"} · ${t.sheets ?? "–"}</dd>
       </dl>
     </article>`;
   }).join("") : `<p class="empty">아직 들어온 조가 없습니다. 학생들이 조 이름을 적고 「문을 연다」를 누르면 여기에 나타납니다.</p>`;
 
   $("#feed").innerHTML = feed.length ? feed.slice(-60).reverse().map(r => `
-    <li class="${r.ok ? "ok" : "no"}">
+    <li class="${r.step === "reflect" ? "re" : r.ok ? "ok" : "no"}">
       <div class="meta"><b>${esc(r.team)}</b><span>${esc(STEP[r.step] || r.step)}</span>
-        <span class="mark">${r.ok ? "통함" : "안 통함"}</span><time>${ago(ms(r))}</time></div>
+        <span class="mark">${r.step === "reflect" ? "조의 생각" : r.ok ? "통함" : "안 통함"}</span><time>${ago(ms(r))}</time></div>
       <p>${esc(r.text)}</p>
     </li>`).join("") : `<li class="empty">누에게 건넨 말이 여기에 차례로 올라옵니다.</li>`;
 
