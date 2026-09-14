@@ -51,6 +51,7 @@ let colliders = world.colliders;              // 3장 인쇄소에 들어가면 
 
 function spawnActor(opts, x, z, faceYaw = 0) {
   const a = makeAvatar(opts);
+  a.body.visible = false;                     // 블록 인형은 쓰지 않는다 — 믹사모 모델이 들어와야 보인다
   a.root.position.set(x, heightAt(x, z), z);
   a.root.rotation.y = faceYaw;
   scene.add(a.root);
@@ -100,8 +101,6 @@ const npc = {
     VILLAGE.x + 5, VILLAGE.z - 3.5, -1.0),
   hunter: spawnActor({ skin: "#b9835c", shirt: "#6d5a3e", pants: "#5a4530", hair: "#1d140d", beard: "#2a1d12", scale: 1.12 },
     VILLAGE.x + 3.5, VILLAGE.z + 4.5, -2.4),
-  kid: spawnActor({ skin: "#c89067", shirt: "#a0805a", pants: hide2, hair: "#2e1d12", scale: 0.62 },
-    VILLAGE.x - 3, VILLAGE.z + 4, 2.4),
   // 2장 숲길의 후드 쓴 자 — 1장 동안에는 지도 밖에서 기다린다
   villain: spawnActor({ skin: "#c9a080", shirt: "#1d1a1a", pants: "#1a1716", hair: "#111111", scale: 1.1 },
     58, 58, 0),
@@ -118,7 +117,7 @@ const npc = {
 
 // Tripo 모델이 폴더에 있으면 갈아 끼운다. 없으면 블록 인형 그대로.
 // 교수님이 믹사모로 만든 모델 — 할아버지는 granpa, 엄마는 mama, 아빠(사냥꾼)는 papa, 후드 쓴 자는 villain
-const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid", villain: "villain",
+const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", villain: "villain",
               abbot: "abbot", monk: "nu_monk", gatekeeper: "gatekeeper", printer: "printer", apprentice: "nu_print", guide: "nu_modern" };
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
@@ -207,7 +206,7 @@ const G = {
   },
   /** 불이 붙으면 마을 사람들이 불가로 둘러앉는다 — 한자리에서 함께 듣는 부족 */
   async gather() {
-    const ring = ["elder", "woman", "hunter", "kid"];
+    const ring = ["elder", "woman", "hunter"];
     await Promise.all(ring.map((k, i) => {
       const a = (i / ring.length) * Math.PI * 2 + 1.48;     // 연출 카메라 쪽(약 0.7 라디안)은 비워 둔다
       const p = new THREE.Vector3(VILLAGE.x + Math.sin(a) * 2.6, 0, VILLAGE.z + Math.cos(a) * 2.6);
