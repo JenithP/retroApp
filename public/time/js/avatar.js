@@ -209,7 +209,7 @@ export async function trySwapGLB(A, url) {
     const n = c.name.toLowerCase();
     const k = /idle|breath/.test(n) ? "idle" : /walk/.test(n) ? "walk" : /talk|argu/.test(n) ? "talk"
             : /cheer/.test(n) ? "cheer" : /victor/.test(n) ? "victory" : /jump/.test(n) ? "jump"
-            : /danc/.test(n) ? "dance" : /punch/.test(n) ? "punch" : null;
+            : /danc/.test(n) ? "dance" : /punch/.test(n) ? "punch" : /cough/.test(n) ? "cough" : null;
     if (k && !clips[k]) clips[k] = c;
   }
   if (clips.walk) stripRootMotion(clips.walk);   // 앞으로 나아가는 이동은 게임이 맡는다
@@ -287,6 +287,9 @@ export async function trySwapGLB(A, url) {
       if (mixer) {
         // 알아들었을 때 — 기뻐하는 클립을 처음부터 한 번
         if (gName === "joy" && prevG !== "joy" && joy) joy.reset().setEffectiveWeight(1).fadeIn(0.15).play();
+        // 몸짓과 같은 이름의 클립이 있으면(할아버지의 기침처럼) 뼈를 억지로 굽히지 않고 그 클립을 한 번 튼다
+        const own = gName && gName !== "joy" && act[gName];
+        if (own && prevG !== gName && !special) A.glb.once(gName);
         const joyOn = !!(joy && joy.isRunning());
         spW += ((special ? 1 : 0) - spW) * Math.min(1, dt * 8);
         if (spAct) {
@@ -306,7 +309,7 @@ export async function trySwapGLB(A, url) {
         if (rig) {                             // 클립 위에 고개 돌리기와 몸짓을 얹는다
           rig.begin();
           rig.look(yaw * 0.8);
-          if (g && !(gName === "joy" && joy)) rig.gesture(g.name, g.t, g.e);
+          if (g && !(gName === "joy" && joy) && !own) rig.gesture(g.name, g.t, g.e);
           rig.applyAdditive();
         }
         holder.position.y = waist; holder.rotation.set(0, 0, 0); holder.scale.set(1, 1, 1);
