@@ -44,6 +44,8 @@ const STEPS = {
     ask: "사냥꾼이 원시 말투로 외친 경고 「하늘이 울고, 또 운다. 그리고 산의 물이 배고프다. 배고픈 물이 내려온다. 해가 눕기 전에. 붉은 흙 등으로 올라라. 늙은 발 먼저, 작은 발 먼저.」 — 학생들이 이 말의 뜻을 오늘날 말로 풀어 적는다. 이 장면에서는 학생의 풀이가 맞는지만 판정한다.",
     pass: "비가 계속 와서 물이 불어나 넘쳐 내려온다(홍수가 온다)는 뜻과, 높은 곳·언덕으로 피하라는 뜻이 둘 다 들어 있다. 해 지기 전, 노인과 아이 먼저는 없어도 통과.",
     fail: "물이 넘쳐 온다는 뜻이 없거나, 높은 곳으로 피하라는 뜻이 없다. 경고문을 거의 그대로 옮겨 적기만 한 것도 풀이가 아니므로 통과시키지 않는다.",
+    // 작은 모델은 빠진 절반을 스스로 채워 넣고 통과시키곤 한다 — 두 뜻이 글자로 다 들어 있어야만 통과
+    must: [/홍수|범람|물.{0,10}(넘|불어|불어나|차오|차올|내려|밀려|덮)/, /높은|언덕|산\s*위|위로|올라|피하|피해야|피신|대피|도망/],
   },
   remember: {
     ask: "누가 순서를 잊었다. 잊지 않게 하려면 어떻게 할까?",
@@ -114,8 +116,9 @@ export default async function handler(req, res) {
     if (!r.ok) return res.status(502).json({ error: `OpenAI 응답 ${r.status}` });
     const data = await r.json();
     const out = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+    const hasAll = !S.must || S.must.every(re => re.test(text));
     return res.status(200).json({
-      understood: out.understood === true,
+      understood: out.understood === true && hasAll,
       reply: String(out.reply || "").slice(0, 200),
       reason: String(out.reason || "").slice(0, 200),
     });
