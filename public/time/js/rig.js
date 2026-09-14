@@ -76,16 +76,21 @@ export function makeRig(model) {
 
   /** 동작 클립이 도는 모델용 — 뼈를 원래 자세로 되돌려 둔다 (클립이 안 건드리는 뼈가 누적되지 않게) */
   const reset = () => { for (const b of Object.values(found)) b.quaternion.copy(b.userData.rig.rest); };
-  /** 동작 클립 위에 얹는다 — 원래 자세 대신 클립이 만든 지금 자세를 바탕으로 삼는다 */
-  const Q = new THREE.Quaternion();
+  /** 동작 클립 위에 얹는다 — 원래 자세 대신 클립이 만든 지금 자세를 바탕으로 삼는다.
+   *  믹사모 GLB 는 원래 자세에서 목이 옆으로 90도쯤 누워 있어, 그때 잰 P 로 돌리면
+   *  「고개 돌리기」가 「목 꺾기」가 된다. 그래서 부모가 지금 돌아간 정도를 매 프레임 다시 잰다.
+   *  WANT 순서가 부모 → 자식이라, 앞에서 돌린 가슴이 목의 P 에 그대로 반영된다. */
+  const Q = new THREE.Quaternion(), Pc = new THREE.Quaternion(), Pci = new THREE.Quaternion();
   const applyAdditive = () => {
     for (const [slot, b] of Object.entries(found)) {
       const p = pose[slot];
       if (!p || (!p[0] && !p[1] && !p[2])) continue;
-      const g = b.userData.rig;
+      Pc.identity();
+      for (let o = b.parent; o && o !== model; o = o.parent) Pc.premultiply(o.quaternion);
+      Pci.copy(Pc).invert();
       R.setFromEuler(E.set(p[0], p[1], p[2]));
       Q.copy(b.quaternion);
-      b.quaternion.copy(g.Pinv).multiply(R).multiply(g.P).multiply(Q);
+      b.quaternion.copy(Pci).multiply(R).multiply(Pc).multiply(Q);
     }
   };
 
