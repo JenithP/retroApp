@@ -65,6 +65,43 @@ kbd{font-family:var(--sans);font-size:.72em;border:1px solid currentColor;border
 .sayrow button kbd{border-color:var(--paper)}
 .hint{margin:8px 0 0;font-size:.86rem;color:var(--rust);line-height:1.5}
 
+/* ── 편지 베끼기 ─────────────────────────────────── */
+.mcard.wide{width:min(960px,100%)}
+.tcount{font-family:var(--sans);font-size:.8rem;color:var(--rust);font-weight:700;margin-left:10px}
+.tpad{position:relative;height:clamp(150px,30vh,230px);border-radius:8px;border:1px solid var(--edge);
+  background:repeating-linear-gradient(to bottom,transparent 0 44px,rgba(165,70,43,.12) 44px 45px),#f8f0dc;
+  touch-action:none;cursor:crosshair;overflow:hidden}
+.tpad canvas{display:block;width:100%;height:100%}
+.trow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:8px}
+.ttime{font-family:var(--serif);font-variant-numeric:tabular-nums;color:var(--ink-soft);font-size:.9rem;white-space:nowrap}
+.tbtns{display:flex;gap:10px;margin-top:10px}
+.tbtns .tool{padding:10px 14px;font-size:.9rem}
+.tbtns .big{flex:1}
+
+/* ── 들어가며 — 인쇄 박물관 ───────────────────────── */
+section#start{background:linear-gradient(90deg,rgba(18,14,10,.82) 0%,rgba(18,14,10,.45) 60%,rgba(18,14,10,.25)),
+  url(../img/museum.webp) center/cover no-repeat #1c1712}
+#intro{position:fixed;inset:0;z-index:30;background:#0d0a07;overflow:hidden;transition:background-color .8s ease}
+#intro.clear{background:transparent}
+#intro.clear .ibg{opacity:0}
+.ibg{position:absolute;inset:-2%;background-size:cover;background-position:center;
+  transition:opacity .8s ease;animation:kb 16s ease-out forwards}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
+.ibg.glow::after{content:"";position:absolute;inset:0;mix-blend-mode:screen;
+  background:radial-gradient(38% 42% at 55% 60%,rgba(255,214,120,.9),rgba(255,170,60,.25) 55%,rgba(255,150,40,0) 75%);
+  animation:glowin 2.6s ease-in forwards}
+@keyframes glowin{from{opacity:0}to{opacity:1}}
+.iflash{position:absolute;inset:0;background:#fff6df;opacity:0;pointer-events:none;transition:opacity .8s ease}
+.iflash.on{opacity:1}
+.icap{position:absolute;left:50%;bottom:6vh;transform:translateX(-50%);width:min(820px,calc(100vw - 32px));
+  background:rgba(22,17,12,.74);border:1px solid rgba(216,166,63,.35);border-radius:8px;
+  padding:18px 24px 26px;color:var(--paper);cursor:pointer;box-shadow:0 18px 40px -16px #000}
+.icap p{margin:0;font-family:var(--serif);font-size:clamp(1.05rem,2.1vw,1.32rem);line-height:1.8;
+  min-height:3.6em;white-space:pre-line;text-wrap:pretty}
+.inext{position:absolute;right:16px;bottom:7px;font-size:.74rem;opacity:.65}
+.iskip{position:absolute;top:14px;right:14px}
+@media (prefers-reduced-motion:reduce){ .ibg{animation:none} .ibg.glow::after{animation:none} }
+
 /* ── 행동 단추 ────────────────────────────────────── */
 #act{position:fixed;right:22px;bottom:30px;z-index:5;background:var(--gold);color:#221606;border:0;
   border-radius:40px;padding:15px 24px;font-size:1.05rem;font-weight:700;

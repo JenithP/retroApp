@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>활자의 문 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/board.css">
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <p class="eyebrow">HCI와 커뮤니케이션 · 3주차 오프라인</p>
+    <h1>활자의 문 <span>현황판</span></h1>
+  </div>
+  <div class="live">
+    <span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span>
+    <span class="clock" id="clock"></span>
+  </div>
+</header>
+
+<section class="kpis" id="kpis" aria-label="요약"></section>
+
+<main class="grid">
+  <section class="panel teams">
+    <h2>조별 진행 <small>5분 넘게 조용한 조는 흐리게</small></h2>
+    <div class="teamgrid" id="teams"></div>
+  </section>
+
+  <section class="panel feed">
+    <h2>누에게 건넨 말 <small>새 말이 위로</small></h2>
+    <ol id="feed"></ol>
+  </section>
+
+  <section class="panel quiz">
+    <h2>후드 쓴 자의 문제 <small>정답률이 낮은 순 · 3주차 온라인</small></h2>
+    <div class="tablewrap"><table id="quiz"></table></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span id="scope"></span>
+  <a href="?">오늘</a><a href="?all">모든 날짜</a><a href="?demo">예시 데이터</a>
+</footer>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { Talk } from "./talk.js";
 import { audio } from "./audio.js";
 import { makeFire, makeSparkle } from "./fx.js";
 import { chapter1 } from "./ch1.js";
+import { chapter2 } from "./ch2.js";
 import { saveRun } from "../../js/firebase.js";   // 2주차 거실과 같은 저장 통로 — 끊겨도 담아 두었다 다시 보낸다
 
 const $ = s => document.querySelector(s);
@@ -98,11 +99,14 @@ const npc = {
     VILLAGE.x + 3.5, VILLAGE.z + 4.5, -2.4),
   kid: spawnActor({ skin: "#c89067", shirt: "#a0805a", pants: hide2, hair: "#2e1d12", scale: 0.62 },
     VILLAGE.x - 3, VILLAGE.z + 4, 2.4),
+  // 2장 숲길의 후드 쓴 자 — 1장 동안에는 지도 밖에서 기다린다
+  villain: spawnActor({ skin: "#c9a080", shirt: "#1d1a1a", pants: "#1a1716", hair: "#111111", scale: 1.1 },
+    58, 58, 0),
 };
 
 // Tripo 모델이 폴더에 있으면 갈아 끼운다. 없으면 블록 인형 그대로.
-// 교수님이 믹사모로 만든 모델 — 할아버지는 granpa, 엄마는 mama, 아빠(사냥꾼)는 papa
-const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid" };
+// 교수님이 믹사모로 만든 모델 — 할아버지는 granpa, 엄마는 mama, 아빠(사냥꾼)는 papa, 후드 쓴 자는 villain
+const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", kid: "kid", villain: "villain" };
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
 const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
@@ -110,7 +114,7 @@ const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector
 /* ── 도우미 — 퀘스트 대본이 부르는 것들 ─────────────────── */
 const input = new Input(canvas, $("#stick"), $("#knob"), $("#act"));
 const talk = new Talk();
-talk.voices = { "빠른 발 누": 560, "할아버지": 200 };
+talk.voices = { "빠른 발 누": 560, "할아버지": 200, "후드 쓴 자": 150, "수도원장": 230, "옆 수도원 문지기": 280 };
 
 const waits = [];            // until() 대기열 — 매 프레임 조건을 본다
 const reach = [];            // interact() 대기열 — 가까이 가서 행동 단추를 누르면 풀린다
@@ -124,12 +128,13 @@ const G = {
   pathToVillage: [],
   objective(t) { $("#objective").textContent = t; },
   misses: 0,
+  missLabel: "말이 안 통한 횟수",             // 장마다 다르게 센다 — 2장은 빼앗긴 편지
   /** 말이 통하지 않았다 — 몇 번째인지 화면에 남긴다 */
   miss(why = "말이 통하지 않았다", sub = "누가 알아듣지 못했습니다") {
     G.misses++;
     const m = $("#misses");
     m.hidden = false;
-    m.textContent = `말이 안 통한 횟수 ${G.misses}`;
+    m.textContent = `${G.missLabel} ${G.misses}`;
     G.toast(why, "bad", sub || "누가 알아듣지 못했습니다");
   },
   hit(msg = "통했다") { G.toast(msg, "good"); },
@@ -194,6 +199,65 @@ const G = {
     audio.shimmer();
     for (let i = 0; i < 60; i++) { stone.position.y += 0.02; await G.wait(0.03); }
     await G.wait(1.2);
+  },
+
+  /* ── 현황판으로 보내기 · 2장 연출 ─────────────────────── */
+  team: "",
+  /** 한 사건을 현황판으로 — 끊겨도 담아 두었다 다시 보낸다 */
+  log(row) { if (G.team) saveRun({ team: G.team, ...row }, "time"); },
+  chapter(t) { $("#chapname").textContent = t; $("#misses").hidden = true; G.misses = 0; },
+  /** 원시 마을을 치운다 — 2장은 중세 숲길 */
+  enterMedieval() {
+    for (const [k, o] of Object.entries(npc)) if (k !== "villain") { o.path = null; o.pos.set(60 + Math.random() * 2, 0, -60); }
+    for (const h of world.huts || []) if (h && h.isObject3D) h.visible = false;
+    world.firePit.visible = false;
+    world.sticks.forEach(s => (s.visible = false));
+    fire.setLevel(0); audio.fire?.(false);
+    world.typeStone.position.set(0, -50, 0);
+    sparkles.forEach(s => (s.level = 0));
+    G.fireLit = true;                          // 마을 사람들이 우리를 돌아보는 버릇을 끈다
+  },
+  /** 편지를 품고 숲길 들머리에 선다. 후드 쓴 자는 길 한가운데 나무 사이에 */
+  placeForest() {
+    player.pos.set(SPAWN.x, 0, SPAWN.z - 2);
+    player.avatar.root.rotation.y = Math.PI;
+    player.avatar.root.visible = true;
+    input.yaw = 0;
+    const h = npc.villain;
+    h.path = null;
+    h.pos.set(2.4, 0, 10);
+    h.avatar.root.rotation.y = 0;
+    h.avatar.glb?.action(null);
+  },
+  /** 편지를 빼앗겼다 — 후드 쓴 자는 숲 밖으로 사라진다 */
+  backToAbbey() { npc.villain.pos.set(58, 0, 58); G.shot(null); player.avatar.root.visible = true; },
+  faceTo(a, p) { a.avatar.root.rotation.y = Math.atan2(p.x - a.pos.x, p.z - a.pos.z); a.avatar.lookAt(p); },
+  /** 말하는 사람을 화면 가득 — null 이면 평소 카메라 */
+  closeUp(a) {
+    if (!a) { G.shot(null); player.avatar.root.visible = true; return; }
+    const f = a.avatar.root.rotation.y, h = a.avatar.height;
+    const base = a.pos.clone();
+    G.shot(base.clone().add(new THREE.Vector3(Math.sin(f) * 2.3 + Math.cos(f) * 0.5, h * 0.82, Math.cos(f) * 2.3 - Math.sin(f) * 0.5)),
+           base.clone().add(new THREE.Vector3(0, h * 0.74, 0)));
+    player.avatar.root.visible = false;        // 우리 머리가 화면을 가리지 않게
+  },
+  aside: new THREE.Vector3(4.5, 0, -1.5),
+  gatePos: new THREE.Vector3(-0.9, 0, -2.5),
+  gateSpark: null,
+  showGate() {
+    const p = G.gatePos, stone = world.typeStone;
+    stone.position.set(p.x, heightAt(p.x, p.z) + 1.1, p.z);
+    if (!G.gateSpark) { G.gateSpark = makeSparkle(scene, stone.position.clone()); sparkles.push(G.gateSpark); }
+    G.gateSpark.level = 0.5;
+  },
+  async gateGlow() {
+    const stone = world.typeStone;
+    if (G.gateSpark) G.gateSpark.level = 1;
+    audio.shimmer();
+    G.shot(stone.position.clone().add(new THREE.Vector3(3.2, 1.6, 4.2)), stone.position.clone());
+    for (let i = 0; i < 60; i++) { stone.position.y += 0.02; await G.wait(0.03); }
+    await G.wait(1.2);
+    G.shot(null);
   },
 };
 const sparkles = [];
@@ -404,31 +468,118 @@ $("#go").addEventListener("click", async () => {
   G.team = team;
   audio.init();
   $("#start").hidden = true;
-  $("#hud").hidden = false;
   $("#teamtag").textContent = team;
 
-  const s = await chapter1(G);
-  showDone(s);
-  saveRun({ team: G.team, chapter: "1-fire", ...s }, "time");
+  // ?ch=2 — 1장을 건너뛰고 2장부터 (수업 시간이 모자랄 때, 시험할 때)
+  const params = new URLSearchParams(location.search);
+  const from = params.get("ch") === "2" ? 2 : 1;
+  G.log({ kind: "start", crew: picked + 1, from });
+  if (!params.has("skipintro")) await intro(from);
+  $("#hud").hidden = false;
+
+  if (from === 1) {
+    const s = await chapter1(G);
+    G.log({ kind: "chapter", chapter: "1-fire", ...s });
+    await showCard({
+      eyebrow: "1장 ① 완료", title: "마을에 첫 불이 붙었다",
+      rows: [
+        ["누에게 건넨 말", "조가 직접 써서 보낸 횟수", s.tries],
+        ["통하지 않은 말", "불 · 나무 · 마찰처럼 이름이나 개념어로 말했을 때", s.misses],
+        ["여섯 장면 모두 통하기까지", "한 장면에 평균", `${(s.tries / 6).toFixed(1)}번`],
+        ["종이에 적어 주려 한 횟수", "글자가 없는 시대", s.paper],
+        ["걸린 시간", "", mmss(s.secs)],
+      ],
+      tip: "누는 사물을 이름이 아니라 쓰임으로 불렀습니다. 옹이 말한 구술 문화의 「상황 의존적」 사고입니다. "
+         + "그리고 적어 둘 곳이 없으니, 여러 번 되풀이한 노래만 기억에 남았습니다.",
+      next: "2장으로",
+    });
+  }
+
+  const s2 = await chapter2(G);
+  const avg = Math.round(s2.copySecs.reduce((a, b) => a + b, 0) / s2.copySecs.length);
+  await showCard({
+    eyebrow: "2장 완료", title: "편지가 옆 수도원에 닿았다",
+    rows: [
+      ["베낀 편지", "빼앗길 때마다 처음부터 다시", `${s2.copies}부`],
+      ["한 부를 베끼는 데", "평균", mmss(avg)],
+      ["후드 쓴 자의 문제", "통과하기까지", `${s2.quizTries}번`],
+      ["걸린 시간", "", mmss(s2.secs)],
+    ],
+    tip: "필사본은 한 부뿐이라, 빼앗기면 그 시간이 통째로 사라졌습니다. "
+       + "같은 판본을 한꺼번에 여러 부 만드는 인쇄의 「표준화」와 「고정성」이 아직 없던 시대입니다.",
+    next: "계속",
+  });
+  G.objective("3장 인쇄는 곧 이어집니다.");
 });
 
-function showDone(s) {
-  const rows = [
-    ["누에게 건넨 말", "조가 직접 써서 보낸 횟수", s.tries],
-    ["통하지 않은 말", "불 · 나무 · 마찰처럼 이름이나 개념어로 말했을 때", s.misses],
-    ["여섯 장면 모두 통하기까지", "한 장면에 평균", `${(s.tries / 6).toFixed(1)}번`],
-    ["종이에 적어 주려 한 횟수", "글자가 없는 시대", s.paper],
-    ["걸린 시간", "", `${Math.floor(s.secs / 60)}분 ${s.secs % 60}초`],
-  ];
+const mmss = s => `${Math.floor(s / 60)}분 ${s % 60}초`;
+
+/** 장이 끝났을 때의 카드. 다음 단추를 누르면 풀린다 */
+function showCard({ eyebrow, title, rows, tip, next = "다음으로" }) {
+  $("#doneeyebrow").textContent = eyebrow;
+  $("#donetitle").textContent = title;
   $("#donestats").innerHTML = rows.map(([a, b, v]) =>
     `<tr><td>${a}${b ? `<small>${b}</small>` : ""}</td><td>${v}</td></tr>`).join("");
-  $("#donetip").textContent = "누는 사물을 이름이 아니라 쓰임으로 불렀습니다. 옹이 말한 구술 문화의 「상황 의존적」 사고입니다. "
-    + "그리고 적어 둘 곳이 없으니, 여러 번 되풀이한 노래만 기억에 남았습니다.";
+  $("#donetip").textContent = tip;
+  $("#donenext").textContent = next;
   $("#done").hidden = false;
-  $("#donenext").onclick = () => {
-    $("#done").hidden = true;
-    G.objective("1장 ② 홍수는 곧 이어집니다.");
-  };
+  return new Promise(res => { $("#donenext").onclick = () => { $("#done").hidden = true; res(); }; });
+}
+
+/* ── 들어가며 — 인쇄 박물관 ─────────────────────────── */
+const SLIDES = [
+  { img: "museum", text: "인쇄 박물관, 문 닫기 30분 전.\n과제 사진을 찍으러 온 우리 조만 전시실에 남아 있었다." },
+  { img: "museum", text: "천장에는 「書 · 印 · 傳」 — 쓰고, 찍고, 퍼뜨린다.\n그 아래 낡은 나무 인쇄기 한 대가 서 있었다." },
+  { img: "hand",   text: "판 위에는 쇠로 된 활자가 빼곡했다.\n「만지지 마시오」 팻말을 보지 못한 누군가가, 인쇄기에 손을 댔다." },
+  { img: "hand",   glow: true, text: "차가운 쇠가 순간 뜨거워지더니,\n활자 사이로 빛이 새어 나와 손끝을 타고 올라왔다." },
+];
+function intro(from) {
+  const box = $("#intro"), bg = $("#ibg"), tx = $("#itext"), flash = $("#iflash");
+  const slides = [...SLIDES, { img: null, flash: true, text: from === 2
+    ? "…눈을 뜨니 돌벽과 촛불이 보였다.\n손끝에 아직 쇠 활자의 온기가 남아 있었다."
+    : "…눈을 뜨니 낯선 숲이었다.\n발밑에서 활자 하나가 희미하게 빛나고 있었다." }];
+  box.hidden = false; box.classList.remove("clear");
+  return new Promise(done => {
+    let i = -1, typing = null, full = "", img = "";
+    const show = () => {
+      i++;
+      if (i >= slides.length) return finish();
+      const s = slides[i];
+      if (s.img && s.img !== img) {
+        img = s.img;
+        bg.style.backgroundImage = `url(img/${s.img}.webp)`;
+        bg.style.animation = "none"; void bg.offsetWidth; bg.style.animation = "";
+      }
+      bg.classList.toggle("glow", !!s.glow);
+      if (s.glow) audio.shimmer();
+      if (s.flash) {                            // 빛에 삼켜졌다가, 뒤에 그려진 숲이 드러난다
+        flash.classList.add("on");
+        setTimeout(() => { box.classList.add("clear"); flash.classList.remove("on"); }, 800);
+      }
+      full = s.text; let k = 0;
+      clearInterval(typing);
+      tx.textContent = "";
+      typing = setInterval(() => {
+        tx.textContent = full.slice(0, ++k);
+        if (k >= full.length) { clearInterval(typing); typing = null; }
+      }, 38);
+    };
+    const adv = () => {
+      if (typing) { clearInterval(typing); typing = null; tx.textContent = full; }
+      else show();
+    };
+    const onClick = e => { if (!e.target.closest("#iskip")) adv(); };
+    const onKey = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); adv(); } };
+    const finish = () => {
+      clearInterval(typing);
+      box.removeEventListener("click", onClick); removeEventListener("keydown", onKey);
+      box.hidden = true; box.classList.remove("clear"); flash.classList.remove("on");
+      done();
+    };
+    $("#iskip").onclick = finish;
+    box.addEventListener("click", onClick); addEventListener("keydown", onKey);
+    show();
+  });
 }
 
 // 시험할 때만 — 미리보기 창은 화면을 안 그릴 때 프레임을 멈추므로 대신 돌려 준다

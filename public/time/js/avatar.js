@@ -209,7 +209,7 @@ export async function trySwapGLB(A, url) {
     const n = c.name.toLowerCase();
     const k = /idle|breath/.test(n) ? "idle" : /walk/.test(n) ? "walk" : /talk/.test(n) ? "talk"
             : /cheer/.test(n) ? "cheer" : /victor/.test(n) ? "victory" : /jump/.test(n) ? "jump"
-            : /danc/.test(n) ? "dance" : null;
+            : /danc/.test(n) ? "dance" : /punch/.test(n) ? "punch" : null;
     if (k && !clips[k]) clips[k] = c;
   }
   if (clips.walk) stripRootMotion(clips.walk);   // 앞으로 나아가는 이동은 게임이 맡는다
@@ -245,8 +245,28 @@ export async function trySwapGLB(A, url) {
   }
 
   let breathe = Math.random() * 10, prevG = null;
+  // 대본이 켜고 끄는 동작 — 후드 쓴 자의 주먹질처럼 서 있기·걷기 대신 되풀이한다
+  let special = null, spAct = null, spW = 0;
   A.glb = {
     rigged: !!rig, clips: Object.keys(clips),
+    /** 이름 붙은 동작을 되풀이한다. null 이면 서 있기로 돌아온다 */
+    action(name) {
+      const a = name ? act[name] || null : null;
+      if (a === special) return;
+      if (a) {
+        if (spAct && spAct !== a) spAct.stop();
+        a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.setEffectiveWeight(spW); a.play();
+        spAct = a;
+      }
+      special = a;
+    },
+    /** 이름 붙은 동작을 한 번만 — 끝나면 풀린다 */
+    once(name) {
+      const a = act[name];
+      if (!a) return Promise.resolve();
+      A.glb.action(name);
+      return new Promise(r => setTimeout(() => { A.glb.action(null); r(); }, a.getClip().duration * 1000));
+    },
     update(dt, speed, yaw, g, phase) {
       breathe += dt;
       const gName = g ? g.name : null;
@@ -255,7 +275,13 @@ export async function trySwapGLB(A, url) {
         // 알아들었을 때 — 기뻐하는 클립을 처음부터 한 번
         if (gName === "joy" && prevG !== "joy" && joy) joy.reset().setEffectiveWeight(1).fadeIn(0.15).play();
         const joyOn = !!(joy && joy.isRunning());
-        const k = Math.min(1, speed / 2.2), base = joyOn ? 0.1 : 1;
+        spW += ((special ? 1 : 0) - spW) * Math.min(1, dt * 8);
+        if (spAct) {
+          spAct.setEffectiveWeight(spW);
+          if (!special && spW < 0.01) { spAct.stop(); spAct = null; }
+        }
+        yaw *= 1 - spW;                          // 주먹질하는 동안엔 고개를 따로 돌리지 않는다
+        const k = Math.min(1, speed / 2.2), base = (joyOn ? 0.1 : 1) * (1 - spW);
         if (act.walk) act.walk.setEffectiveWeight(k * base);
         if (act.idle) act.idle.setEffectiveWeight((act.walk ? 1 - k : 1) * base);
         if (act.walk) act.walk.timeScale = speed > 0.15 ? Math.max(0.7, Math.min(1.6, speed / 2.6)) : 1;

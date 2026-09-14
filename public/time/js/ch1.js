@@ -84,6 +84,7 @@ export async function chapter1(G) {
       const r = await judge(step, text);
       if (r.offline) S.offline++;
       S.answers.push({ step, text: text.slice(0, 300), ok: r.understood });
+      G.log({ kind: "answer", chapter: "1-fire", step, text: text.slice(0, 300), ok: r.understood, offline: r.offline });
 
       if (r.understood) {
         audio.chime(); nu.avatar.play("joy", 1.3);

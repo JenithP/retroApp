@@ -128,6 +128,14 @@ export async function watchRuns(cb) {
     e => console.error(e));
 }
 
+/** 아무 모음이나 들어온 순서대로 지켜본다 — 3주차 현황판은 time */
+export async function watchColl(name, cb) {
+  await whenReady();
+  return onSnapshot(query(collection(db, name), orderBy("createdAt")),
+    s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
+    e => console.error(e));
+}
+
 /** 지금 누가 어느 자리에 있는지 지켜본다. */
 export async function watchPresence(cb) {
   await whenReady();
