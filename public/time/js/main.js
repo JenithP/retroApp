@@ -1,6 +1,7 @@
 // 활자의 문 — 본체. 그리기, 걷기, 카메라, 그리고 퀘스트 대본이 쓰는 도우미들.
 import * as THREE from "three";
-import { buildWorld, heightAt, VILLAGE, SPAWN } from "./world.js";
+import { buildWorld, heightAt, VILLAGE, SPAWN, RIVER_X } from "./world.js";
+import { flood } from "./flood.js";
 import { makeAvatar, trySwapGLB } from "./avatar.js";
 import { Input } from "./input.js";
 import { Talk } from "./talk.js";
@@ -127,9 +128,9 @@ const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector
 const input = new Input(canvas, $("#stick"), $("#knob"), $("#act"));
 const talk = new Talk();
 talk.voices = { "빠른 발 누": 560, "할아버지": 200, "후드 쓴 자": 150, "수도원장": 230, "옆 수도원 문지기": 280,
-                "견습 수도사": 520, "인쇄소 주인": 210, "도제 소년": 540, "해설사": 470 };
+                "견습 수도사": 520, "인쇄소 주인": 210, "도제 소년": 540, "해설사": 470, "사냥꾼": 170, "엄마": 400 };
 // 대사창에 이름이 뜬 사람이 말하는 동작을 한다
-const SPEAKERS = { "빠른 발 누": "nu", "할아버지": "elder", "후드 쓴 자": "villain", "수도원장": "abbot", "견습 수도사": "monk",
+const SPEAKERS = { "빠른 발 누": "nu", "할아버지": "elder", "사냥꾼": "hunter", "엄마": "woman", "후드 쓴 자": "villain", "수도원장": "abbot", "견습 수도사": "monk",
                    "옆 수도원 문지기": "gatekeeper", "인쇄소 주인": "printer", "도제 소년": "apprentice", "해설사": "guide" };
 talk.onSpeak = who => {
   for (const o of [player, ...Object.values(npc)]) o.avatar.talking = false;
@@ -229,6 +230,69 @@ const G = {
   /** 한 사건을 현황판으로 — 끊겨도 담아 두었다 다시 보낸다 */
   log(row) { if (G.team) saveRun({ team: G.team, ...row }, "time"); },
   chapter(t) { $("#chapname").textContent = t; $("#misses").hidden = true; G.misses = 0; },
+  /* ── 1장 ② 홍수 ───────────────────────────────────── */
+  /** 개울가에 우리, 산 쪽에서 달려올 사냥꾼, 마을 불가에 엄마·할아버지·누 */
+  floodSetup() {
+    G.floodStop();
+    $("#floodover").hidden = true;
+    world.water.position.y = -0.95;
+    fire.setLevel(1); G.fireLit = true;
+    world.sticks.forEach(s => (s.visible = false));
+    world.typeStone.position.set(0, -50, 0);
+    reach.length = 0;
+    G.shot(null); focus = null;
+    player.pos.set(RIVER_X - 8, 0, -4);
+    player.avatar.root.rotation.y = Math.PI / 2;
+    player.avatar.root.visible = true;
+    input.yaw = -Math.PI / 2;
+    const at = { hunter: [RIVER_X - 6, -24], woman: [VILLAGE.x + 2.6, VILLAGE.z + 2], elder: [VILLAGE.x - 2.4, VILLAGE.z - 1.2], nu: [VILLAGE.x - 0.8, VILLAGE.z + 2.8] };
+    for (const [k, [x, z]] of Object.entries(at)) {
+      const o = npc[k]; o.path = null; o.pos.set(x, 0, z); o.avatar.speed = 0;
+      if (k !== "hunter") G.faceTo(o, world.firePit.position);
+    }
+  },
+  floodLeft: 0,
+  /** 제한 시간 과제 — 물이 차오르는 막대를 띄우고, 시간이 다 되면 대화와 행동 단추를 거두고 false */
+  timed(limit, fn) {
+    const bar = $("#floodbar"), fill = bar.querySelector("i"), tx = bar.querySelector("span");
+    bar.hidden = false;
+    const t0 = performance.now();
+    let alive = true;
+    return new Promise(res => {
+      const tickBar = () => {
+        const l = Math.max(0, limit - (performance.now() - t0) / 1000);
+        G.floodLeft = Math.round(l);
+        fill.style.width = `${(1 - l / limit) * 100}%`;
+        tx.textContent = `물이 차오른다 · ${Math.floor(l / 60)}:${String(Math.floor(l % 60)).padStart(2, "0")}`;
+        bar.classList.toggle("urgent", l < 30);
+        world.water.position.y = -0.95 + (1 - l / limit) * 0.65;
+        if (l <= 0 && alive) { alive = false; clearInterval(G._floodIv); talk.close(); reach.length = 0; res(false); }
+      };
+      tickBar();
+      G._floodIv = setInterval(tickBar, 200);
+      fn(() => alive).then(ok => { if (!alive) return; alive = false; clearInterval(G._floodIv); res(ok); });
+    });
+  },
+  floodStop() { clearInterval(G._floodIv); $("#floodbar").hidden = true; },
+  /** 시간 안에 못 전했다 — 파란 물이 화면을 덮는다 */
+  floodOver() {
+    G.floodStop();
+    const o = $("#floodover");
+    o.hidden = false; o.classList.remove("up"); void o.offsetWidth; o.classList.add("up");
+    audio.huh();
+    return new Promise(res => { $("#floodretry").onclick = () => { o.hidden = true; o.classList.remove("up"); res(); }; });
+  },
+  /** 마을 사람들이 붉은 흙 언덕으로 올라가고, 개울이 불어난다 */
+  async toHill() {
+    const hill = new THREE.Vector3(VILLAGE.x - 14, 0, VILLAGE.z - 20);
+    G.shot(new THREE.Vector3(VILLAGE.x + 9, 8, VILLAGE.z + 11), new THREE.Vector3(VILLAGE.x - 7, 1, VILLAGE.z - 9));
+    const who = ["elder", "nu", "woman"];
+    const walks = who.map((k, i) => G.walkTo(npc[k], [hill.clone().add(new THREE.Vector3(i * 1.5 - 1.5, 0, (i % 2) * 1.2))], 3.4));
+    player.pos.set(hill.x + 3, 0, hill.z + 2.5);
+    for (let i = 0; i < 40; i++) { world.water.position.y = Math.min(0.1, world.water.position.y + 0.02); await G.wait(0.08); }
+    await Promise.race([Promise.all(walks), G.wait(7)]);
+    G.shot(null);
+  },
   /** 온 화면을 덮는 그림 — 실내 장면. under 면 3D 사람을 그림 앞에 세운다 */
   backdrop(name, { under = false } = {}) {
     const b = $("#backdrop");
@@ -597,7 +661,8 @@ $("#go").addEventListener("click", async () => {
 
   // ?ch=2 · ?ch=3 — 앞 장을 건너뛴다 (수업 시간이 모자랄 때, 시험할 때)
   const params = new URLSearchParams(location.search);
-  const from = Math.max(1, Math.min(3, parseInt(params.get("ch") || "1", 10) || 1));
+  const chp = params.get("ch");               // ?ch=flood — 홍수부터
+  const from = chp === "flood" ? 1.5 : Math.max(1, Math.min(3, parseInt(chp || "1", 10) || 1));
   G.log({ kind: "start", crew: picked + 1, from });
   if (!params.has("skipintro")) await intro(from);
   $("#hud").hidden = false;
@@ -617,9 +682,26 @@ $("#go").addEventListener("click", async () => {
       ],
       tip: "누는 사물을 이름이 아니라 쓰임으로 불렀습니다. 옹이 말한 구술 문화의 「상황 의존적」 사고입니다. "
          + "그리고 적어 둘 곳이 없으니, 여러 번 되풀이한 노래만 기억에 남았습니다.",
-      next: "2장으로",
+      next: "계속",
     });
     all.ch1 = s;
+  }
+
+  if (from <= 1.5) {
+    const f = await flood(G);
+    all.flood = f;
+    await showCard({
+      eyebrow: "1장 ② 완료", title: "들은 말 그대로 전해 마을을 살렸다",
+      rows: [
+        ["뜻 풀이", "조가 의논해 적어 낸 횟수", `${f.meaningTries}번`],
+        ["엄마에게 전하기", "들은 말 그대로 전해지기까지", `${f.relayTries}번`],
+        ["홍수에 마을을 잃은 횟수", "3분 안에 못 전했을 때", `${f.fails}번`],
+        ["남은 시간", "", mmss(f.secsLeft)],
+      ],
+      tip: "글자가 없는 시대에 말은 들은 그대로 되풀이해야 살아남았습니다. 뜻을 알아도 제 말로 바꾸면 듣는 사람이 알아듣지 못했습니다. "
+         + "옹이 말한 구술 문화의 정형구와 반복입니다.",
+      next: "2장으로",
+    });
   }
 
   if (from <= 2) {
@@ -723,7 +805,7 @@ function intro(from) {
       stage = "wake"; vid.pause();
       flash.classList.add("on");
       setTimeout(() => { vid.hidden = true; box.classList.add("clear"); flash.classList.remove("on"); }, 800);
-      type(WAKE[from]);
+      type(WAKE[Math.floor(from)]);
     };
     // 이야기 순서대로 — 박물관 사진 위에 자막 셋(손을 대기까지)을 한 줄씩, 그다음 빨려 드는 영상, 그리고 깨어남.
     // 영상은 10초라 그 위에 자막을 얹으면 읽을 틈이 없어 영상 동안에는 자막을 감춘다.
@@ -769,7 +851,7 @@ function intro(from) {
 /** 영상을 틀 수 없을 때 — 사진 넉 장과 자막 */
 function slideIntro(from) {
   const box = $("#intro"), bg = $("#ibg"), tx = $("#itext"), flash = $("#iflash");
-  const slides = [...SLIDES, { img: null, flash: true, text: WAKE[from] }];
+  const slides = [...SLIDES, { img: null, flash: true, text: WAKE[Math.floor(from)] }];
   box.hidden = false; box.classList.remove("clear");
   return new Promise(done => {
     let i = -1, typing = null, full = "", img = "";

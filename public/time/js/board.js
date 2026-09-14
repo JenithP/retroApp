@@ -8,7 +8,7 @@ const P = new URLSearchParams(location.search);
 const DEMO = P.has("demo"), ALL = P.has("all");
 const PROBE = /^(연결확인|test|테스트)$/i;           // 시험 삼아 넣은 조는 빼고 센다
 const STEP = { intro: "소개", fireName: "불 이름", material: "무엇으로", method: "어떻게", ember: "그다음", remember: "잊지 않게",
-               reflect: "해설사의 질문" };
+               reflect: "해설사의 질문", floodMeaning: "홍수 경고 풀이", relay: "엄마에게 전하기" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const ms = r => r.createdAt?.toMillis ? r.createdAt.toMillis() : (r.at || Date.now());
@@ -25,7 +25,7 @@ function build(all) {
   const teams = new Map();
   const T = name => {
     if (!teams.has(name)) teams.set(name, { name, last: 0, stage: "시작", cls: "", tries: 0, misses: 0,
-      ch1: null, copies: 0, copySecs: [], quizTries: 0, pass: false, ch2: null, typos: null, sheets: null });
+      ch1: null, copies: 0, copySecs: [], quizTries: 0, pass: false, ch2: null, typos: null, sheets: null, relay: 0, floods: 0 });
     return teams.get(name);
   };
   const feed = [];
@@ -41,7 +41,15 @@ function build(all) {
       t.stage = `1장 · ${STEP[r.step] || r.step}`; t.cls = "s1";
       feed.push(r);
     }
-    else if (kind === "chapter" && r.chapter === "1-fire") { t.ch1 = r; t.stage = "2장 · 필사"; t.cls = "s2"; }
+    else if (kind === "chapter" && r.chapter === "1-fire") { t.ch1 = r; t.stage = "1장 · 홍수"; t.cls = "s1"; }
+    else if (kind === "relay") {
+      t.relay++; t.stage = r.ok ? "1장 · 마을이 피한다" : "1장 · 엄마에게 전하기"; t.cls = "s1";
+      feed.push({ ...r, step: "relay" });
+    }
+    else if (kind === "flood") {
+      if (r.pass) { t.stage = "2장 · 필사"; t.cls = "s2"; }
+      else { t.floods++; t.stage = "1장 · 홍수에 잠김"; t.cls = "redo"; }
+    }
     else if (kind === "copy") { t.copies++; t.copySecs.push(r.secs || 0); t.stage = "2장 · 숲길"; t.cls = "s2"; }
     else if (kind === "quiz") {
       t.quizTries++;
@@ -87,6 +95,7 @@ function render() {
       <dl>
         <dt>건넨 말 · 안 통함</dt><dd>${t.tries} · ${t.misses}</dd>
         <dt>1장 걸린 시간</dt><dd>${t.ch1?.secs ? mmss(t.ch1.secs) : "–"}</dd>
+        <dt>홍수 전하기 · 잠김</dt><dd>${t.relay} · ${t.floods}</dd>
         <dt>베낀 편지 · 한 부 평균</dt><dd>${t.copies}부 · ${avg}</dd>
         <dt>문제 도전</dt><dd>${t.quizTries ? `${t.quizTries}번 ${t.pass ? "· 통과" : ""}` : "–"}</dd>
         <dt>틀린 활자 · 찍은 장</dt><dd>${t.typos ?? "–"} · ${t.sheets ?? "–"}</dd>

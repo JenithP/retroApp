@@ -41,9 +41,10 @@ const OFFLINE = {
   method:   { no: /마찰|열|온도|발화/ },
   ember:    { no: /산소|공기|연소/ },
   remember: { yes: /노래|부르|불러|구호|따라|되풀이|반복|외치|외우/ },
+  floodMeaning: { yes: /(홍수|물.{0,6}(넘|불어|차|내려|밀려)|범람).*(높|언덕|올라|피|대피)|(높|언덕|올라|피|대피).*(홍수|물.{0,6}(넘|불어|차|내려|밀려)|범람)/ },
 };
 
-async function judge(step, text) {
+export async function judge(step, text) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 12000);
   try {
@@ -194,11 +195,7 @@ export async function chapter1(G) {
   await talk.say("", "(그날 밤, 마을 사람들은 불가에 둘러앉아 누의 노래를 따라 불렀다. 적어 둘 데가 없으니, 노래가 곧 기록이었다.)");
   talk.close();
 
-  // 활자가 다시 빛난다
-  G.objective("불 속에서 무언가 반짝인다.");
-  G.shot(pit.clone().add(new THREE.Vector3(4.5, 3.2, 6)), pit.clone().add(new THREE.Vector3(0, 2.2, 0)));
-  await G.typeGlow();
-  G.shot(null);
+  // 활자는 아직 빛나지 않는다 — 홍수를 지나고 나서(flood.js)
 
   S.secs = Math.round((performance.now() - t0) / 1000);
   return S;
