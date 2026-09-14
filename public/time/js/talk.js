@@ -88,5 +88,48 @@ export class Talk {
     });
   }
 
+  /** 물음을 보여 주고, 직접 쓴 말을 돌려준다. 몸짓 보기는 없다 — 말로만 전해야 한다. */
+  async ask(who, text, { prefill = "", placeholder = "누에게 할 말을 쓰십시오" } = {}) {
+    await this._type(who, text);
+    this._click = null;
+    return new Promise(res => {
+      this.choicesEl.innerHTML = `<form class="say">
+        <textarea maxlength="300" rows="2" aria-label="누에게 할 말"></textarea>
+        <div class="sayrow"><small class="cnt"></small><button type="submit">누에게 말하기 <kbd>Enter</kbd></button></div>
+      </form>`;
+      const form = this.choicesEl.querySelector("form"), ta = form.querySelector("textarea"),
+            cnt = form.querySelector(".cnt");
+      ta.placeholder = placeholder;
+      ta.value = prefill;
+      const count = () => { cnt.textContent = `${ta.value.length} / 300`; };
+      count();
+      ta.addEventListener("input", count);
+      // 쓰는 동안에는 WASD·스페이스·숫자가 게임으로 새지 않게. 한글 조합 중 Enter 는 글자를 마저 짓는 것.
+      ta.addEventListener("keydown", e => {
+        e.stopPropagation();
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); }
+      });
+      ta.addEventListener("keyup", e => e.stopPropagation());
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const v = ta.value.trim();
+        if (!v) { ta.focus(); return; }
+        this.choicesEl.innerHTML = "";
+        res(v);
+      });
+      setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 30);
+    });
+  }
+
+  /** 누가 듣고 생각하는 동안 — 누를 수 없는 한 줄 */
+  wait(who, text) {
+    this.box.hidden = false;
+    this.who.textContent = who || "";
+    this.line.innerHTML = this._render(text, [...text].length);
+    this.choicesEl.innerHTML = "";
+    this.nextEl.hidden = true;
+    this._click = null;
+  }
+
   close() { this.box.hidden = true; this._click = null; this._pick = null; }
 }

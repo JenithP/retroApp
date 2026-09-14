@@ -51,6 +51,19 @@ kbd{font-family:var(--sans);font-size:.72em;border:1px solid currentColor;border
 .choices button .n{font-family:var(--sans);font-size:.78rem;color:var(--rust);font-weight:700;
   margin-right:8px}
 .choices button.used{opacity:.45}
+/* 직접 쓰는 말 */
+.say{display:flex;flex-direction:column;gap:7px;cursor:default}
+.say textarea{font-family:var(--serif);font-size:1.08rem;line-height:1.55;color:var(--ink);
+  background:#fffaf0;border:1px solid var(--edge);border-radius:6px;padding:10px 12px;resize:none;
+  min-height:3.4em;-webkit-user-select:text;user-select:text;touch-action:auto}
+.say textarea:focus{outline:3px solid var(--gold);outline-offset:1px;border-color:var(--rust)}
+.sayrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sayrow .cnt{font-size:.76rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.sayrow button{background:var(--ink);color:var(--paper);border:0;border-radius:6px;padding:9px 16px;
+  font-family:var(--serif);font-weight:700;font-size:1rem}
+.sayrow button:hover{background:#3d3024}
+.sayrow button kbd{border-color:var(--paper)}
+.hint{margin:8px 0 0;font-size:.86rem;color:var(--rust);line-height:1.5}
 
 /* ── 행동 단추 ────────────────────────────────────── */
 #act{position:fixed;right:22px;bottom:30px;z-index:5;background:var(--gold);color:#221606;border:0;

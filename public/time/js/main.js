@@ -125,12 +125,12 @@ const G = {
   objective(t) { $("#objective").textContent = t; },
   misses: 0,
   /** 말이 통하지 않았다 — 몇 번째인지 화면에 남긴다 */
-  miss(why = "말이 통하지 않았다") {
+  miss(why = "말이 통하지 않았다", sub = "누가 알아듣지 못했습니다") {
     G.misses++;
     const m = $("#misses");
     m.hidden = false;
     m.textContent = `말이 안 통한 횟수 ${G.misses}`;
-    G.toast(why, "bad", "누가 알아듣지 못했습니다");
+    G.toast(why, "bad", sub || "누가 알아듣지 못했습니다");
   },
   hit(msg = "통했다") { G.toast(msg, "good"); },
   toast(text, kind, sub = "") {
@@ -414,11 +414,10 @@ $("#go").addEventListener("click", async () => {
 
 function showDone(s) {
   const rows = [
-    ["추상어로 말했다가 안 통한 횟수", "나무 · 불 · 마찰처럼 이름으로 말했을 때", s.abstract],
-    ["쓰임이나 겪은 일로 말해 통한 횟수", "딱 소리 막대 · 하늘 뱀처럼", s.situ],
-    ["말 대신 직접 보여 준 횟수", "막대 줍기 · 비비기 · 입김", s.demo],
+    ["누에게 건넨 말", "조가 직접 써서 보낸 횟수", s.tries],
+    ["통하지 않은 말", "불 · 나무 · 마찰처럼 이름이나 개념어로 말했을 때", s.misses],
+    ["여섯 장면 모두 통하기까지", "한 장면에 평균", `${(s.tries / 6).toFixed(1)}번`],
     ["종이에 적어 주려 한 횟수", "글자가 없는 시대", s.paper],
-    ["다시 설명했다가 또 잊은 횟수", "한 번 길게 말하면 남지 않는다", s.explain],
     ["걸린 시간", "", `${Math.floor(s.secs / 60)}분 ${s.secs % 60}초`],
   ];
   $("#donestats").innerHTML = rows.map(([a, b, v]) =>
