@@ -37,8 +37,17 @@ export class Talk {
     return out;
   }
 
+  /** 괄호 안은 몸짓·상황 지문이다. 몸짓은 캐릭터가 동작으로 보여 주니, 말하는 사람이 있는 대사에서는 지운다.
+   *  이름 없는 내레이션은 문장 전체가 괄호로 싸여 있으므로 괄호만 벗겨 보여 준다. */
+  _clean(who, text) {
+    if (!who) return text.replace(/^\s*\(([\s\S]*)\)\s*$/, "$1");
+    const t = text.replace(/\([^)]*\)/g, "").replace(/[ \t]{2,}/g, " ").replace(/[ \t]*\n[ \t]*/g, "\n").trim();
+    return t || "…";
+  }
+
   /** 한 글자씩 찍는다. 누르면 한 번에 다 보인다. */
   _type(who, text) {
+    text = this._clean(who, text);
     this.box.hidden = false;
     this.who.textContent = who || "";
     this.onSpeak?.(who);                       // 말하는 사람이 말하는 동작을 하게
@@ -127,6 +136,7 @@ export class Talk {
   wait(who, text) {
     this.box.hidden = false;
     this.who.textContent = who || "";
+    text = this._clean("", text);                // 「(곰곰이 생각한다…)」 같은 지문만 있는 줄 — 괄호만 벗긴다
     this.line.innerHTML = this._render(text, [...text].length);
     this.choicesEl.innerHTML = "";
     this.nextEl.hidden = true;
