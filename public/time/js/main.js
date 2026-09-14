@@ -134,7 +134,7 @@ const SPEAKERS = { "빠른 발 누": "nu", "할아버지": "elder", "사냥꾼":
                    "옆 수도원 문지기": "gatekeeper", "인쇄소 주인": "printer", "도제 소년": "apprentice", "해설사": "guide" };
 talk.onSpeak = who => {
   for (const o of [player, ...Object.values(npc)]) o.avatar.talking = false;
-  if (who === "우리") player.avatar.talking = true;
+  if (who === "나") player.avatar.talking = true;
   else if (SPEAKERS[who]) npc[SPEAKERS[who]].avatar.talking = true;
 };
 const ABBEY = new THREE.Vector3(0, 0, 39.5);    // 2장 수도원 — 숲길 들머리, 문이 숲길 쪽을 본다
@@ -485,6 +485,13 @@ function stepToward(o, tx, tz, speed, dt, stopAt = 0.25) {
   return false;
 }
 
+// 말 걸 사람 머리 위에 떠 있는 노란 화살표 — 누구에게 가야 하는지 한눈에
+const marker = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.55, 18),
+  new THREE.MeshBasicMaterial({ color: "#f2c14e", fog: false }));
+marker.rotation.x = Math.PI;
+marker.visible = false;
+scene.add(marker);
+
 let lastTick = 0;
 function frame() { tick(); requestAnimationFrame(frame); }
 
@@ -553,6 +560,18 @@ function tick() {
   } else { act.hidden = true; input.takeAction(); }
 
   for (let i = waits.length - 1; i >= 0; i--) if (waits[i].pred()) { waits[i].res(); waits.splice(i, 1); }
+
+  // 가야 할 곳 표시 — 거리가 멀어도 가장 가까운 목표 위에
+  let tgt = null, td = 1e9;
+  for (const r of reach) {
+    const d = Math.hypot(r.target.pos.x - player.pos.x, r.target.pos.z - player.pos.z);
+    if (d < td) { td = d; tgt = r.target; }
+  }
+  marker.visible = !!tgt && !talk.open && !locked && !shot;
+  if (tgt) {
+    const top = tgt.avatar ? tgt.avatar.height + 0.55 : 2.4;
+    marker.position.set(tgt.pos.x, (tgt.pos.y || 0) + top + Math.sin(performance.now() / 260) * 0.12, tgt.pos.z);
+  }
 
   world.update(dt);
   fire.update(dt);
@@ -772,7 +791,8 @@ function showCard({ eyebrow, title, rows, tip, next = "다음으로" }) {
 
 /* ── 들어가며 — 인쇄 박물관 ─────────────────────────── */
 const SLIDES = [
-  { img: "museum", text: "인쇄 박물관, 문 닫기 30분 전.\n과제 사진을 찍으러 온 우리 조만 전시실에 남아 있었다." },
+  { img: "museum", text: "교수님 : 「이번 주 과제는 직접 인쇄 박물관에 다녀와서 레포트를 내는 겁니다.」" },
+  { img: "museum", text: "그래서 찾아온 인쇄 박물관, 문 닫기 30분 전.\n과제 사진을 찍다 보니 전시실에는 나만 남아 있었다." },
   { img: "museum", text: "천장에는 「書 · 印 · 傳」 — 쓰고, 찍고, 퍼뜨린다.\n그 아래 낡은 나무 인쇄기 한 대가 서 있었다." },
   { img: "hand",   text: "판 위에는 쇠로 된 활자가 빼곡했다.\n「만지지 마시오」 팻말을 보지 못한 누군가가, 인쇄기에 손을 댔다." },
   { img: "hand",   glow: true, text: "차가운 쇠가 순간 뜨거워지더니,\n활자 사이로 빛이 새어 나와 손끝을 타고 올라왔다." },

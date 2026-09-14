@@ -10,7 +10,7 @@ import { VILLAGE } from "./world.js";
 import { judge } from "./ch1.js";
 import * as THREE from "three";
 
-const PAPA = "사냥꾼", MAMA = "엄마", NU = "빠른 발 누", WE = "우리";
+const PAPA = "사냥꾼", MAMA = "엄마", NU = "빠른 발 누", WE = "나";
 export const WARNING = "하늘이 울고, 또 운다. 그리고 산의 물이 배고프다.\n배고픈 물이 내려온다. 해가 눕기 전에.\n붉은 흙 등으로 올라라. 늙은 발 먼저, 작은 발 먼저.";
 const LIMIT = 180;              // 「전하세요」부터 3분
 const SAME = 0.9;               // 들은 말과 이만큼 같아야 엄마가 알아듣는다
@@ -91,7 +91,7 @@ export async function flood(G) {
     G.objective("사냥꾼의 말은 무슨 뜻일까? 조원과 의논해 적으십시오.");
     let replay = 1, misses = 0;
     for (;;) {
-      const text = await talk.ask(WE, "사냥꾼의 말은 무슨 뜻일까? 조원과 의논해 우리 말로 풀어 적어 보자.",
+      const text = await talk.ask(WE, "사냥꾼의 말은 무슨 뜻일까? 조원과 의논해 오늘날 말로 풀어 적어 보자.",
         { placeholder: "사냥꾼의 말은 … 라는 뜻이다", button: "뜻 풀이 내기", extra: replay ? "한 번 더 듣기" : null });
       if (text === null) {                        // 한 번 더 듣기 — 딱 한 번
         replay--; S.replays++;

@@ -105,7 +105,7 @@ export async function chapter2(G) {
     talk.close();
     G.backToAbbey();
     await G.faceEachOther(monk);
-    await talk.say(MONK, "(돌아온 우리를 보고 눈이 동그래진다) 편지를… 빼앗기셨어요? 원본은 여기 있으니, 처음부터 다시 베끼는 수밖에 없어요.");
+    await talk.say(MONK, "(돌아온 나를 보고 눈이 동그래진다) 편지를… 빼앗기셨어요? 원본은 여기 있으니, 처음부터 다시 베끼는 수밖에 없어요.");
     talk.close();
   }
 

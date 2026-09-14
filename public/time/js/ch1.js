@@ -12,7 +12,7 @@ import { audio } from "./audio.js";
 import { VILLAGE } from "./world.js";
 import * as THREE from "three";
 
-const NU = "빠른 발 누", WE = "우리";
+const NU = "빠른 발 누", WE = "나";        // 화면 속 인물은 한 사람 — 조원 넷이 의논하되 말하는 건 「나」
 
 // 게임이 버셀에 있으면 같은 주소로, 파이어베이스나 내 컴퓨터에서 열었으면 버셀 주소로 묻는다
 const JUDGE = location.hostname.endsWith(".vercel.app") ? "/api/judge" : "https://retro-app-six.vercel.app/api/judge";
@@ -20,7 +20,7 @@ const JUDGE = location.hostname.endsWith(".vercel.app") ? "/api/judge" : "https:
 // 두 번, 세 번 막히면 조금씩 길을 보여 준다
 const HINTS = {
   intro:    ["누가 겪어 본 적 없는 이름은 통하지 않습니다. 누가 방금 본 것으로 말해 보십시오.",
-             "누는 우리가 어디에서 나오는 것을 봤을까요?"],
+             "누는 내가 어디에서 나오는 것을 봤을까요?"],
   fireName: ["누는 「불」이라는 이름을 모릅니다. 누가 겪었을 법한 장면으로 말해 보십시오.",
              "비 오는 밤, 하늘이 번쩍하고 쾅… 그 뒤에 쓰러진 나무는 어떻게 되었을까요?"],
   material: ["누는 「나무」라는 묶음 이름을 모릅니다. 만지거나 밟았을 때 어떤지로 말해 보십시오.",
@@ -107,7 +107,8 @@ export async function chapter1(G) {
   }
 
   /* ── 0. 깨어남 ─────────────────────────────────────── */
-  G.objective("덤불 사이에서 누군가 쳐다보고 있다. 가까이 가 보십시오.");
+  G.objective("덤불 속에서 한 소년이 나를 쳐다보고 있다. 소년에게 다가가 말을 거십시오.");
+  G.toast("소년에게 다가가 보십시오", "good", "머리 위 노란 화살표를 따라가면 됩니다");
   await G.interact(nu, "말 걸기");
 
   /* ── 1. 만남 ───────────────────────────────────────── */
@@ -115,8 +116,8 @@ export async function chapter1(G) {
   await talk.say(NU, "(덤불에서 뛰쳐나와 한 바퀴 빙 돈다)\n반짝이는 돌에서 사람이 나왔다! 그리고 누가 봤다! 그리고 누가 놀랐다!");
   nu.avatar.play("thump", 1.6);
   await talk.say(NU, "(제 가슴을 두드린다) 빠른 발 누! 빠른 발 누는 마을에서 제일 빠르다.");
-  G.objective("누에게 우리를 소개하십시오. 조원과 의논해 직접 쓰십시오.");
-  await untilUnderstood("intro", "누가 우리를 빤히 본다. 우리를 뭐라고 소개할까?");
+  G.objective("누에게 나를 소개하십시오. 조원과 의논해 직접 쓰십시오.");
+  await untilUnderstood("intro", "누가 나를 빤히 본다. 나를 뭐라고 소개할까?");
   await talk.say(NU, "반짝이는 돌 사람, 와라. 마을로 와라. 할아버지가 아프다. 그리고 엄마도 아프다. 그리고 모두 아프다.");
   talk.close();
 
@@ -137,7 +138,7 @@ export async function chapter1(G) {
   G.objective("누는 「불」을 모릅니다. 누가 알아듣게 말해 주십시오.");
   await untilUnderstood("fireName", "불이 있으면 고기를 익히고 몸을 데울 텐데. 누에게 뭐라고 말할까?");
   await talk.say(NU, "누의 마을은 그걸 「하늘 뱀의 빨간 것」이라고 부른다. 하늘 뱀이 나무를 먹으면 생긴다!");
-  await talk.say(WE, "그래. 우리도 그걸 「하늘 뱀의 빨간 것」이라고 부르자.");
+  await talk.say(WE, "그래. 나도 그걸 「하늘 뱀의 빨간 것」이라고 부를게.");
   await talk.say(NU, "하늘 뱀의 빨간 것을… 반짝이는 돌 사람이 부를 수 있다?");
   await talk.say(WE, "응. 같이 불러 보자. 한 걸음씩 알려 줄게.");
 

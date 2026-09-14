@@ -7,7 +7,7 @@
 import { compose, press } from "./mini.js";
 import { audio } from "./audio.js";
 
-const PRINTER = "인쇄소 주인", BOY = "도제 소년", GUIDE = "해설사", WE = "우리";
+const PRINTER = "인쇄소 주인", BOY = "도제 소년", GUIDE = "해설사", WE = "나";
 const LINE = "모든 사람이 읽을 수 있게";
 const DECOYS = ["잃", "랍", "계", "묘", "는", "샤", "잇"];      // 뒤집어 놓으면 헷갈리는 활자
 const PRESS_SECS = 40;
