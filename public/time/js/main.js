@@ -185,7 +185,7 @@ const G = {
     m.textContent = `${G.missLabel} ${G.misses}`;
     G.toast(why, "bad", sub || "누가 알아듣지 못했습니다");
   },
-  hit(msg = "통했다") { G.toast(msg, "good"); },
+  hit(msg = "통했다", sub = "") { G.toast(msg, "good", sub); },
   toast(text, kind, sub = "") {
     const t = $("#toast");
     t.className = kind;

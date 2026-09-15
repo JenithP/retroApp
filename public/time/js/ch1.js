@@ -90,7 +90,7 @@ export async function chapter1(G) {
       if (r.understood) {
         audio.chime(); nu.avatar.play("joy", 1.3);
         await talk.say(NU, r.reply);
-        G.hit(fails ? `${fails + 1}번 만에 통했다` : "한 번에 통했다");
+        G.hit(fails ? `통했다 · ${fails + 1}번 만에` : "통했다 · 한 번에", "누가 알아들었습니다 — 다음으로 넘어갑니다");
         return fails + 1;
       }
       fails++; S.misses++;

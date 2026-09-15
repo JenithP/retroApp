@@ -124,9 +124,16 @@ export default async function handler(req, res) {
     const data = await r.json();
     const out = JSON.parse(data.choices?.[0]?.message?.content || "{}");
     const hasAll = !S.must || S.must.every(re => re.test(text));
+    const understood = out.understood === true && hasAll;
+    // 판정과 말이 어긋나면 학생이 헷갈린다 — 통했는데 「누는 모른다」 라고 하는 일을 막는다
+    let reply = String(out.reply || "").slice(0, 200);
+    if (understood && /모른다|모르겠|못 알아|알아듣지|갸웃|무슨 말|다시 말해/.test(reply))
+      reply = "누가 안다! 그리고 누는 기쁘다!";
+    if (!understood && /(누가 안다|알겠|알아들었|기쁘다)/.test(reply))
+      reply = "누는 모른다. 다시 말해 줄래?";
     return res.status(200).json({
-      understood: out.understood === true && hasAll,
-      reply: String(out.reply || "").slice(0, 200),
+      understood,
+      reply,
       reason: String(out.reason || "").slice(0, 200),
     });
   } catch (e) {
