@@ -589,16 +589,31 @@ function tick() {
   for (let i = waits.length - 1; i >= 0; i--) if (waits[i].pred()) { waits[i].res(); waits.splice(i, 1); }
 
   // 가야 할 곳 표시 — 거리가 멀어도 가장 가까운 목표 위에
-  let tgt = null, td = 1e9;
+  let tgt = null, td = 1e9, tlabel = "";
   for (const r of reach) {
     const d = Math.hypot(r.target.pos.x - player.pos.x, r.target.pos.z - player.pos.z);
-    if (d < td) { td = d; tgt = r.target; }
+    if (d < td) { td = d; tgt = r.target; tlabel = r.label || ""; }
   }
   marker.visible = !!tgt && !talk.open && !locked && !shot;
+  const guide = $("#guide");
   if (tgt) {
-    const top = tgt.avatar ? tgt.avatar.height + 0.55 : 2.4;
+    // 멀수록 크고 높게 — 마을 건너편에서도 보이게
+    const far = Math.min(3.2, Math.max(1, td / 11));
+    const top = (tgt.avatar ? tgt.avatar.height + 0.55 : 2.4) + (far - 1) * 1.6;
+    marker.scale.setScalar(far);
     marker.position.set(tgt.pos.x, (tgt.pos.y || 0) + top + Math.sin(performance.now() / 260) * 0.12, tgt.pos.z);
-  }
+
+    // 화면 아래 방향 표시 — 멀리 있을 때만
+    const show = td > 8 && !talk.open && !locked && !shot;
+    guide.hidden = !show;
+    if (show) {
+      const fx = camLook.x - camPos.x, fz = camLook.z - camPos.z;
+      const dx = tgt.pos.x - player.pos.x, dz = tgt.pos.z - player.pos.z;
+      const ang = Math.atan2(fx * dz - fz * dx, fx * dx + fz * dz);      // 카메라가 보는 쪽 기준
+      guide.firstElementChild.style.transform = `rotate(${(-ang * 180 / Math.PI).toFixed(0)}deg)`;
+      guide.lastElementChild.textContent = `${tlabel ? tlabel + " · " : ""}${Math.round(td)}m`;
+    }
+  } else guide.hidden = true;
 
   world.update(dt);
   fire.update(dt);
