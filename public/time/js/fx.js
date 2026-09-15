@@ -75,6 +75,40 @@ export function makeFire(parent, at) {
   };
 }
 
+/** 비 — 조종하는 사람 둘레에만 가는 빗줄기를 떨어뜨린다. setLevel(0~1) */
+export function makeRain(parent) {
+  const N = 1400, R = 26, H = 18;
+  const pos = new Float32Array(N * 6);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.LineBasicMaterial({ color: "#cdd8e2", transparent: true, opacity: 0, depthWrite: false });
+  const lines = new THREE.LineSegments(geo, mat);
+  lines.frustumCulled = false;
+  lines.visible = false;
+  parent.add(lines);
+  const drops = Array.from({ length: N }, () => ({
+    x: (Math.random() - 0.5) * 2 * R, y: Math.random() * H, z: (Math.random() - 0.5) * 2 * R, v: 14 + Math.random() * 7 }));
+  let level = 0, want = 0;
+  return {
+    setLevel(v) { want = v; },
+    update(dt, cx, cy, cz) {
+      level += (want - level) * (1 - Math.exp(-dt * 1.2));
+      mat.opacity = 0.5 * level;
+      lines.visible = level > 0.02;
+      if (!lines.visible) return;
+      for (let i = 0; i < N; i++) {
+        const d = drops[i];
+        d.y -= d.v * dt;
+        if (d.y < 0) { d.y += H; d.x = (Math.random() - 0.5) * 2 * R; d.z = (Math.random() - 0.5) * 2 * R; }
+        const x = cx + d.x, y = cy + d.y - 2, z = cz + d.z, k = i * 6;
+        pos[k] = x; pos[k + 1] = y; pos[k + 2] = z;
+        pos[k + 3] = x + 0.06; pos[k + 4] = y - 0.75; pos[k + 5] = z + 0.03;
+      }
+      geo.attributes.position.needsUpdate = true;
+    },
+  };
+}
+
 /** 활자가 빛날 때 둘레로 솟는 금빛 알갱이 */
 export function makeSparkle(parent, at) {
   const s = puffs(70, { color: ["#fff3c4", "#d8a63f"], size: 0.28, blending: THREE.AdditiveBlending,

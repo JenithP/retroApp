@@ -1,12 +1,12 @@
 // 활자의 문 — 본체. 그리기, 걷기, 카메라, 그리고 퀘스트 대본이 쓰는 도우미들.
 import * as THREE from "three";
-import { buildWorld, heightAt, VILLAGE, SPAWN, RIVER_X } from "./world.js";
+import { buildWorld, heightAt, VILLAGE, SPAWN, RIVER_X, HILL } from "./world.js";
 import { flood } from "./flood.js";
 import { makeAvatar, trySwapGLB } from "./avatar.js";
 import { Input } from "./input.js";
 import { Talk } from "./talk.js";
 import { audio } from "./audio.js";
-import { makeFire, makeSparkle } from "./fx.js";
+import { makeFire, makeSparkle, makeRain } from "./fx.js";
 import { chapter1 } from "./ch1.js";
 import { chapter2 } from "./ch2.js";
 import { chapter3, ending } from "./ch3.js";
@@ -28,11 +28,12 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog("#dfe3cb", 38, 135);
+scene.fog = new THREE.Fog("#efdcc0", 42, 150);     // 늦은 오후의 볕 — 날씨가 바뀌면 updateMood 가 옮긴다
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 700);
 
-scene.add(new THREE.HemisphereLight("#dcecff", "#6f5a3c", 1.15));
-const sun = new THREE.DirectionalLight("#fff0d4", 2.3);
+const hemi = new THREE.HemisphereLight("#ffe9cf", "#5b4a34", 1.05);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight("#ffe0ad", 2.5);
 sun.castShadow = true;
 sun.shadow.mapSize.set(touchy ? 1024 : 2048, touchy ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -28, right: 28, top: 28, bottom: -28, near: 1, far: 140 });
@@ -123,6 +124,29 @@ const GLB = { nu: "nu", elder: "granpa", woman: "mama", hunter: "papa", villain:
 for (const [k, f] of Object.entries(GLB)) if (npc[k]) trySwapGLB(npc[k].avatar, `models/${f}.glb`);
 
 const fire = makeFire(scene, world.firePit.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
+
+// 날씨 — 맑은 늦은 오후와, 홍수 때의 비 오는 흐린 하늘. G.weather("rain") 으로 천천히 옮겨 간다
+const rain = makeRain(scene);
+const MOODS = {
+  clear: { sky: "#ffffff", fog: "#efdcc0", near: 42, far: 150, hemiSky: "#ffe9cf", hemiGround: "#5b4a34", hemi: 1.05, sun: "#ffe0ad", sunI: 2.5, rain: 0 },
+  rain:  { sky: "#8d97a0", fog: "#98a1a8", near: 20, far: 95,  hemiSky: "#b3bcc4", hemiGround: "#3a3833", hemi: 0.9,  sun: "#cdd6de", sunI: 0.85, rain: 1 },
+};
+let mood = MOODS.clear;
+const moodColor = new THREE.Color();
+function updateMood(dt) {
+  const k = 1 - Math.exp(-dt * 1.1);
+  world.sky.material.color.lerp(moodColor.set(mood.sky), k);
+  if (scene.fog) {
+    scene.fog.color.lerp(moodColor.set(mood.fog), k);
+    scene.fog.near += (mood.near - scene.fog.near) * k;
+    scene.fog.far += (mood.far - scene.fog.far) * k;
+  }
+  hemi.color.lerp(moodColor.set(mood.hemiSky), k);
+  hemi.groundColor.lerp(moodColor.set(mood.hemiGround), k);
+  hemi.intensity += (mood.hemi - hemi.intensity) * k;
+  sun.color.lerp(moodColor.set(mood.sun), k);
+  sun.intensity += (mood.sunI - sun.intensity) * k;
+}
 
 /* ── 도우미 — 퀘스트 대본이 부르는 것들 ─────────────────── */
 const input = new Input(canvas, $("#stick"), $("#knob"), $("#act"));
@@ -230,6 +254,9 @@ const G = {
   /** 한 사건을 현황판으로 — 끊겨도 담아 두었다 다시 보낸다 */
   log(row) { if (G.team) saveRun({ team: G.team, ...row }, "time"); },
   chapter(t) { $("#chapname").textContent = t; $("#misses").hidden = true; G.misses = 0; },
+  /** 날씨 — "clear" 늦은 오후, "rain" 홍수 때의 비 */
+  weather(name) { mood = MOODS[name] || MOODS.clear; rain.setLevel(mood.rain); },
+
   /* ── 1장 ② 홍수 ───────────────────────────────────── */
   /** 개울가에 우리, 산 쪽에서 달려올 사냥꾼, 마을 불가에 엄마·할아버지·누 */
   floodSetup() {
@@ -284,8 +311,8 @@ const G = {
   },
   /** 마을 사람들이 붉은 흙 언덕으로 올라가고, 개울이 불어난다 */
   async toHill() {
-    const hill = new THREE.Vector3(VILLAGE.x - 14, 0, VILLAGE.z - 20);
-    G.shot(new THREE.Vector3(VILLAGE.x + 9, 8, VILLAGE.z + 11), new THREE.Vector3(VILLAGE.x - 7, 1, VILLAGE.z - 9));
+    const hill = HILL.clone();                   // 붉은 흙 언덕 꼭대기
+    G.shot(new THREE.Vector3(VILLAGE.x + 6, 10, VILLAGE.z + 8), new THREE.Vector3(HILL.x + 3, 2, HILL.z + 5));
     const who = ["elder", "nu", "woman"];
     const walks = who.map((k, i) => G.walkTo(npc[k], [hill.clone().add(new THREE.Vector3(i * 1.5 - 1.5, 0, (i % 2) * 1.2))], 3.4));
     player.pos.set(hill.x + 3, 0, hill.z + 2.5);
@@ -575,6 +602,8 @@ function tick() {
 
   world.update(dt);
   fire.update(dt);
+  updateMood(dt);
+  rain.update(dt, player.pos.x, player.pos.y, player.pos.z);
   sparkles.forEach(s => s.update(dt));
 
   // 카메라 — 평소엔 조종하는 사람 뒤에서, 대화 중엔 어깨너머로 상대와 함께
@@ -635,7 +664,7 @@ function tick() {
   }
 
   // 해는 우리를 따라다닌다 — 그림자 상자를 좁게 쓰려고
-  sun.position.set(player.pos.x + 26, 44, player.pos.z + 16);
+  sun.position.set(player.pos.x + 34, 34, player.pos.z + 20);     // 조금 기운 해 — 그림자가 길게
   sun.target.position.set(player.pos.x, 0, player.pos.z);
 
   renderer.render(scene, camera);

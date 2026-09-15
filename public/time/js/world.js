@@ -11,6 +11,7 @@ export function rng(seed) {
 export const VILLAGE = new THREE.Vector3(0, 0, -12);   // 마을 한가운데 — 불 자리
 export const SPAWN   = new THREE.Vector3(0, 0, 30);    // 넷이 눈을 뜨는 자리
 export const RIVER_X = 34;                              // 개울이 흐르는 줄기
+export const HILL    = new THREE.Vector3(VILLAGE.x - 14, 0, VILLAGE.z - 22);   // 붉은 흙 언덕 — 홍수 때 피하는 곳
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const pathX  = z => 2.6 * Math.sin(z * 0.12);          // 깨어난 자리에서 마을까지 이어진 오솔길
@@ -22,6 +23,7 @@ export function heightAt(x, z) {
         + 0.2  * Math.cos(z * 0.15 - x * 0.03);
   const flat = (c, r0, r1) => smooth(r0, r1, Math.hypot(x - c.x, z - c.z));
   h *= Math.min(flat(VILLAGE, 13, 24), flat(SPAWN, 6, 14));
+  h += 2.6 * (1 - smooth(4, 9, Math.hypot(x - HILL.x, z - HILL.z)));    // 꼭대기가 평평한 언덕
   const dx = x - RIVER_X;
   h -= 1.7 * Math.exp(-(dx * dx) / 20);
   const edge = Math.max(Math.abs(x), Math.abs(z));
@@ -35,10 +37,11 @@ export function buildWorld(scene) {
   const group = new THREE.Group();
   scene.add(group);
 
-  /* ── 하늘 — 위는 푸르고 지평선은 옅은 볕 ───────────────── */
+  /* ── 하늘 — 위는 푸르고 지평선은 늦은 오후의 볕 ─────────── */
+  let sky;
   {
     const g = new THREE.SphereGeometry(420, 24, 16);
-    const top = new THREE.Color("#7fb2df"), mid = new THREE.Color("#cfe0e4"), low = new THREE.Color("#e9e0c4");
+    const top = new THREE.Color("#79a9da"), mid = new THREE.Color("#e6dcc8"), low = new THREE.Color("#f1cfa2");
     const c = [];
     for (let i = 0; i < g.attributes.position.count; i++) {
       const y = g.attributes.position.getY(i) / 420;
@@ -47,7 +50,7 @@ export function buildWorld(scene) {
       c.push(col.r, col.g, col.b);
     }
     g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3));
-    const sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({
+    sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({
       vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
     sky.renderOrder = -1;
     group.add(sky);
@@ -64,6 +67,7 @@ export function buildWorld(scene) {
     const pos = g.attributes.position, col = [];
     const grass = ["#6f9a4a", "#78a352", "#66903f", "#80a95a"].map(s => new THREE.Color(s));
     const dirt = new THREE.Color("#a58a5c"), sand = new THREE.Color("#c9b98b"), moss = new THREE.Color("#5b8440");
+    const clay = new THREE.Color("#b0593a");
     for (let i = 0; i < pos.count; i += 3) {
       const cx = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3;
       const cz = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3;
@@ -74,6 +78,8 @@ export function buildWorld(scene) {
       if (cz > -4 && cz < 29 && Math.abs(cx - pathX(cz)) < 1.4) c.lerp(dirt, 0.7);
       if (cy < -0.45) c.lerp(sand, 0.8);
       if (Math.hypot(cx - SPAWN.x, cz - SPAWN.z) < 5) c.lerp(moss, 0.4);
+      const dh = Math.hypot(cx - HILL.x, cz - HILL.z);
+      if (dh < 9.5) c.lerp(clay, 0.85 * (1 - smooth(6, 9.5, dh)));          // 붉은 흙 언덕
       c.offsetHSL(0, 0, (R() - 0.5) * 0.04);
       for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
     }
@@ -103,6 +109,7 @@ export function buildWorld(scene) {
     if (Math.hypot(x - SPAWN.x, z - SPAWN.z) < 8) return false;
     if (z > -6 && z < 31 && Math.abs(x - pathX(z)) < 3.4) return false;
     if (Math.abs(x - RIVER_X) < 8.5) return false;
+    if (Math.hypot(x - HILL.x, z - HILL.z) < 11) return false;
     for (const t of trees) if ((t.x - x) ** 2 + (t.z - z) ** 2 < 6.5) return false;
     return true;
   };
@@ -144,6 +151,7 @@ export function buildWorld(scene) {
       let x, z, tries = 0;
       do { x = (R() - 0.5) * 140; z = (R() - 0.5) * 140; tries++; }
       while (tries < 30 && (Math.hypot(x - VILLAGE.x, z - VILLAGE.z) < 14 || Math.hypot(x - SPAWN.x, z - SPAWN.z) < 6
+             || Math.hypot(x - HILL.x, z - HILL.z) < 10
              || (z > -6 && z < 31 && Math.abs(x - pathX(z)) < 2.5)));
       const s = 0.5 + R() * 1.3;
       dummy.position.set(x, heightAt(x, z) + 0.1 * s, z);
@@ -164,6 +172,66 @@ export function buildWorld(scene) {
       dummy.rotation.set(0, R() * 6, 0); dummy.scale.set(1.3, 0.9, 1.2); dummy.updateMatrix();
       m.setMatrixAt(i, dummy.matrix);
     });
+  }
+
+  /* ── 풀포기와 들꽃 — 빈 땅이 밋밋하지 않게. 그림자는 드리우지 않아 가볍다 ─── */
+  {
+    const v = [];                                  // 한 포기 = 가는 잎 네 장
+    for (let k = 0; k < 4; k++) {
+      const a = k * Math.PI / 2 + 0.35, hgt = 0.42 + (k % 2) * 0.18;
+      const cx = Math.cos(a), sz = Math.sin(a), bx = -sz * 0.07, bz = cx * 0.07;
+      v.push(-bx, 0, -bz, bx, 0, bz, cx * 0.24 * hgt, hgt, sz * 0.24 * hgt);
+    }
+    const tuftGeo = new THREE.BufferGeometry();
+    tuftGeo.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+    tuftGeo.computeVertexNormals();
+    const okGrass = (x, z) => heightAt(x, z) > -0.3
+      && Math.hypot(x - VILLAGE.x, z - VILLAGE.z) > 9
+      && Math.hypot(x - HILL.x, z - HILL.z) > 8
+      && Math.abs(x - RIVER_X) > 7
+      && !(z > -6 && z < 31 && Math.abs(x - pathX(z)) < 1.7);
+    const spots = [];
+    for (let n = 0; n < 4000 && spots.length < 1500; n++) {
+      const x = (R() - 0.5) * 140, z = (R() - 0.5) * 140;
+      if (okGrass(x, z)) spots.push({ x, z, s: 0.8 + R() * 0.9, r: R() * 6.28 });
+    }
+    const grassM = new THREE.InstancedMesh(tuftGeo,
+      new THREE.MeshStandardMaterial({ color: "#ffffff", flatShading: true, roughness: 1, side: THREE.DoubleSide }), spots.length);
+    grassM.receiveShadow = true;
+    const base = new THREE.Color("#6d9a45");
+    spots.forEach((p, i) => {
+      dummy.position.set(p.x, heightAt(p.x, p.z) - 0.03, p.z);
+      dummy.rotation.set(0, p.r, 0); dummy.scale.setScalar(p.s); dummy.updateMatrix();
+      grassM.setMatrixAt(i, dummy.matrix);
+      grassM.setColorAt(i, base.clone().offsetHSL((R() - 0.5) * 0.05, (R() - 0.5) * 0.1, (R() - 0.5) * 0.12));
+    });
+    group.add(grassM);
+
+    const blooms = spots.filter((_, i) => i % 5 === 0);
+    const flowerM = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.09, 0),
+      new THREE.MeshStandardMaterial({ color: "#ffffff", flatShading: true, roughness: 0.8 }), blooms.length);
+    const petals = ["#f4f0e2", "#f1cc47", "#c68ad3", "#e8876a"].map(c => new THREE.Color(c));
+    blooms.forEach((p, i) => {
+      dummy.position.set(p.x + 0.05, heightAt(p.x, p.z) + 0.5 * p.s, p.z);
+      dummy.rotation.set(R(), R(), R()); dummy.scale.setScalar(0.8 + R() * 0.6); dummy.updateMatrix();
+      flowerM.setMatrixAt(i, dummy.matrix);
+      flowerM.setColorAt(i, petals[Math.floor(R() * petals.length)]);
+    });
+    group.add(flowerM);
+  }
+
+  /* ── 붉은 흙 언덕의 바위 — 가장자리에 몇 개 ───────────────── */
+  {
+    const n = 8, m = mk(new THREE.DodecahedronGeometry(0.8, 0), "#9e4f34", n);
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2 + R() * 0.5, rr = 6.2 + R() * 1.6;
+      const x = HILL.x + Math.sin(a) * rr, z = HILL.z + Math.cos(a) * rr, s = 0.6 + R() * 0.8;
+      dummy.position.set(x, heightAt(x, z) + 0.15 * s, z);
+      dummy.rotation.set(R() * 3, R() * 3, R() * 3);
+      dummy.scale.set(s * 1.2, s * 0.8, s);
+      dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix);
+      colliders.push({ x, z, r: 0.6 * s });
+    }
   }
 
   /* ── 움집 — 마을을 둥글게 두른 다섯 채 (움집 GLB가 오면 갈아 끼운다) ─ */
@@ -249,5 +317,5 @@ export function buildWorld(scene) {
     typeStone.material.emissiveIntensity = 0.7 + 0.35 * Math.sin(t * 2.4);
   }
 
-  return { group, colliders, huts, firePit, sticks, typeStone, water, update, heightAt };
+  return { group, colliders, huts, firePit, sticks, typeStone, water, sky, update, heightAt };
 }

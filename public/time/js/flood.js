@@ -70,6 +70,7 @@ export async function flood(G) {
 
   G.chapter("1장 · 말만 있던 시대");
   G.missLabel = "말이 안 통한 횟수";
+  G.weather("rain");                               // 며칠째 그치지 않는 비
 
   for (let round = 1; ; round++) {
     /* ── 경고 듣기 ───────────────────────────────────── */
@@ -164,5 +165,6 @@ export async function flood(G) {
   G.shot(pit.clone().add(new THREE.Vector3(4.5, 3.2, 6)), pit.clone().add(new THREE.Vector3(0, 2.2, 0)));
   await G.typeGlow();
   G.shot(null);
+  G.weather("clear");                              // 비가 걷히고 다음 시대로
   return S;
 }
