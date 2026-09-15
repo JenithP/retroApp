@@ -13,6 +13,8 @@ import * as THREE from "three";
 const PAPA = "사냥꾼", MAMA = "엄마", NU = "빠른 발 누", WE = "나";
 export const WARNING = "하늘이 울고, 또 운다. 그리고 산의 물이 배고프다.\n배고픈 물이 내려온다. 해가 눕기 전에.\n붉은 흙 등으로 올라라. 늙은 발 먼저, 작은 발 먼저.";
 const LIMIT = 180;              // 「전하세요」부터 3분
+// 네 번 막히면 보여 주는 예시 풀이 — 칸에 그대로 넣어 준다
+const MODEL = "비가 계속 와서 산의 물이 불어 넘쳐 내려온다는 뜻이야. 해가 지기 전에 높은 언덕으로 피하라는 말이고, 늙은 사람과 아이 먼저라고 했어.";
 const SAME = 0.9;               // 들은 말과 이만큼 같아야 엄마가 알아듣는다
 
 const norm = s => s.replace(/[\s.,!?…·'"「」()\-~]/g, "");
@@ -90,16 +92,25 @@ export async function flood(G) {
 
     /* ── 뜻 풀기 ─────────────────────────────────────── */
     G.objective("사냥꾼의 말은 무슨 뜻일까? 조원과 의논해 적으십시오.");
-    let replay = 1, misses = 0;
+    let replay = 1, misses = 0, prefill = "";
     for (;;) {
+      const showExample = misses >= 4;            // 네 번 막히면 예시 풀이를 먼저 내준다
       const text = await talk.ask(WE, "사냥꾼의 말은 무슨 뜻일까? 조원과 의논해 오늘날 말로 풀어 적어 보자.",
-        { placeholder: "사냥꾼의 말은 … 라는 뜻이다", button: "뜻 풀이 내기", extra: replay ? "한 번 더 듣기" : null });
+        { placeholder: "사냥꾼의 말은 … 라는 뜻이다", button: "뜻 풀이 내기", prefill,
+          extra: showExample ? "예시 풀이 보기" : (replay ? "한 번 더 듣기" : null) });
+      if (text === null && showExample) {         // 예시 풀이 — 칸에 넣어 주고 다시 묻는다
+        prefill = MODEL;
+        S.examples = (S.examples || 0) + 1;
+        await talk.say("", "(예시 풀이를 칸에 적어 두었습니다. 그대로 보내도 되고, 고쳐 써도 됩니다.)");
+        continue;
+      }
       if (text === null) {                        // 한 번 더 듣기 — 딱 한 번
         replay--; S.replays++;
         talk.close();
         papa.avatar.talking = true; await playWarning(G); papa.avatar.talking = false;
         continue;
       }
+      prefill = text;
       S.meaningTries++;
       talk.wait("", "(조원들의 풀이를 곰곰이 따져 본다…)");
       const r = await judge("floodMeaning", text);
@@ -121,16 +132,25 @@ export async function flood(G) {
     G.objective("마을로 달려가 엄마에게 사냥꾼의 말을 전하십시오!");
     const ok = await G.timed(limit, async alive => {
       await G.interact(mama, "말 전하기", 3.2);
+      let wrong = 0;
       for (;;) {
         if (!alive()) return false;
         const t = await talk.ask(WE, "엄마에게 사냥꾼의 말을 전하자. 들은 말 그대로!",
-          { placeholder: "사냥꾼이 한 말 그대로", button: "엄마에게 말하기" });
+          { placeholder: "사냥꾼이 한 말 그대로", button: "엄마에게 말하기",
+            extra: wrong >= 3 ? "경고 다시 듣기" : null });
+        if (t === null) {                         // 세 번 넘게 막히면 한 번 더 들려준다 — 시간은 계속 흐른다
+          S.replays++;
+          talk.close();
+          await playWarning(G);
+          continue;
+        }
         if (!alive()) return false;
         S.relayTries++;
         const sim = similarity(norm(t), norm(WARNING));
         const pass = sim >= SAME;
         G.log({ kind: "relay", chapter: "1-flood", text: t.slice(0, 300), sim: Math.round(sim * 100), ok: pass });
         if (pass) return true;
+        wrong++;
         audio.huh(); mama.avatar.play("tilt", 1.4);
         G.miss("엄마가 알아듣지 못했다", `들은 말과 ${Math.round(sim * 100)}% 같다 — 그대로 전해야 한다`);
         await talk.say(MAMA, "(고개를 갸웃한다) …? 엄마는 모른다. 사냥꾼이 한 말, 그 말 그대로 해라!");

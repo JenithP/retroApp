@@ -33,6 +33,16 @@ const HINTS = {
              "어릴 때 오래 기억한 것은 긴 설명이었나요, 여러 번 부른 노래였나요?"],
 };
 
+// 네 번 막히면 보여 주는 예시 답 — 칸에 그대로 넣어 주고, 고쳐 써도 된다
+const MODEL = {
+  intro:    "나는 누가 본 반짝이는 돌에서 나온 사람이야.",
+  fireName: "밤에 빨갛게 일렁이고, 가까이 가면 뜨겁고, 그 위에 고기를 올리면 부드러워지는 것 있잖아.",
+  material: "밟으면 딱 소리가 나는 마른 막대를 가져와.",
+  method:   "추운 날 손바닥 비비듯이, 그 막대를 판에 세우고 손바닥 사이에 끼워 빠르게 비벼.",
+  ember:    "둥지에서 떨어진 아기 새한테 하듯, 살살 입김을 불어 줘.",
+  remember: "노래로 만들어서 같이 여러 번 부르자.",
+};
+
 // 판정 서버에 닿지 않을 때만 쓰는 간단한 판정 — 수업이 멈추지 않게
 const OFFLINE = {
   intro:    { no: /서울|대학|학생|한국|미래|학교|과거|시대/ },
@@ -76,7 +86,13 @@ export async function chapter1(G) {
     let fails = 0, last = "";
     for (;;) {
       const hint = fails >= 2 ? HINTS[step][Math.min(fails - 2, 1)] : "";
-      const text = await talk.ask(WE, prompt, { prefill: last });
+      const text = await talk.ask(WE, prompt, { prefill: last, extra: fails >= 4 ? "예시 답 보기" : null });
+      if (text === null) {                       // 예시 답 — 칸에 넣어 주고 다시 묻는다
+        last = MODEL[step];
+        S.examples = (S.examples || 0) + 1;
+        await talk.say("", "(예시 답을 칸에 적어 두었습니다. 그대로 보내도 되고, 고쳐 써도 됩니다.)");
+        continue;
+      }
       last = text;
       S.tries++;
 
@@ -85,7 +101,8 @@ export async function chapter1(G) {
       const r = await judge(step, text);
       if (r.offline) S.offline++;
       S.answers.push({ step, text: text.slice(0, 300), ok: r.understood });
-      G.log({ kind: "answer", chapter: "1-fire", step, text: text.slice(0, 300), ok: r.understood, offline: r.offline });
+      G.log({ kind: "answer", chapter: "1-fire", step, text: text.slice(0, 300), ok: r.understood, offline: r.offline,
+              example: text.trim() === (MODEL[step] || "").trim() });
 
       if (r.understood) {
         audio.chime(); nu.avatar.play("joy", 1.3);
