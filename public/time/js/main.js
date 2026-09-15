@@ -36,8 +36,9 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight("#ffe0ad", 2.5);
 sun.castShadow = true;
 sun.shadow.mapSize.set(touchy ? 1024 : 2048, touchy ? 1024 : 2048);
-Object.assign(sun.shadow.camera, { left: -28, right: 28, top: 28, bottom: -28, near: 1, far: 140 });
-sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+// 해가 기울어 그림자가 길다 — 상자를 넉넉히 잡지 않으면 가장자리에서 그림자가 잘려 깜빡인다
+Object.assign(sun.shadow.camera, { left: -42, right: 42, top: 42, bottom: -42, near: 1, far: 190 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.06;
 scene.add(sun, sun.target);
 
 function resize() {
@@ -545,7 +546,12 @@ function tick() {
   for (const [k, o] of Object.entries(npc)) {
     if (o.path) {
       const P = o.path, t = P.pts[P.i];
-      const waiting = P.follow && Math.hypot(P.follow.pos.x - o.pos.x, P.follow.pos.z - o.pos.z) > 9;
+      // 기다림과 걸음이 경계선에서 매 프레임 번갈아 바뀌지 않게 — 9.5 에서 멈추고 8 에서 다시 걷는다
+      if (P.follow) {
+        const d = Math.hypot(P.follow.pos.x - o.pos.x, P.follow.pos.z - o.pos.z);
+        P.wait = P.wait ? d > 8 : d > 9.5;
+      }
+      const waiting = !!P.wait;
       if (waiting) { o.avatar.speed = 0; o.avatar.lookAt(P.follow.pos); }
       else {
         o.avatar.lookAt(null);
@@ -679,8 +685,11 @@ function tick() {
   }
 
   // 해는 우리를 따라다닌다 — 그림자 상자를 좁게 쓰려고
-  sun.position.set(player.pos.x + 34, 34, player.pos.z + 20);     // 조금 기운 해 — 그림자가 길게
-  sun.target.position.set(player.pos.x, 0, player.pos.z);
+  // 해는 우리를 따라다니되, 그림자 상자가 흔들리지 않게 2미터 격자에 맞춰 옮긴다
+  const gx = Math.round(player.pos.x / 2) * 2, gz = Math.round(player.pos.z / 2) * 2;
+  sun.position.set(gx + 30, 42, gz + 18);
+  sun.target.position.set(gx, 0, gz);
+  sun.target.updateMatrixWorld();
 
   renderer.render(scene, camera);
 }

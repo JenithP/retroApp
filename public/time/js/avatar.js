@@ -75,6 +75,7 @@ export function makeAvatar(o = {}) {
     root, body, head, arms, legs, color: C,
     height: (LEG + TORSO + HEAD) * C.scale,
     speed: 0,
+    speedSmooth: 0,                          // 동작을 섞을 때 쓰는, 천천히 따라오는 속도
     glb: null,
 
     /** 이 지점을 바라본다 (머리만, 너무 뒤면 몸도 돌린다). null이면 앞을 본다. */
@@ -88,9 +89,12 @@ export function makeAvatar(o = {}) {
 
     update(dt) {
       idleT += dt;
-      const walking = A.speed > 0.15;
+      // 속도가 0과 3.6 사이를 툭툭 오가면 서 있기와 걷기가 매 프레임 바뀌어 번쩍인다. 부드럽게 따라가게 한다
+      A.speedSmooth += (A.speed - A.speedSmooth) * (1 - Math.exp(-dt * 6));
+      if (A.speedSmooth < 0.02) A.speedSmooth = 0;
+      const walking = A.speed > 0.15 || A.speedSmooth > 0.35;
       if (walking) phase += dt * (3.2 + A.speed * 0.9);
-      const sw = walking ? Math.sin(phase) * Math.min(1, A.speed / 3) * 0.75 : 0;
+      const sw = walking ? Math.sin(phase) * Math.min(1, A.speedSmooth / 3) * 0.75 : 0;
 
       let gNow = null;                         // 이번 프레임의 몸짓 — GLB 모델도 이걸 보고 따라 한다
       // 기본 자세 — 걷거나 숨 쉬거나
@@ -150,7 +154,7 @@ export function makeAvatar(o = {}) {
       eyes.forEach(e => (e.scale.y = shut ? 0.15 : 1));
       if (blinkT < 0) blinkT = 2.5 + Math.random() * 3.5;
 
-      if (A.glb) A.glb.update(dt, A.speed, lookYaw, gNow, walking ? phase : null);
+      if (A.glb) A.glb.update(dt, A.speedSmooth, lookYaw, gNow, walking ? phase : null);
     },
   };
   return A;
