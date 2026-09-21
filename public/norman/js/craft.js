@@ -39,8 +39,6 @@ export function paint() {
       <button class="big cmake" id="cmake"${found ? "" : " disabled"}>단서 만들기</button>
     </div>
 
-    ${bookHTML(!mine.length)}
-
     <div class="cmats">
       <h3>내 재료 <small>누르면 조합대에 올라갑니다</small></h3>
       ${mine.length
@@ -60,7 +58,9 @@ export function paint() {
       ${purse.tools.length
         ? `<div class="tlist">${purse.tools.map(toolChip).join("")}</div>`
         : `<p class="cempty">아직 만든 단서가 없습니다.</p>`}
-    </div>`;
+    </div>
+
+    ${bookHTML(!mine.length)}`;
 }
 
 function wornList() {
