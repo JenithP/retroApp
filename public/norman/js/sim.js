@@ -159,9 +159,14 @@ function verdict(job, st, evs, stuck) {
   const done = doneSteps(job, st);
   const stray = strayHits(job, st);
 
+  // 의뢰가 그 부품에 맞는 말을 적어 두었으면 그것을 쓴다.
+  // 「누를 수 있는 곳인지 모름」보다 「카드 전체를 눌러 들어갈 수 있는지
+  // 알기 어렵습니다」가 학생에게 훨씬 잘 와닿는다.
   const words = stuck.map(k => {
     const bits = k.split(":");
     const p = partOf(job, bits[0]);
+    const own = p && p.stuck && p.stuck[bits[1]];
+    if (own) return own;
     return (p && p.label ? p.label + " — " : "") + STUCK[bits[1]];
   });
 

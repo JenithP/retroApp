@@ -31,7 +31,8 @@ export const needOf = p => p.need || (NEED[p.kind] || (() => []))(p);
 
 /** 어떤 단서가 무엇을 알려 주는가 */
 const GIVES = {
-  label: ["name"], guide: ["name"], unit: ["name"],
+  label: ["name"], guide: ["name", "push"], unit: ["name"],
+  cardedge: ["push"], chevron: ["push"],
   bold: ["name", "push"], iconbtn: ["name", "push"],
   bigbtn: ["push"], press: ["push"],
   caret: ["type"], hot: ["type", "push"],
@@ -57,6 +58,98 @@ function el(tag, cls, text) {
   if (cls) n.className = cls;
   if (text != null) n.textContent = text;
   return n;
+}
+
+
+/* ── 카드 ─────────────────────────────────────────────────────
+   카드는 의뢰마다 다르게 생겨야 한다. 쇼핑은 상품 카드, 숙박은 객실 카드,
+   SNS 는 게시물 카드… 전부 같은 회색 네모로 그리면 「회색 버튼 퍼즐」이 된다.
+
+   그러면서도 **누를 수 있다는 것은 알리지 않는다.** 사진도 이름도 값도 다
+   보이는데, 이 덩어리 전체가 하나의 누를 거리인지 사진만 눌리는지는 알 수 없다.
+   문제는 「조작할 것이 없음」이 아니라 「있는데 그 사실이 애매함」이다. */
+
+function cardOf(p) {
+  const n = el("button", "box cardbox v-" + (p.visual || "plain"));
+  n.dataset.act = "press:" + p.id;
+  if (p.decoy) n.classList.add("decoy");
+
+  switch (p.visual) {
+    case "product": {                       // 사진 · 상품명 · 값
+      n.append(
+        el("span", "cshot"),
+        (function () {
+          const t = el("span", "ctext");
+          t.append(el("span", "cname", p.label || ""),
+                   el("span", "csub", p.sub || ""),
+                   el("span", "cprice", p.price || ""));
+          return t;
+        })());
+      return n;
+    }
+    case "hotel": {                         // 사진 · 이름 · 별점 · 1박 값
+      n.append(
+        el("span", "cshot wide"),
+        (function () {
+          const t = el("span", "ctext");
+          t.append(el("span", "cname", p.label || ""),
+                   el("span", "cstar", p.sub || ""),
+                   el("span", "cprice", p.price || ""));
+          return t;
+        })());
+      return n;
+    }
+    case "post": {                          // 게시물 — 사진 위, 글 아래
+      n.classList.add("col");
+      n.append(el("span", "cshot tall"),
+               el("span", "cname", p.label || ""),
+               el("span", "cby", p.sub || ""));
+      return n;
+    }
+    case "event": {                         // 캘린더 일정 블록
+      n.append(el("span", "cwhen", p.at || ""),
+               el("span", "cname", p.label || ""));
+      return n;
+    }
+    case "file": {                          // 파일 한 줄
+      n.append(el("span", "cfile"),
+               el("span", "cname", p.label || ""),
+               el("span", "csize", p.sub || ""));
+      return n;
+    }
+    case "article": {                       // 기사 — 제목과 요약
+      n.classList.add("col");
+      n.append(el("span", "cname", p.label || ""),
+               el("span", "csub", p.sub || ""));
+      return n;
+    }
+    case "chart": {                         // 막대 그래프
+      const bars = el("span", "cbars");
+      (p.bars || [40, 62, 88, 55, 70, 34, 48]).forEach(function (h) {
+        const b = el("i");
+        b.style.height = h + "%";
+        bars.appendChild(b);
+      });
+      n.classList.add("col");
+      n.append(el("span", "cname", p.label || ""), bars);
+      return n;
+    }
+    case "page": {                          // 전자책 본문
+      n.classList.add("col", "paper");
+      (p.lines || ["", "", "", "", ""]).forEach(function () {
+        n.appendChild(el("span", "cline"));
+      });
+      return n;
+    }
+    case "frame": {                         // 카메라 미리보기 따위
+      n.classList.add("col", "viewer");
+      n.appendChild(el("span", "cshot tall"));
+      return n;
+    }
+    default:
+      n.textContent = p.label || "";
+      return n;
+  }
 }
 
 /** 부품 하나를 짓는다. st 는 이 화면의 상태. */
@@ -86,12 +179,7 @@ export function build(p, st) {
       n.append(el("span", "tglname", p.label || ""), el("span", "tglknob"));
       return n;
     }
-    case "card": {
-      const n = el("button", "box cardbox", p.label || "");
-      n.dataset.act = "press:" + p.id;
-      if (p.decoy) n.classList.add("decoy");
-      return n;
-    }
+    case "card": return cardOf(p);
     case "icon": {
       const n = el("button", "box iconbox");
       n.dataset.act = "press:" + p.id;

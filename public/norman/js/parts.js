@@ -63,6 +63,14 @@ export const RECIPES = [
     when: "idle", on: ["input"], gulf: "실행",
     line: "숫자가 금액인지 횟수인지처럼 단위를 알려줍니다" },
 
+  { a: "frame", b: "tint", id: "cardedge", name: "떠 보이는 카드",
+    when: "idle", on: ["button", "list"], gulf: "실행",
+    line: "테두리와 그림자로 이 덩어리 전체가 하나의 누를 거리임을 보여줍니다" },
+
+  { a: "arrow", b: "frame", id: "chevron", name: "들어가기 화살표",
+    when: "idle", on: ["button", "list"], gulf: "실행",
+    line: "오른쪽 끝의 › 로 눌러서 들어가는 곳임을 보여줍니다" },
+
   { a: "notch", b: "frame", id: "grip", name: "드래그 손잡이",
     when: "idle", on: ["list"], gulf: "실행",
     line: "밀거나 끌 수 있는 부분임을 보여줍니다" },

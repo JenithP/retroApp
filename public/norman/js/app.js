@@ -84,6 +84,8 @@ function dress(box, core, at, id, words) {
   if (on("bold"))   core.classList.add("sg-bold");
   if (on("grip"))   core.classList.add("sg-grip");
   if (on("iconbtn")) core.classList.add("sg-icon");
+  if (on("cardedge")) core.classList.add("sg-cardedge");
+  if (on("chevron")) core.classList.add("sg-chevron");
 
   if (on("label")) box.prepend(el("p", "sg-label", arg("label") || "…"));
   if (on("unit"))  { core.classList.add("sg-unit"); box.dataset.unit = arg("unit") || ""; }

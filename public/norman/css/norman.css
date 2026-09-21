@@ -73,10 +73,8 @@ h2{font-family:var(--serif);font-size:1rem;margin:0}
 .order h1{font-family:var(--serif);font-size:1.4rem;margin:1px 0 4px}
 .otask{margin:0 0 10px;font-size:.88rem}
 .oparts{display:flex;flex-wrap:wrap;gap:5px;margin:0}
-.part{font-family:var(--sans);font-size:.74rem;color:var(--ui-soft);background:var(--panel);
-  border:1px solid var(--line);border-radius:4px;padding:4px 9px;cursor:pointer}
-.part:hover{color:var(--ui)}
-.part.on{background:var(--lamp);border-color:var(--lamp);color:#1A1409;font-weight:500}
+/* 옛 주문서 칩 스타일이었다. 지금 .part 는 화면 속 부품이라 이름이 겹쳐
+   어두운 패널색이 부품 뒤에 깔렸다. 칩은 .part-chip 으로 옮겼으므로 지운다. */
 .onote{margin:7px 0 0;font-size:.76rem;color:var(--ui-soft)}
 
 /* ── 화면 ─────────────────────────────────────────────────── */
