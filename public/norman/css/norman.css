@@ -140,7 +140,7 @@ select.barg{min-width:78px;padding:3px 5px}
 .statusbar{display:flex;justify-content:space-between;color:#7E756B;font-size:.64rem;
   padding:1px 10px 5px}
 .screen{background:var(--paper);border-radius:18px;padding:16px 14px 20px;color:var(--ink);
-  font-weight:400;min-height:430px;display:flex;flex-direction:column;gap:13px}
+  font-weight:400;min-height:318px;display:flex;flex-direction:column;gap:7px}
 .phonenote{max-width:330px;margin:13px 0 0;font-size:.78rem;color:var(--ui-soft);text-align:center}
 .phonenote b{color:var(--ui);font-weight:500}
 
@@ -149,25 +149,25 @@ select.barg{min-width:78px;padding:3px 5px}
 .field.picked{box-shadow:0 0 0 2px var(--lamp),0 0 0 6px rgba(217,164,65,.16)}
 .fieldrow{display:flex;align-items:center;gap:8px}
 
-/* 아무것도 알려 주지 않는 기본 모습 */
-.namebox{flex:1;background:var(--bare);border:0;border-radius:6px;padding:11px 12px;
-  font-family:var(--sans);font-size:.92rem;color:var(--ink);min-width:0}
-.stepper{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  background:var(--paper-2);border-radius:8px;padding:5px}
-.step{width:42px;height:34px;background:var(--bare);border:0;border-radius:5px;cursor:pointer}
-.step svg{width:15px;height:15px;fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round}
-.value{font-family:var(--sans);font-size:1.12rem;font-weight:500;min-width:66px;text-align:center}
-.savebtn{width:100%;height:46px;background:var(--bare);border:0;border-radius:8px;cursor:pointer;
-  font-family:var(--sans);font-size:.94rem;font-weight:500;color:var(--ink);
-  display:flex;align-items:center;justify-content:center;gap:8px}
-.savebtn svg{width:17px;height:17px;fill:none;stroke:var(--ink);stroke-width:1.5;
-  stroke-linejoin:round;stroke-linecap:round}
-.setlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;
-  max-height:132px;overflow-y:auto}
-.setrow{display:flex;align-items:center;gap:9px;background:var(--paper-2);border-radius:6px;
-  padding:8px 11px;font-size:.84rem;touch-action:pan-y}
-.setrow.empty{height:34px;background:var(--bare);opacity:.45}
-.setno{color:var(--ink-soft);font-size:.76rem;min-width:9px}
+/* 아무것도 알려 주지 않는 기본 모습 —
+   무엇 하나 남보다 크지도 진하지도 않고, 묶여 있지도 않다.
+   크기·색·묶음·간격은 전부 조가 사서 붙여야 할 단서이므로
+   골격에서 공짜로 주지 않는다. 손님이 헤매는 것은 그래서다. */
+.box{background:var(--bare);border:0;border-radius:5px;height:40px;padding:0 10px;
+  width:100%;min-width:0;font-family:var(--sans);font-size:.88rem;font-weight:400;
+  color:var(--ink);display:flex;align-items:center;justify-content:center;gap:7px;
+  cursor:pointer}
+.box svg{width:16px;height:16px;fill:none;stroke:var(--ink);stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+input.box{cursor:text;justify-content:flex-start}
+.row3{display:flex;gap:7px;width:100%}
+.row3 .box{flex:1}
+.val{cursor:default;font-variant-numeric:tabular-nums}
+.setlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;
+  width:100%;max-height:140px;overflow-y:auto}
+.setrow{justify-content:flex-start;gap:9px;font-size:.84rem;touch-action:pan-y}
+.setrow.empty{opacity:.4;cursor:default}
+.setno{color:var(--ink-soft);font-size:.76rem}
 .swipehint{margin-left:auto;color:var(--ink-soft);font-size:.7rem}
 .nope{animation:shake .3s}
 
@@ -180,8 +180,8 @@ select.barg{min-width:78px;padding:3px 5px}
   stroke-linejoin:round;stroke-linecap:round}
 .sg-strong{background:#2F4A63!important;color:#FFF!important}
 .sg-strong svg{stroke:#FFF}
-.sg-big{font-size:1.06rem!important;padding-top:14px!important;padding-bottom:14px!important}
-.sg-wide{padding-left:20px!important;padding-right:20px!important;min-height:48px}
+.sg-big{height:58px!important;font-size:1.12rem!important;font-weight:500!important}
+.sg-wide{height:52px!important;padding-left:18px!important;padding-right:18px!important}
 .sg-grip{background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 6px);
   background-size:26px 100%;background-repeat:no-repeat;background-position:center}
 .sg-glow:hover{filter:brightness(1.14)}
@@ -266,3 +266,47 @@ select.barg{min-width:78px;padding:3px 5px}
 .btip{flex-basis:100%;margin-top:3px;font-size:.7rem;font-weight:400;color:#2C2317;
   line-height:1.4}
 .sblock .btip{display:none}
+
+/* ── 공방 ─────────────────────────────────────────────────── */
+/* 작업대는 나무, 연장대는 벽에 걸린 판, 물건 위에는 등이 하나 켜져 있다. */
+.stage{position:relative}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(52% 30% at 50% 16%,rgba(217,164,65,.18) 0%,transparent 72%)}
+.stage > *{position:relative;z-index:1}
+.bench{position:absolute;left:0;right:0;top:56%;bottom:0;z-index:0;pointer-events:none;
+  background-color:#3B2C1E;
+  background-image:
+    linear-gradient(180deg,rgba(255,255,255,.07) 0 3px,transparent 3px),
+    repeating-linear-gradient(92deg,rgba(0,0,0,.26) 0 2px,transparent 2px 7px,
+      rgba(255,255,255,.035) 7px 8px,transparent 8px 38px),
+    repeating-linear-gradient(180deg,rgba(0,0,0,.22) 0 1px,transparent 1px 74px);
+  border-top:3px solid #55402B;
+  box-shadow:inset 0 18px 30px -16px #000,0 -10px 26px -10px #000}
+.lamp{position:absolute;left:50%;top:-10px;width:420px;height:460px;margin-left:-210px;
+  z-index:0;pointer-events:none;mix-blend-mode:screen;
+  background:conic-gradient(from 180deg at 50% 0%,transparent 0deg 66deg,
+    rgba(217,164,65,.14) 70deg 110deg,transparent 114deg 360deg)}
+
+.rack{background-image:
+  repeating-linear-gradient(180deg,rgba(0,0,0,.14) 0 1px,transparent 1px 15px)}
+
+/* ── 대화창 ───────────────────────────────────────────────── */
+.talk{width:100%;max-width:420px;margin:14px 0 0;display:flex;gap:12px;align-items:flex-start;
+  background:rgba(13,11,9,.93);border:1px solid var(--line);border-left:3px solid var(--lamp);
+  border-radius:8px;padding:12px 14px;cursor:pointer;min-height:76px;
+  box-shadow:0 12px 26px -12px #000}
+.port{position:relative;width:44px;height:44px;flex:none;border-radius:7px;overflow:hidden}
+.port svg,.port img{position:absolute;inset:0;width:100%;height:100%}
+.port img{object-fit:cover}
+.say{min-width:0;flex:1}
+.tname{margin:0 0 3px;font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--lamp)}
+.p-guest ~ .say .tname,.talk:has(.p-guest) .tname{color:#8FB5D9}
+.tline{margin:0;font-size:.88rem;color:var(--ui);line-height:1.55;min-height:1.55em}
+.tnext{align-self:flex-end;color:var(--lamp);font-size:.8rem;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+
+/* 손님이 물건 앞에 서 있다 */
+.guestbox{position:absolute;right:-64px;bottom:34px;width:58px;text-align:center;z-index:2}
+.guestbox .port{width:52px;height:52px;margin:0 auto;box-shadow:0 8px 18px -6px #000}
+.guestbox p{margin:4px 0 0;font-size:.68rem;color:var(--ui-soft)}
+@media(max-width:1240px){.guestbox{right:-10px;bottom:-72px}}

@@ -6,6 +6,7 @@
 
 import { HATS, works } from "./blocks.js";
 import { act, has, countAt } from "./app.js";
+import { GUEST, pickLine } from "./cast.js";
 
 export class Stop extends Error {}
 
@@ -35,9 +36,10 @@ export async function cold(ui) {
   const wait = sleeper(tok);
   const t0 = performance.now();
   const evs = [];
-  const say = (kind, el, text) => {
+  const say = (kind, el, text, voice) => {
     const e = { t: (performance.now() - t0) / 1000, kind, el, text };
     evs.push(e); log(e);
+    if (voice && ui.speak) ui.speak("guest", voice);
   };
 
   const point = async el => {
@@ -63,16 +65,17 @@ export async function cold(ui) {
 
   /** 과업 하나를 하기 전에 그 부품을 찾는다. 단서가 없으면 엉뚱한 데를 눌러 본다. */
   const reach = async (el, others) => {
-    if (findable(s, el)) { say("hit", el, "단서를 보고 곧장 찾는다"); await point(el); await wait(320); return; }
-    say("seek", el, "어디를 눌러야 할지 모른다");
+    if (findable(s, el)) { say("hit", el, "단서를 보고 곧장 찾는다", pickLine("direct", GUEST.direct));
+      await point(el); await wait(320); return; }
+    say("seek", el, "어디를 눌러야 할지 모른다", pickLine("seek", GUEST.seek));
     for (const w of others) {
       await point(w);
       await wait(520);
-      say("miss", w, "여기가 아니다");
+      say("miss", w, "여기가 아니다", pickLine("miss", GUEST.miss));
       await tap(w.code, w.el ?? w);
     }
     await wait(420);
-    say("hit", el, "여러 번 만에 겨우 찾는다");
+    say("hit", el, "여러 번 만에 겨우 찾는다", pickLine("found", GUEST.found));
   };
 
   try {
@@ -80,25 +83,25 @@ export async function cold(ui) {
     await reach("weight", findable(s, "weight") ? [] :
       [{ el: "reps", code: "reps:+" }, { el: "name", code: "name" }]);
     while (st.weight < 60) await tap("weight:+", "weight");
-    say("done", "weight", `무게를 ${st.weight}까지 올렸다`);
+    say("done", "weight", `무게를 ${st.weight}까지 올렸다`, GUEST.set(st.weight));
 
     /* ② 횟수를 8로 */
     await reach("reps", findable(s, "reps") ? [] : [{ el: "weight", code: "weight:+" }]);
     while (st.reps > 8) await tap("reps:-", "reps");
     while (st.reps < 8) await tap("reps:+", "reps");
-    say("done", "reps", `횟수를 ${st.reps}로 맞췄다`);
+    say("done", "reps", `횟수를 ${st.reps}로 맞췄다`, GUEST.set(st.reps));
 
     /* ③ 세 세트 기록 */
     await reach("save", findable(s, "save") ? [] : [{ el: "list", code: "del:0" }]);
     for (let n = 1; n <= 3; n++) {
       await tap("save", "save");
       if (answered(s, "save")) {
-        say("done", "save", `${n}세트째 — 됐다는 것을 알아본다`);
+        say("done", "save", `${n}세트째 — 됐다는 것을 알아본다`, GUEST.ok(n));
       } else {
-        say("repeat", "save", "눌렀는데 아무 말이 없다");
+        say("repeat", "save", "눌렀는데 아무 말이 없다", pickLine("quiet", GUEST.quiet));
         const again = 3 + (n % 2);
         for (let k = 0; k < again; k++) { await tap("save", "save"); await wait(90); }
-        say("repeat", "save", `${again}번 더 눌렀다 — 그만큼 더 쌓였다`);
+        say("repeat", "save", `${again}번 더 눌렀다 — 그만큼 더 쌓였다`, GUEST.bash(again));
       }
     }
 
@@ -107,12 +110,13 @@ export async function cold(ui) {
     // 단위나 이름표가 없으면 무엇이 적혔는지 읽을 수 없어 그대로 넘어간다.
     const bad = st.sets.filter(x => x.weight !== 60 || x.reps !== 8).length;
     if (bad) say("stall", "list",
-      `주문은 60킬로그램 8회인데 ${bad}건이 다른 값으로 적혔다 — 읽을 수가 없어 모르고 지나친다`);
+      `주문은 60킬로그램 8회인데 ${bad}건이 다른 값으로 적혔다 — 읽을 수가 없어 모르고 지나친다`,
+      GUEST.wrong(bad));
 
     if (!findable(s, "list") && !has(s, "list", "idle", "status"))
-      say("stall", "list", "몇 세트가 쌓였는지 읽을 수 없다");
+      say("stall", "list", "몇 세트가 쌓였는지 읽을 수 없다", GUEST.blind);
     else
-      say("done", "list", `목록에서 ${st.sets.length}세트를 확인한다`);
+      say("done", "list", `목록에서 ${st.sets.length}세트를 확인한다`, `${st.sets.length}개 들어갔네요.`);
 
     ui.dot.hidden = true;
     return verdict(evs, st, s);

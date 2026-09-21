@@ -104,7 +104,7 @@ export function render(screen, st, s, hot) {
 
   /* 운동 이름 칸 */
   {
-    const inp = make("input", "namebox");
+    const inp = make("input", "box namebox");
     inp.value = st.name;
     inp.placeholder = "";
     inp.dataset.act = "name";
@@ -114,9 +114,9 @@ export function render(screen, st, s, hot) {
 
   /* 무게·횟수 조절 */
   for (const el of ["weight", "reps"]) {
-    const row = make("div", "stepper");
-    const minus = dress(make("button", "step", ""), s, el);
-    const plus  = dress(make("button", "step", ""), s, el);
+    const row = make("div", "row3");
+    const minus = dress(make("button", "box step", ""), s, el);
+    const plus  = dress(make("button", "box step", ""), s, el);
     minus.dataset.act = el + ":-";
     plus.dataset.act  = el + ":+";
 
@@ -127,7 +127,7 @@ export function render(screen, st, s, hot) {
     }
 
     const u = unitOf(s, el);
-    const val = make("span", "value", st[el] + (u ? " " + u : ""));
+    const val = make("span", "box val", st[el] + (u ? " " + u : ""));
 
     row.append(minus, val, plus);
     const words = el === "weight" ? `${st.weight} 킬로그램` : `${st.reps} 회`;
@@ -136,7 +136,7 @@ export function render(screen, st, s, hot) {
 
   /* 기록 단추 */
   {
-    const btn = make("button", "savebtn", argOf(s, "save", "idle", "label") || "");
+    const btn = make("button", "box savebtn", argOf(s, "save", "idle", "label") || "");
     btn.dataset.act = "save";
     dress(btn, s, "save");
     const ico = argOf(s, "save", "idle", "icon");
@@ -157,7 +157,7 @@ export function render(screen, st, s, hot) {
     const ul = make("ul", "setlist");
     dress(ul, s, "list");
     st.sets.forEach((x, i) => {
-      const li = make("li", "setrow");
+      const li = make("li", "box setrow");
       li.dataset.act = "del:" + i;
       const uw = unitOf(s, "weight"), ur = unitOf(s, "reps");
       li.append(
@@ -167,7 +167,7 @@ export function render(screen, st, s, hot) {
       if (has(s, "list", "idle", "grip")) li.appendChild(make("span", "swipehint", "‹ 밀기"));
       ul.appendChild(li);
     });
-    if (!st.sets.length) ul.appendChild(make("li", "setrow empty", ""));
+    if (!st.sets.length) ul.appendChild(make("li", "box setrow empty", ""));
 
     const words = st.rest > 0
       ? `쉬는 중 ${st.rest}초`

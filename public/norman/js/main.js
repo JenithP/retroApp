@@ -7,6 +7,8 @@
 import { APP, fresh, render, act, argOf, has } from "./app.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
+import { NORMAN, faceSVG } from "./cast.js";
+import * as Talk from "./talk.js";
 import * as Ed from "./editor.js";
 import * as Sim from "./sim.js";
 
@@ -170,6 +172,8 @@ $("reset").addEventListener("click", () => {
   st = fresh();
   nodes.verdict.hidden = true;
   Sim.clearAstray(nodes.hats);
+  document.querySelector(".guestbox")?.remove();
+  Talk.cut("norman", NORMAN.rule);
   nodes.note.innerHTML = "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
   redraw();
 });
@@ -195,6 +199,15 @@ $("cold").addEventListener("click", async () => {
   dot.className = "cursor"; dot.hidden = true;
   document.getElementById("phone").appendChild(dot);
 
+  const who = document.createElement("div");
+  who.className = "guestbox";
+  who.innerHTML = `<div class="port p-guest">${faceSVG("guest")}` +
+    `<img src="img/guest.webp" alt="" onerror="this.remove()"></div><p>손님</p>`;
+  document.getElementById("phone").appendChild(who);
+
+  Talk.hush();
+  Talk.say("norman", NORMAN.beforeGuest, 1800);
+
   nodes.verdict.hidden = false;
   nodes.verdict.innerHTML = `<h3>처음 본 사람</h3><ol class="tl" id="tl"></ol>`;
   const tl = $("tl");
@@ -203,6 +216,7 @@ $("cold").addEventListener("click", async () => {
   const v = await Sim.cold({
     st, scripts, screen: nodes.screen, dot, tok,
     redraw: () => redraw({ hats: false }),
+    speak: (w, t) => Talk.cut(w, t),
     log: e => {
       const li = document.createElement("li");
       li.className = "ev k-" + e.kind;
@@ -212,7 +226,8 @@ $("cold").addEventListener("click", async () => {
     },
   });
   dot.remove();
-  if (v) showVerdict(v);
+  who.remove();
+  if (v) { showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); }
 });
 
 function stopSim() {
@@ -309,6 +324,10 @@ async function enter(n) {
   $("teamtag").textContent = n + "조";
   nodes.whoami.textContent = "주문서 · " + order.name;
 
+  Talk.mount($("talk"));
+  Talk.say("norman", NORMAN.hello(n), 3400);
+  Talk.say("norman", NORMAN.rule);
+
   await restore();
   beat();
 }
@@ -352,9 +371,11 @@ function beat() {
 
 /* ── 시작 ─────────────────────────────────────────────────── */
 
+let greeted = false;
 Ed.paint(nodes, scripts, o => {
   redraw();
   stash();
+  if (!greeted && o.focus) { greeted = true; Talk.say("norman", NORMAN.first); }
   if (o.focus) Ed.focusArg(o.focus);
 });
 Ed.drag($("drag"));
