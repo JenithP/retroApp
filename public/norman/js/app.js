@@ -111,7 +111,8 @@ export function render(screen, job, st, at, layout, arrange) {
   // 이 앱이 무엇을 하는 앱인지는 배경 그림이 말해 준다.
   // 그림은 맥락일 뿐 조작 단서가 아니다 — 만지는 것은 아래 부품들이다.
   // 파일이 없으면 조용히 건너뛴다.
-  if (!noBg[job.id]) {
+  const hasPin = job.parts.some(p => p.kind === "pin");
+  if (!noBg[job.id] && !hasPin) {
     const bg = el("div", "appbg");
     const img = new Image();
     img.alt = "";
@@ -125,10 +126,11 @@ export function render(screen, job, st, at, layout, arrange) {
     .filter(id => partOf(job, id));
   for (const p of job.parts) if (ids.indexOf(p.id) < 0) ids.push(p.id);
 
-  // 핀은 한 줄로 세우면 지도로 안 보인다 — 판 위에 흩어 놓는다
+  // 핀은 한 줄로 세우면 지도로 안 보인다 — 지도 그림 위에 흩어 놓는다
   const pins = ids.filter(id => partOf(job, id).kind === "pin");
   if (pins.length) {
     const map = el("div", "mapbox");
+    if (!noBg[job.id]) map.style.backgroundImage = 'url("img/jobs/' + job.id + '.webp")';
     pins.forEach((id, i) => {
       const p = partOf(job, id);
       const core = build(p, st);

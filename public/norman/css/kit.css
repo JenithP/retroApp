@@ -68,11 +68,12 @@
   font-family:var(--sans);font-size:.84rem;color:var(--ink)}
 .tabseg.on{background:#CFCFCD}
 
-/* 지도와 핀 */
-.mapbox{position:relative;width:100%;height:150px;border-radius:2px;background:#E4E4E1;
+/* 지도와 핀 — 지도 그림이 있으면 그 위에, 없으면 그려 둔 격자 위에 */
+.mapbox{position:relative;width:100%;height:172px;border-radius:2px;background:#E4E4E1;
   background-image:linear-gradient(90deg,#DCDCD9 1px,transparent 1px),
     linear-gradient(180deg,#DCDCD9 1px,transparent 1px);
-  background-size:34px 34px;overflow:hidden}
+  background-size:34px 34px;background-position:center;overflow:hidden}
+.mapbox[style*="url"]{background-size:cover;background-repeat:no-repeat}
 .part.pinpart{position:absolute;width:auto}
 .pindot{width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
   background:#9A9A98;border:0;cursor:pointer;padding:0}
