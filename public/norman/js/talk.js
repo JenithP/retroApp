@@ -9,9 +9,10 @@
 import { CAST, faceSVG, hasArt, probeAll } from "./cast.js";
 
 let box, port, name, line, next;
-let queue = [], busy = false, typer = 0, resting = null;
+let queue = [], busy = false, typer = 0, resting = null, onWho = null;
 
-export function mount(el) {
+export function mount(el, opts = {}) {
+  onWho = opts.onWho || onWho;
   if (box === el) return;                 // 조를 바꿔 다시 들어와도 한 번만 건다
   box = el;
   box.innerHTML =
@@ -32,6 +33,7 @@ function face(who) {
   port.innerHTML = faceSVG(who) +
     (hasArt(who) ? `<img src="img/${who}.webp" alt="">` : "");
   name.textContent = c?.name || "";
+  onWho?.(who);
 }
 
 /** 한 마디. hold 를 주면 그만큼 머물렀다 다음으로 간다. */
@@ -54,7 +56,7 @@ let cur = null;
 function run() {
   const it = queue.shift();
   cur = it;
-  if (!it) { busy = false; next.hidden = true; return; }
+  if (!it) { busy = false; next.hidden = true; onWho?.(null); return; }
   busy = true;
   box.hidden = false;
   face(it.who);

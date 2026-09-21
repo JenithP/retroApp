@@ -309,7 +309,35 @@ function showVerdict(v) {
 
 /* ── 자리 옮기기 — 공방 · 상점 · 앱시장 ───────────────────── */
 
-function coin() { $("coin").textContent = purse.point; }
+function coin() {
+  $("coin").textContent = purse.point;
+  nudgePortrait();
+}
+
+/* ── 벽에 걸린 노만 영감 ──────────────────────────────────── */
+
+/** 지금 말하는 사람이 노만이면 액자가 밝아진다. */
+function lit(who) {
+  $("portrait")?.classList.toggle("talking", who === "norman");
+}
+
+// 주머니가 비어 가면 액자가 스스로 빛난다 — 이것부터가 시그니파이어다.
+const LOW = 150;
+let nagged = false;
+function nudgePortrait() {
+  const port = $("portrait");
+  if (!port) return;
+  const low = purse.point < LOW && Quiz.left() > 0;
+  port.classList.toggle("low", low);
+  $("portping").hidden = !low;
+  if (low && !nagged && where === "bench") {
+    nagged = true;
+    Talk.say("norman", NORMAN.lowPoint(purse.point));
+  }
+  if (!low) nagged = false;
+}
+
+$("portrait").addEventListener("click", () => go("quiz"));
 
 function go(to) {
   where = to;
@@ -332,6 +360,8 @@ function go(to) {
         Talk.cut("norman", n
           ? `${n}개 사 왔구먼. ${paid}포인트 나갔네. 이제 어디에 붙일지 보게.`
           : NORMAN.rule);
+        nagged = false;
+        nudgePortrait();          // 알림 뒤에 줄을 서게 한다
       },
     });
 
@@ -412,10 +442,11 @@ async function enter(n) {
   $("teamtag").textContent = n + "조";
   nodes.whoami.textContent = "주문서 · " + order.name;
 
-  Talk.mount($("talk"));
+  Talk.mount($("talk"), { onWho: lit });
+  Talk.say("norman", NORMAN.wake(n), 3200);
   // 주문은 앱시장 중개인이 물어 온다. 나중에 심사하고 값을 매기는 것도 같은 사람이다.
   BROKER.knock.forEach((t, i) => Talk.say("critic", t, i < 2 ? 2600 : 3000));
-  Talk.say("norman", NORMAN.heard(n), 3400);
+  Talk.say("norman", NORMAN.heard(), 3400);
   Talk.say("norman", NORMAN.rule, 3600);
   Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.", 3800);
   Talk.say("norman", NORMAN.broke);
