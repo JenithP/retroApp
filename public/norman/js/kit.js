@@ -61,6 +61,42 @@ function el(tag, cls, text) {
 }
 
 
+/* ── 목록 한 줄 ───────────────────────────────────────────────
+   가게 줄과 편지 줄과 파일 줄은 다르게 생겼다. 전부 같은 회색 띠로 그리면
+   무슨 목록인지 알 수 없다. 다만 **밀 수 있다는 것은 알리지 않는다.** */
+
+function rowOf(p, v) {
+  const n = el("div", "box listrow v-" + (p.visual || "plain"));
+  n.dataset.act = "swipe:" + p.id;
+  if (v === "gone") n.classList.add("gone");
+
+  switch (p.visual) {
+    case "store":                         // 배달 가게 — 사진·이름·걸리는 시간
+      n.append(el("span", "rshot"),
+               wrapText(p.label, p.sub));
+      return n;
+    case "mail":                          // 편지 — 보낸 이·제목·시각
+      n.append(el("span", "rdot"),
+               wrapText(p.label, p.sub),
+               el("span", "rat", p.at || ""));
+      return n;
+    case "file":                          // 파일 — 아이콘·이름·크기
+      n.append(el("span", "rfile"),
+               el("span", "rname", p.label || ""),
+               el("span", "rsize", p.sub || ""));
+      return n;
+    default:
+      n.textContent = p.label || "";
+      return n;
+  }
+}
+
+function wrapText(name, sub) {
+  const t = el("span", "rtext");
+  t.append(el("span", "rname", name || ""), el("span", "rsub", sub || ""));
+  return t;
+}
+
 /* ── 카드 ─────────────────────────────────────────────────────
    카드는 의뢰마다 다르게 생겨야 한다. 쇼핑은 상품 카드, 숙박은 객실 카드,
    SNS 는 게시물 카드… 전부 같은 회색 네모로 그리면 「회색 버튼 퍼즐」이 된다.
@@ -157,7 +193,12 @@ export function build(p, st) {
   const v = st.vals[p.id];
   switch (p.kind) {
     case "input": {
-      const n = el("input", "box inbox" + (p.look === "dead" ? " faded" : ""));
+      // 칸도 의뢰마다 다르게 생겼다. 금액 칸은 크고 오른쪽으로 붙고,
+      // 메모 본문은 넓고, 대화 입력은 낮고 둥글다.
+      // 다만 **여기에 쓸 수 있다는 것은 어느 모습도 알리지 않는다** —
+      // 커서가 보이지 않고 테두리도 없다.
+      const n = el("input", "box inbox v-" + (p.visual || "plain") +
+        (p.look === "dead" ? " faded" : ""));
       n.value = v == null ? (p.value || "") : v;
       n.dataset.act = "type:" + p.id;
       n.setAttribute("aria-label", p.label || "칸");
@@ -189,12 +230,7 @@ export function build(p, st) {
       if (p.decoy) n.classList.add("decoy");
       return n;
     }
-    case "list": {
-      const n = el("div", "box listrow", p.label || "");
-      n.dataset.act = "swipe:" + p.id;
-      if (v === "gone") n.classList.add("gone");
-      return n;
-    }
+    case "list": return rowOf(p, v);
     case "slider": {
       const n = el("div", "box slidertrack");
       n.dataset.act = "drag:" + p.id;

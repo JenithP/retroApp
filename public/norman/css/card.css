@@ -75,3 +75,38 @@
 
 /* 가리키는 안내가 카드에 붙으면 아래에 한 줄 */
 .part.k-card .sg-guide{margin-top:2px}
+
+/* ── 목록 한 줄 ───────────────────────────────────────────────
+   가게·편지·파일이 다르게 생겨야 무슨 목록인지 안다.
+   그러면서 밀 수 있다는 표시는 어디에도 없다. */
+.listrow{height:auto;min-height:0;padding:9px 2px;background:transparent;
+  border-radius:0;gap:10px;align-items:center}
+.listrow + .listrow{border-top:1px solid #EDEDEA}
+.rshot{flex:none;width:44px;height:44px;border-radius:6px;background:#E2E2DF;
+  background-image:linear-gradient(135deg,#E8E8E5 0 46%,#DBDBD8 46% 54%,#E8E8E5 54%)}
+.rtext{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.rname{font-size:.86rem;font-weight:500;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsub{font-size:.73rem;color:var(--ink-soft);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rat{flex:none;font-size:.7rem;color:var(--ink-soft);align-self:flex-start}
+.rdot{flex:none;width:8px;height:8px;border-radius:50%;background:#B9C6CE;align-self:center}
+.rfile{flex:none;width:20px;height:24px;border-radius:2px;background:#DCDCD9;
+  box-shadow:inset -6px 6px 0 -5px #C4C4C1}
+.rsize{margin-left:auto;flex:none;font-size:.72rem;color:var(--ink-soft)}
+.listrow.v-file .rname{flex:1}
+
+/* 손잡이를 붙이면 그제야 밀 수 있다는 것이 보인다 */
+.listrow.sg-grip{padding-right:26px;background-position:right 6px center}
+
+/* ── 입력칸의 모습 ────────────────────────────────────────────
+   금액은 크게 오른쪽으로, 메모 본문은 넓게, 대화 입력은 낮고 둥글게.
+   어느 모습도 「여기에 쓸 수 있다」를 알리지는 않는다 — 커서가 없다. */
+.inbox.v-amount{height:52px;font-size:1.4rem;font-weight:700;text-align:right;
+  padding-right:14px;background:transparent;border-bottom:1px solid #E4E4E1;border-radius:0}
+.inbox.v-code{height:44px;font-size:.95rem;letter-spacing:.02em;
+  background:#F2F2F0;border-radius:4px}
+.inbox.v-note{height:96px;background:transparent;padding:0 2px;font-size:.9rem;
+  background-image:repeating-linear-gradient(180deg,transparent 0 23px,#EDEDEA 23px 24px);
+  background-size:100% 24px}
+.inbox.v-chat{height:38px;border-radius:19px;background:#F0F0EE;padding:0 14px;font-size:.88rem}
