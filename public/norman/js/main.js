@@ -7,7 +7,7 @@
 import { APP, fresh, render, act, argOf, has } from "./app.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
-import { NORMAN, faceSVG, hasArt } from "./cast.js";
+import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
 import { purse, dump, load } from "./wallet.js";
 import * as Shop from "./shop.js";
 import * as Market from "./market.js";
@@ -181,7 +181,7 @@ $("before").addEventListener("click", e => {
   e.currentTarget.classList.toggle("on", bare);
   e.currentTarget.textContent = bare ? "내 물건" : "원래 물건";
   nodes.note.innerHTML = bare
-    ? "<b>손대기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
+    ? "<b>터치하기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
     : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
   redraw({ hats: false });
 });
@@ -404,8 +404,10 @@ async function enter(n) {
   nodes.whoami.textContent = "주문서 · " + order.name;
 
   Talk.mount($("talk"));
-  Talk.say("norman", NORMAN.hello(n), 3400);
-  Talk.say("norman", NORMAN.rule);
+  // 주문은 앱시장 중개인이 물어 온다. 나중에 심사하고 값을 매기는 것도 같은 사람이다.
+  BROKER.knock.forEach((t, i) => Talk.say("critic", t, i < 2 ? 2600 : 3000));
+  Talk.say("norman", NORMAN.heard(n), 3400);
+  Talk.say("norman", NORMAN.rule, 3600);
   Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.");
 
   await restore();

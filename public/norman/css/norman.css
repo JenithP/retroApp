@@ -399,3 +399,8 @@ input.box{cursor:text;justify-content:flex-start}
 .noteol{margin:0;font-size:.8rem;color:var(--ui-soft);line-height:1.7;
   border:1px dashed var(--line);border-radius:6px;padding:14px 12px;text-align:center}
 .noteol b{color:var(--lamp)}
+
+/* 출품이 반려되었을 때 */
+.offer.turned{border-color:var(--bad)}
+.oprice.bad{color:var(--bad);font-size:2rem}
+.oprice.bad::after{content:""}

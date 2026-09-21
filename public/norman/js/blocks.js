@@ -23,11 +23,11 @@ export const CATS = {
 // 그래서 **손님이 그 순간 속으로 하는 말**을 같이 적는다.
 // 앞의 둘이 노먼의 실행의 간극, 셋째가 평가의 간극이다.
 export const HATS = [
-  { id: "idle",  when: "손대기 전",   ask: "뭘 눌러야 하지?",   gulf: "실행",
+  { id: "idle",  when: "터치하기 전",   ask: "뭘 눌러야 하지?",   gulf: "실행",
     empty: "아무 표시도 없음" },
-  { id: "touch", when: "손대는 동안", ask: "이거 맞나?",        gulf: "실행",
+  { id: "touch", when: "터치하는 동안", ask: "이거 맞나?",        gulf: "실행",
     empty: "만져도 그대로임" },
-  { id: "after", when: "누른 뒤",     ask: "어떻게 된 거지?",   gulf: "평가",
+  { id: "after", when: "터치한 뒤",     ask: "어떻게 된 거지?",   gulf: "평가",
     empty: "아무 말도 없음" },
   { id: "block", when: "못 하게",     ask: "왜 안 되지?",       gulf: "제약",
     empty: "막아 둔 것 없음" },
@@ -82,7 +82,7 @@ export const BLOCKS = [
   { id: "big",    name: "크게 만들기",      cat: "sense", fits: ["idle"],
     tip: "칸과 글자가 한눈에 들어올 만큼 커진다" },
 
-  { id: "glow",   name: "손대면 환해지기",  cat: "sense", fits: ["touch"],
+  { id: "glow",   name: "터치하면 환해지기",  cat: "sense", fits: ["touch"],
     tip: "손가락이 닿는 동안만 밝아진다" },
 
   { id: "check",  name: "체크 표시 띄우기", cat: "sense", fits: ["after"],
