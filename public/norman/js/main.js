@@ -1,83 +1,86 @@
-// 노만의 공방 — 작업대를 잇는다.
+// 노만의 공방 — 자리들을 잇는다.
 //
-// 지금 파이어베이스에 닿는 것은 둘뿐이다 — 붙여 둔 단서를 담아 두는 것(hci4_drafts)과
-// 어느 조가 앉아 있는지 알리는 것(hci4_presence). 둘 다 돈과 무관하다.
-// 상점·장부·품평은 아직 없다. 그쪽은 서버 함수를 거쳐야 하므로 나중에 얹는다.
+// 공방(제작·붙이기) · 상점(재료) · 앱시장(출품) · 문제 풀기(품삯).
+// 파이어베이스에 닿는 것은 붙여 둔 것을 담아 두는 일(hci4_drafts)과
+// 어느 조가 앉아 있는지 알리는 일(hci4_presence)뿐이다.
 
-import { APP, fresh, render, act, argOf, has, DEFAULT_LAYOUT } from "./app.js";
+import { APP, PART, DEFAULT_LAYOUT, fresh, render, act, wears, argOf } from "./app.js";
+import { recipeById } from "./parts.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
 import { purse, dump, load } from "./wallet.js";
+import * as Talk from "./talk.js";
+import * as Craft from "./craft.js";
 import * as Shop from "./shop.js";
 import * as Market from "./market.js";
 import * as Quiz from "./quiz.js";
-import * as Talk from "./talk.js";
-import * as Ed from "./editor.js";
 import * as Sim from "./sim.js";
 
 const $ = id => document.getElementById(id);
 const nodes = {
-  screen: $("screen"), hats: $("hats"), palette: $("palette"), cats: $("cats"),
-  order: $("order"), toast: $("toast"), check: $("checkfx"), verdict: $("verdict"),
-  elname: $("elname"), elhint: $("elhint"), note: $("phonenote"), whoami: $("whoami"),
+  screen: $("screen"), craft: $("craft"), order: $("order"),
+  toast: $("toast"), check: $("checkfx"), verdict: $("verdict"),
+  note: $("phonenote"), whoami: $("whoami"),
 };
 
 let st = fresh();
-const scripts = {};                   // 자리에 붙은 단서. 통째로 갈아 끼우지 않는다.
-let sel = null;
-let tok = null;                       // 시연 중단용
-let where = "bench";                  // 지금 있는 자리 — 공방·상점·앱시장
-let lastRun = null;                   // 손님이 마지막으로 써 본 결과
-let layout = [...DEFAULT_LAYOUT];     // 부품 순서 — 조가 바꾼다
-let arrange = false;                  // 자리 옮기는 중
-let bare = false;                     // 손대기 전 물건을 견주어 보는 중
-let team = null;                      // 조 번호
-let order = null;                     // 맡은 물건
+const attached = {};                  // 부품에 붙인 연장 — 통째로 갈아 끼우지 않는다
+let layout = [...DEFAULT_LAYOUT];
+let arrange = false, bare = false;
+let where = "bench", lastRun = null;
+let team = null, order = null, tok = null;
 
 /* ── 화면 ─────────────────────────────────────────────────── */
 
 function redraw(opt = {}) {
   const a = document.activeElement;
-  const keep = a?.classList?.contains("namebox")
-    ? { v: a.value, s: a.selectionStart } : null;
+  const keep = a && a.classList && a.classList.contains("inbox")
+    ? { act: a.dataset.act, s: a.selectionStart } : null;
 
-  render(nodes.screen, st, bare ? {} : scripts, sel, layout, arrange);
+  render(nodes.screen, st, bare ? {} : attached, null, layout, arrange);
 
   if (keep) {
-    const n = nodes.screen.querySelector(".namebox");
-    if (n) { n.value = keep.v; n.focus(); n.setSelectionRange(keep.s, keep.s); }
+    const n = nodes.screen.querySelector('[data-act="' + keep.act + '"]');
+    if (n) { n.focus(); n.setSelectionRange(keep.s, keep.s); }
   }
-  if (opt.hats !== false) { Ed.hats(sel); Sim.clearBlame(nodes.hats); }
+  if (opt.craft !== false) Craft.paint();
   paintOrder();
 }
 
+/** 주문서 — 어디가 문제인지는 적지 않는다. 찾아내는 것이 과업이다. */
 function paintOrder() {
-  const el = APP.elements.find(e => e.id === sel);
   nodes.order.innerHTML =
-    `<p class="oeyebrow">주문서</p>
-     <h1>${APP.name}</h1>
-     <p class="otask">${APP.task}</p>
-     <p class="oparts">${APP.elements.map(e =>
-        `<button class="part${e.id === sel ? " on" : ""}" data-pick="${e.id}">${e.label}</button>`
-      ).join("")}</p>` +
-    (el ? `<p class="onote">${el.note}</p>` : "");
+    '<p class="oeyebrow">주문서</p>' +
+    '<h1>' + APP.name + '</h1>' +
+    '<p class="otask">' + APP.task + '</p>' +
+    '<p class="ofind">어디가 막히는지는 적혀 있지 않습니다. ' +
+    '<b>테스트해 보기</b>로 직접 찾아내십시오.</p>';
 }
 
-function pick(el) {
-  sel = el;
-  const e = APP.elements.find(x => x.id === el);
-  nodes.elname.textContent = e ? e.label : "부품을 고르세요";
-  nodes.elhint.textContent = e ? e.note : "가운데 화면에서 손볼 곳을 누릅니다";
+/* ── 붙이고 떼기 ──────────────────────────────────────────── */
+
+function attach(part, item) {
+  (attached[part] = attached[part] || []).push(item);
+  const r = recipeById(item.recipe);
+  Talk.cut("norman", PART(part).label + '에 「' + r.name + '」을 붙였네.');
   redraw();
+  stash();
 }
 
-/* ── 하고 난 뒤 — 붙은 단서가 실제로 작동한다 ─────────────── */
+function detach(part, i) {
+  const gone = (attached[part] || []).splice(i, 1)[0];
+  if (gone) Craft.unattach(gone);
+  redraw();
+  stash();
+}
+
+/* ── 하고 난 뒤 — 붙은 연장이 실제로 작동한다 ─────────────── */
 
 let ac = null;
 function blip() {
   try {
-    ac ||= new (window.AudioContext || window.webkitAudioContext)();
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     const o = ac.createOscillator(), g = ac.createGain();
     o.frequency.value = 880; o.type = "triangle";
     g.gain.setValueAtTime(.0001, ac.currentTime);
@@ -89,291 +92,207 @@ function blip() {
 }
 
 let toastTimer = 0;
-function fire(el) {
-  if (has(scripts, el, "after", "toast")) {
-    const msg = argOf(scripts, el, "after", "toast") || "…";
-    nodes.toast.textContent = msg;
+function fire(part) {
+  const at = bare ? {} : attached;
+  if (wears(at, part, "toast")) {
+    nodes.toast.textContent = argOf(at, part, "toast") || "…";
     nodes.toast.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { nodes.toast.hidden = true; }, 1500);
+    toastTimer = setTimeout(function () { nodes.toast.hidden = true; }, 1500);
   }
-  if (has(scripts, el, "after", "check")) {
+  if (wears(at, part, "done")) {
     nodes.check.hidden = false;
     nodes.check.classList.remove("pop");
     void nodes.check.offsetWidth;
     nodes.check.classList.add("pop");
-    setTimeout(() => { nodes.check.hidden = true; }, 700);
+    setTimeout(function () { nodes.check.hidden = true; }, 700);
   }
-  if (has(scripts, el, "after", "buzz")) {
+  if (wears(at, part, "feel")) {
     blip();
-    navigator.vibrate?.(40);
-    document.getElementById("phone").classList.add("shake");
-    setTimeout(() => document.getElementById("phone").classList.remove("shake"), 260);
+    if (navigator.vibrate) navigator.vibrate(40);
+    $("phone").classList.add("shake");
+    setTimeout(function () { $("phone").classList.remove("shake"); }, 260);
   }
-  Sim.glow(nodes.hats, "after");
 }
 
-/* ── 자리 옮기기 — 어디에 두느냐도 단서다 ────────────────── */
+/* ── 손대기 — 물건은 언제나 진짜로 작동한다 ───────────────── */
 
-$("arrange").addEventListener("click", e => {
+nodes.screen.addEventListener("click", function (e) {
+  if (arrange) return;
+  const ctl = e.target.closest("[data-act]");
+  if (!ctl || ctl.dataset.act.indexOf("type") === 0) return;
+  const r = act(st, ctl.dataset.act);
+  redraw({ craft: false });
+  if (r.part && r.did && r.did !== "empty") fire(r.part);
+  if (r.did === "empty") {
+    ctl.classList.add("nope");
+    setTimeout(function () { ctl.classList.remove("nope"); }, 320);
+  }
+});
+
+nodes.screen.addEventListener("input", function (e) {
+  const n = e.target.closest("[data-act]");
+  if (!n || n.dataset.act.indexOf("type") !== 0) return;
+  act(st, n.dataset.act, n.value);
+  redraw({ craft: false });
+});
+
+/* ── 자리 옮기기 ──────────────────────────────────────────── */
+
+$("arrange").addEventListener("click", function (e) {
   arrange = !arrange;
   e.currentTarget.classList.toggle("on", arrange);
-  e.currentTarget.setAttribute("aria-pressed", String(arrange));
   nodes.note.innerHTML = arrange
-    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸십시오. " +
-      "가까이 둔 것은 한 덩어리로 읽힙니다."
+    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸십시오."
     : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
-  if (arrange) Talk.cut("norman", "어디에 두느냐도 알려 주는 일일세. " +
-    "붙여 놓으면 한 덩어리로 보이고, 떼어 놓으면 남남으로 보이지.");
-  redraw({ hats: false });
+  if (arrange) Talk.cut("norman",
+    "어디에 두느냐도 알려 주는 일일세. 가까이 두면 한 덩어리로 보이지.");
+  redraw({ craft: false });
 });
 
 let lift = null;
-nodes.screen.addEventListener("pointerdown", e => {
+nodes.screen.addEventListener("pointerdown", function (e) {
   const h = e.target.closest("[data-grab]");
   if (!h) return;
   e.preventDefault();
   lift = h.dataset.grab;
   document.body.classList.add("dragging");
 });
-
-addEventListener("pointermove", e => {
+addEventListener("pointermove", function (e) {
   if (!lift) return;
-  const fields = [...nodes.screen.querySelectorAll(".field")];
-  let to = fields.length - 1;
-  for (let i = 0; i < fields.length; i++) {
-    const r = fields[i].getBoundingClientRect();
+  const ps = [].slice.call(nodes.screen.querySelectorAll(".part"));
+  let to = ps.length - 1;
+  for (let i = 0; i < ps.length; i++) {
+    const r = ps[i].getBoundingClientRect();
     if (e.clientY < r.top + r.height / 2) { to = i; break; }
   }
   const from = layout.indexOf(lift);
   if (from < 0 || from === to) return;
   layout.splice(to, 0, layout.splice(from, 1)[0]);
-  redraw({ hats: false });
+  redraw({ craft: false });
 });
-
-addEventListener("pointerup", () => {
+addEventListener("pointerup", function () {
   if (!lift) return;
   lift = null;
   document.body.classList.remove("dragging");
   stash();
 });
 
-/* ── 손대기 ───────────────────────────────────────────────── */
+/* ── 머리 단추 ────────────────────────────────────────────── */
 
-nodes.screen.addEventListener("click", e => {
-  if (arrange) {                               // 옮기는 중에는 눌리지 않는다
-    const box = e.target.closest(".field");
-    if (box) pick(box.dataset.el);
-    return;
-  }
-  const ctl = e.target.closest("[data-act]");
-  if (ctl) {                                   // 진짜로 작동한다 — 언제나
-    if (ctl.dataset.act === "name") { pick("name"); return; }
-    const r = act(st, ctl.dataset.act, scripts);
-    redraw({ hats: false });
-    if (r.el && r.did && r.did !== "locked") fire(r.el);
-    if (r.did === "locked") nudge(ctl);
-    if (r.el) { pick(r.el); }
-    return;
-  }
-  const box = e.target.closest(".field");
-  if (box) pick(box.dataset.el);
-});
-
-nodes.screen.addEventListener("input", e => {
-  if (e.target.classList.contains("namebox")) st.name = e.target.value;
-});
-
-function nudge(n) {
-  n.classList.add("nope");
-  setTimeout(() => n.classList.remove("nope"), 320);
-}
-
-nodes.order.addEventListener("click", e => {
-  const b = e.target.closest("[data-pick]");
-  if (b) pick(b.dataset.pick);
-});
-
-/* ── 세트 목록 밀어 지우기 — 아무도 알려 주지 않는 어포던스 ── */
-
-let sw = null;
-nodes.screen.addEventListener("pointerdown", e => {
-  const row = e.target.closest(".setrow[data-act]");
-  if (row) sw = { row, x: e.clientX };
-});
-addEventListener("pointermove", e => {
-  if (!sw) return;
-  const d = Math.min(0, e.clientX - sw.x);
-  sw.row.style.transform = `translateX(${d}px)`;
-  sw.row.style.opacity = String(1 + d / 160);
-});
-addEventListener("pointerup", e => {
-  if (!sw) return;
-  const d = e.clientX - sw.x;
-  const row = sw.row; sw = null;
-  row.style.transform = ""; row.style.opacity = "";
-  if (d < -70) { act(st, row.dataset.act, scripts); redraw({ hats: false }); fire("list"); }
-});
-
-/* ── 쉬는 시계 ────────────────────────────────────────────── */
-
-setInterval(() => {
-  if (st.rest <= 0) return;
-  st.rest--;
-  if (has(scripts, "list", "idle", "status") || has(scripts, "list", "after", "status"))
-    if (!document.activeElement?.classList?.contains("namebox")) redraw({ hats: false });
-}, 1000);
-
-/* ── 단추들 ───────────────────────────────────────────────── */
-
-// 붙이기 전과 나란히 — 해 놓고도 티가 안 난다고 느끼는 것은
-// 대개 견줄 것이 없어서다.
-$("before").addEventListener("click", e => {
+$("before").addEventListener("click", function (e) {
   bare = !bare;
-  e.currentTarget.setAttribute("aria-pressed", String(bare));
   e.currentTarget.classList.toggle("on", bare);
   e.currentTarget.textContent = bare ? "내 물건" : "원래 물건";
   nodes.note.innerHTML = bare
-    ? "<b>터치하기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
+    ? "<b>손대기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
     : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
-  redraw({ hats: false });
+  redraw({ craft: false });
 });
 
-$("reset").addEventListener("click", () => {
-  stopSim();
-  st = fresh();
+$("reset").addEventListener("click", function () {
+  stopSim(); st = fresh();
   nodes.verdict.hidden = true;
-  Sim.clearAstray(nodes.hats);
-  document.querySelector(".guestbox")?.remove();
+  const g = document.querySelector(".guestbox"); if (g) g.remove();
   Talk.cut("norman", NORMAN.rule);
-  nodes.note.innerHTML = "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
   redraw();
 });
 
-$("run").addEventListener("click", () => {
-  stopSim();
-  unbare();
-  st = fresh();
-  nodes.verdict.hidden = true;
+$("cold").addEventListener("click", async function () {
+  stopSim(); st = fresh(); unbare();
   redraw();
-  Sim.markAstray(nodes.hats);
-  nodes.note.innerHTML = "<b>직접 써 보십시오.</b> 붙인 단서가 그대로 작동합니다. " +
-    "제자리가 아닌 단서는 오른쪽에 흐리게 표시됩니다.";
-});
-
-$("cold").addEventListener("click", async () => {
-  stopSim();
-  unbare();
-  st = fresh();
-  redraw();
-  Sim.markAstray(nodes.hats);
-  nodes.note.innerHTML = "<b>처음 만져 보는 사람</b>이 테스트하는 중입니다. 화면에 붙은 것만 보고 합니다.";
+  nodes.note.innerHTML = "<b>처음 만져 보는 사람</b>이 테스트하는 중입니다.";
 
   const dot = document.createElement("div");
   dot.className = "cursor"; dot.hidden = true;
-  document.getElementById("phone").appendChild(dot);
+  $("phone").appendChild(dot);
 
   const who = document.createElement("div");
   who.className = "guestbox";
-  who.innerHTML = `<div class="port p-guest">${faceSVG("guest")}` +
-    (hasArt("guest") ? `<img src="img/guest.webp" alt="">` : "") + `</div><p>테스트</p>`;
-  document.getElementById("phone").appendChild(who);
+  who.innerHTML = '<div class="port p-guest">' + faceSVG("guest") +
+    (hasArt("guest") ? '<img src="img/guest.webp" alt="">' : "") + "</div><p>테스트</p>";
+  $("phone").appendChild(who);
 
   Talk.hush();
   Talk.say("norman", NORMAN.beforeGuest, 1800);
 
   nodes.verdict.hidden = false;
-  nodes.verdict.innerHTML = `<h3>테스트 사용자</h3><ol class="tl" id="tl"></ol>`;
+  nodes.verdict.innerHTML = '<h3>테스트 사용자</h3><ol class="tl" id="tl"></ol>';
   const tl = $("tl");
 
   tok = { dead: false, cancels: [] };
   const v = await Sim.cold({
-    st, scripts, screen: nodes.screen, dot, tok,
-    redraw: () => redraw({ hats: false }),
-    speak: (w, t) => Talk.cut(w, t),
-    log: e => {
+    st: st, attached: attached, screen: nodes.screen, dot: dot, tok: tok,
+    redraw: function () { redraw({ craft: false }); },
+    speak: function (w, t) { Talk.cut(w, t); },
+    log: function (e) {
       const li = document.createElement("li");
       li.className = "ev k-" + e.kind;
-      li.innerHTML = `<b>${e.t.toFixed(1)}초</b><span>${e.text}</span>`;
-      tl.appendChild(li);
-      tl.scrollTop = tl.scrollHeight;
+      li.innerHTML = "<b>" + e.t.toFixed(1) + "초</b><span>" + e.text + "</span>";
+      tl.appendChild(li); tl.scrollTop = tl.scrollHeight;
     },
   });
-  dot.remove();
-  who.remove();
-  if (v) {
-    lastRun = v;                       // 앱시장이 이걸 보고 값을 매긴다
-    showVerdict(v);
-    Talk.say("norman", NORMAN.verdict(v));
-    stash();
-  }
+  dot.remove(); who.remove();
+  if (v) { lastRun = v; showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); stash(); }
 });
 
 function unbare() {
   if (!bare) return;
   bare = false;
   const b = $("before");
-  b.setAttribute("aria-pressed", "false");
-  b.classList.remove("on");
-  b.textContent = "원래 물건";
+  b.classList.remove("on"); b.textContent = "원래 물건";
 }
 
 function stopSim() {
   if (!tok) return;
   tok.dead = true;
-  tok.cancels.forEach(f => f());
+  tok.cancels.forEach(function (f) { f(); });
   tok = null;
-  document.querySelector(".cursor")?.remove();
+  const c = document.querySelector(".cursor"); if (c) c.remove();
 }
 
-/* ── 판정 ─────────────────────────────────────────────────── */
+/* ── 판정 — 고칠 곳이 아니라 「무엇이 불편했는지」를 준다 ──── */
 
 function showVerdict(v) {
   const rows = [
-    ["실행의 간극", v.exec, "무엇을 해야 할지 몰라 헤맨 횟수", v.exec > 0],
+    ["실행의 간극", v.exec, "무엇을 해야 할지 몰라 막힌 횟수", v.exec > 0],
     ["평가의 간극", v.evalGap, "무슨 일이 생겼는지 몰라 잘못 쌓인 건수", v.evalGap > 0],
-    ["주문대로 기록", `${v.right} / 3`,
-      v.wrong ? `엉뚱한 값으로 ${v.wrong}건이 더 적혔습니다`
-              : v.right > 3 ? `같은 것이 ${v.right - 3}건 더 쌓였습니다` : "알맞습니다",
+    ["주문대로 기록", v.right + " / 3",
+      v.wrong ? "엉뚱한 값으로 " + v.wrong + "건" : "알맞습니다",
       v.right !== 3 || v.wrong > 0],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],
   ];
 
   nodes.verdict.innerHTML =
-    `<h3>테스트 사용자 ${v.clean ? "<em class='good'>막힘 없이 해냈습니다</em>" : "<em class='bad'>막혔습니다</em>"}</h3>
-     <div class="scores">${rows.map(([k, n, d, hot]) =>
-        `<div class="score${hot ? " hot" : ""}">
-           <b>${n}</b><span>${k}</span><small>${d}</small></div>`).join("")}</div>
-     <ol class="tl">${v.evs.map(e =>
-        `<li class="ev k-${e.kind}"><b>${e.t.toFixed(1)}초</b><span>${e.text}</span></li>`).join("")}</ol>` +
-    (v.blame.length
-      ? `<p class="blame">비어 있어서 막은 자리 — ${v.blame.map(b =>
-          `<button data-pick="${b.el}">${APP.elements.find(e => e.id === b.el).label} · ${
-            b.hat === "idle" ? "평소에" : "하고 난 뒤"}</button>`).join(" ")}</p>`
-      : `<p class="blame ok">빈 자리 없이 전달되었습니다.</p>`);
-
-  nodes.verdict.querySelectorAll("[data-pick]").forEach(b =>
-    b.addEventListener("click", () => {
-      pick(b.dataset.pick);
-      Sim.flashBlame(nodes.hats, v.blame, b.dataset.pick);
-    }));
+    "<h3>테스트 사용자 " + (v.clean
+      ? "<em class='good'>막힘 없이 해냈습니다</em>"
+      : "<em class='bad'>막혔습니다</em>") + "</h3>" +
+    '<div class="scores">' + rows.map(function (r) {
+      return '<div class="score' + (r[3] ? " hot" : "") + '"><b>' + r[1] +
+        "</b><span>" + r[0] + "</span><small>" + r[2] + "</small></div>";
+    }).join("") + "</div>" +
+    (v.stuck.length
+      ? '<div class="stuck"><p class="stucktop">사용자가 말한 불편</p><ul>' +
+        v.stuck.map(function (t) { return "<li>" + t + "</li>"; }).join("") +
+        '</ul><p class="stuckdim">어느 연장을 만들어 어디에 붙일지는 여러분이 정합니다.</p></div>'
+      : '<p class="stuck ok">막히는 데가 없었습니다. 앱시장에 내놓아 보십시오.</p>') +
+    '<ol class="tl">' + v.evs.map(function (e) {
+      return '<li class="ev k-' + e.kind + '"><b>' + e.t.toFixed(1) +
+        "초</b><span>" + e.text + "</span></li>";
+    }).join("") + "</ol>";
 }
 
-/* ── 자리 옮기기 — 공방 · 상점 · 앱시장 ───────────────────── */
+/* ── 자리 옮기기 — 공방 · 상점 · 앱시장 · 문제 풀기 ───────── */
 
-function coin() {
-  $("coin").textContent = purse.point;
-  nudgePortrait();
-}
+const PLACES = ["bench", "shop", "market", "quiz"];
 
-/* ── 벽에 걸린 노만 영감 ──────────────────────────────────── */
+function coin() { $("coin").textContent = purse.point; nudgePortrait(); }
 
-/** 지금 말하는 사람이 노만이면 액자가 밝아진다. */
 function lit(who) {
-  $("portrait")?.classList.toggle("talking", who === "norman");
+  const p = $("portrait");
+  if (p) p.classList.toggle("talking", who === "norman");
 }
 
-// 주머니가 비어 가면 액자가 스스로 빛난다 — 이것부터가 시그니파이어다.
 const LOW = 150;
 let nagged = false;
 function nudgePortrait() {
@@ -388,55 +307,51 @@ function nudgePortrait() {
   }
   if (!low) nagged = false;
 }
-
-$("portrait").addEventListener("click", () => go("quiz"));
+$("portrait").addEventListener("click", function () { go("quiz"); });
 
 function go(to) {
   where = to;
   stopSim();
-  $("places").querySelectorAll(".place").forEach(b =>
-    b.classList.toggle("on", b.dataset.go === to));
-  $("bench").hidden  = to !== "bench";
-  $("shop").hidden   = to !== "shop";
-  $("market").hidden = to !== "market";
-  $("quiz").hidden   = to !== "quiz";
+  $("places").querySelectorAll(".place").forEach(function (b) {
+    b.classList.toggle("on", b.dataset.go === to);
+  });
+  PLACES.forEach(function (k) { $(k).hidden = to !== k; });
   coin();
 
   if (to === "shop")
     Shop.open($("shop"), {
-      talk: (w, t) => Talk.cut(w, t),
-      onDone: ({ paid, n }) => {
-        go("bench");
-        Ed.shelf();
-        stash();
-        Talk.cut("norman", n
-          ? `${n}개 사 왔구먼. ${paid}포인트 나갔네. 이제 어디에 붙일지 보게.`
+      talk: function (w, t) { Talk.cut(w, t); },
+      onDone: function (r) {
+        go("bench"); stash();
+        Talk.cut("norman", r.n
+          ? r.n + "개 사 왔구먼. " + r.paid + "포인트 나갔네. 제작대에서 둘씩 합쳐 보게."
           : NORMAN.rule);
-        nagged = false;
-        nudgePortrait();          // 알림 뒤에 줄을 서게 한다
+        nagged = false; nudgePortrait();
       },
     });
 
   if (to === "market")
     Market.open($("market"), {
-      scripts, run: lastRun,
-      talk: (w, t) => Talk.cut(w, t),
-      onBack: () => go("bench"),
-      onSold: a => { coin(); stash(); go("bench");
-        Talk.say("norman", `${a.price}포인트 받아 왔구먼. 다음 주문도 있네.`); },
+      attached: attached, run: lastRun,
+      talk: function (w, t) { Talk.cut(w, t); },
+      onBack: function () { go("bench"); },
+      onSold: function (a) {
+        coin(); stash(); go("bench");
+        Talk.say("norman", a.price + "포인트 받아 왔구먼.");
+      },
     });
 
   if (to === "quiz")
     Quiz.open($("quiz"), {
-      talk: (w, t) => Talk.cut(w, t),
-      onChange: () => { coin(); stash(); },
-      onBack: () => go("bench"),
+      talk: function (w, t) { Talk.cut(w, t); },
+      onChange: function () { coin(); stash(); },
+      onBack: function () { go("bench"); },
     });
 
-  if (to === "bench") { Ed.shelf(); redraw(); }
+  if (to === "bench") redraw();
 }
 
-$("places").addEventListener("click", e => {
+$("places").addEventListener("click", function (e) {
   const b = e.target.closest("[data-go]");
   if (b) go(b.dataset.go);
 });
@@ -448,128 +363,149 @@ let picking = null;
 
 for (let n = 1; n <= TEAMS; n++) {
   const b = document.createElement("button");
-  b.className = "teamcell";
-  b.dataset.team = n;
-  b.textContent = n + "조";
+  b.className = "teamcell"; b.dataset.team = n; b.textContent = n + "조";
   grid.appendChild(b);
 }
 
-grid.addEventListener("click", e => {
+grid.addEventListener("click", function (e) {
   const b = e.target.closest(".teamcell");
   if (!b) return;
   picking = Number(b.dataset.team);
-  grid.querySelectorAll(".teamcell").forEach(x =>
-    x.classList.toggle("on", Number(x.dataset.team) === picking));
-
-  const o = orderOf(picking);
-  const use = o?.ready ? o : FALLBACK;
+  grid.querySelectorAll(".teamcell").forEach(function (x) {
+    x.classList.toggle("on", Number(x.dataset.team) === picking);
+  });
+  const o = orderOf(picking), use = (o && o.ready) ? o : FALLBACK;
   peek.hidden = false;
   peek.innerHTML =
-    `<p class="pk">${picking}조가 맡은 물건</p>
-     <h2>${use.name}</h2>
-     <p class="pkline">${use.line}</p>
-     <p class="pkmate">같은 물건을 ${partnerOf(picking)}조도 맡습니다 — 끝나고 둘을 나란히 놓고 봅니다.</p>` +
+    '<p class="pk">' + picking + "조가 맡은 물건</p><h2>" + use.name + "</h2>" +
+    '<p class="pkline">' + use.line + "</p>" +
+    '<p class="pkmate">같은 물건을 ' + partnerOf(picking) + "조도 맡습니다.</p>" +
     (o && !o.ready
-      ? `<p class="pkwarn">「${o.name}」은 아직 준비 중이라 오늘은 <b>${FALLBACK.name}</b>으로 들어갑니다.</p>`
+      ? '<p class="pkwarn">「' + o.name + "」은 아직 준비 중이라 오늘은 <b>" +
+        FALLBACK.name + "</b>으로 들어갑니다.</p>"
       : "");
   enterBtn.disabled = false;
 });
 
-enterBtn.addEventListener("click", () => enter(picking));
-$("swap").addEventListener("click", () => {
-  gate.hidden = false;
-  $("bar").hidden = true;
-  $("bench").hidden = true;
+enterBtn.addEventListener("click", function () { enter(picking); });
+$("swap").addEventListener("click", function () {
+  gate.hidden = false; $("bar").hidden = true;
+  PLACES.forEach(function (k) { $(k).hidden = true; });
 });
 
 async function enter(n) {
   team = n;
   const o = orderOf(n);
-  order = o?.ready ? o : FALLBACK;
+  order = (o && o.ready) ? o : FALLBACK;
   try { localStorage.setItem("hci4_team", String(n)); } catch (e) {}
 
   gate.hidden = true;
   $("bar").hidden = false;
-  $("bench").hidden = false;
   $("teamtag").textContent = n + "조";
   nodes.whoami.textContent = "주문서 · " + order.name;
 
   Talk.mount($("talk"), { onWho: lit });
   Talk.say("norman", NORMAN.wake(n), 3200);
-  // 주문은 앱시장 중개인이 물어 온다. 나중에 심사하고 값을 매기는 것도 같은 사람이다.
-  BROKER.knock.forEach((t, i) => Talk.say("critic", t, i < 2 ? 2600 : 3000));
+  BROKER.knock.forEach(function (t, i) { Talk.say("critic", t, i < 2 ? 2600 : 3000); });
   Talk.say("norman", NORMAN.heard(), 3400);
-  Talk.say("norman", NORMAN.rule, 3600);
-  Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.", 3800);
+  Talk.say("norman", "재료는 하나도 없네. 「상점」에서 재료를 사다 제작대에서 " +
+    "둘씩 합치게. 주머니에 1000포인트 있네.", 3800);
   Talk.say("norman", NORMAN.broke);
 
+  Craft.mount({
+    nodes: nodes,
+    talk: function (w, t) { Talk.cut(w, t); },
+    onChange: function () { coin(); stash(); },
+    attach: attach,
+    markTargets: function (kinds) {
+      nodes.screen.querySelectorAll(".part").forEach(function (p) {
+        const k = PART(p.dataset.part);
+        p.classList.toggle("target", !!kinds && !!k && kinds.indexOf(k.kind) >= 0);
+      });
+    },
+    worn: function () { return attached; },
+  });
+  Craft.drag($("drag"));
+
   await restore();
+  go("bench");
   beat();
 }
 
-/* ── 하던 작업 되찾기 · 자리 알리기 ───────────────────────── */
+/* 붙인 연장을 떼어 내는 길 — 제작대의 「붙인 것」 목록에서 */
+nodes.craft.addEventListener("click", function (e) {
+  const x = e.target.closest("[data-off]");
+  if (!x) return;
+  const bits = x.dataset.off.split(":");
+  detach(bits[0], Number(bits[1]));
+});
 
-/** 새로고침하거나 노트북이 꺼져도 붙여 둔 단서는 남아야 한다. */
+/* ── 담아 두고 되찾기 ─────────────────────────────────────── */
+
 async function restore() {
   try {
     const d = await readDoc("hci4_drafts", "team" + team);
-    if (d?.purse) load(JSON.parse(d.purse));
-    if (d?.layout) {
+    if (d && d.purse) load(JSON.parse(d.purse));
+    if (d && d.attached) {
+      const A = JSON.parse(d.attached);
+      if (A && typeof A === "object") {
+        Object.keys(attached).forEach(function (k) { delete attached[k]; });
+        Object.assign(attached, A);
+      }
+    }
+    if (d && d.layout) {
       const L = JSON.parse(d.layout);
-      if (Array.isArray(L) && L.length) layout = L.filter(x => DEFAULT_LAYOUT.includes(x));
-      for (const id of DEFAULT_LAYOUT) if (!layout.includes(id)) layout.push(id);
+      if (Array.isArray(L) && L.length)
+        layout = L.filter(function (x) { return DEFAULT_LAYOUT.indexOf(x) >= 0; });
+      DEFAULT_LAYOUT.forEach(function (id) {
+        if (layout.indexOf(id) < 0) layout.push(id);
+      });
     }
-    const saved = d?.scripts ? JSON.parse(d.scripts) : null;
-    if (saved && typeof saved === "object") {
-      for (const k of Object.keys(scripts)) delete scripts[k];
-      Object.assign(scripts, saved);
-    }
-  } catch (e) { console.warn("되찾기", e?.code || e?.message); }
-  pick(null);
-  Ed.shelf();
+  } catch (e) { console.warn("되찾기", (e && (e.code || e.message)) || e); }
   coin();
-  redraw();
 }
 
 let saveTimer = 0;
-/** 손을 뗀 뒤에 한 번만 보낸다 — 한 글자마다 보내면 읽기·쓰기가 터진다. */
 function stash() {
   if (!team) return;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    putDoc("hci4_drafts", "team" + team,
-      { team, order: order.id, scripts: JSON.stringify(scripts),
-        layout: JSON.stringify(layout), purse: JSON.stringify(dump()) })
-      .catch(e => console.warn("저장", e?.code || e?.message));
+  saveTimer = setTimeout(function () {
+    putDoc("hci4_drafts", "team" + team, {
+      team: team, order: order.id,
+      attached: JSON.stringify(attached),
+      layout: JSON.stringify(layout),
+      purse: JSON.stringify(dump()),
+    }).catch(function (e) { console.warn("저장", (e && (e.code || e.message)) || e); });
   }, 1600);
 }
 
-/** 오래 앉아 있는 조도 현황판에서 사라지지 않게 일 분에 한 번 알린다. */
 let heart = null;
 function beat() {
   clearInterval(heart);
-  const send = () => pingTo("hci4_presence", { team, order: order.id, where: "공방" });
+  const send = function () {
+    pingTo("hci4_presence", { team: team, order: order.id, where: "공방" });
+  };
   send();
   heart = setInterval(send, 60000);
 }
 
+/* ── 쉬는 시계 ────────────────────────────────────────────── */
+
+setInterval(function () {
+  if (st.rest <= 0) return;
+  st.rest--;
+  const a = document.activeElement;
+  if (wears(attached, "list", "state") &&
+      !(a && a.classList && a.classList.contains("inbox")))
+    redraw({ craft: false });
+}, 1000);
+
 /* ── 시작 ─────────────────────────────────────────────────── */
 
-let greeted = false;
-Ed.paint(nodes, scripts, o => {
-  redraw();
-  stash();
-  if (o.shelf) { Ed.shelf(); coin(); }
-  if (!greeted && o.focus) { greeted = true; Talk.say("norman", NORMAN.first); }
-  if (o.focus) Ed.focusArg(o.focus);
-});
-Ed.drag($("drag"));
-pick(null);
-redraw();
-
-// 지난번에 고른 조가 있으면 눌러 둔 채로 보여 준다 — 다시 찾게 하지 않는다
 try {
   const last = Number(localStorage.getItem("hci4_team"));
-  if (last >= 1 && last <= TEAMS)
-    grid.querySelector(`.teamcell[data-team="${last}"]`)?.click();
+  if (last >= 1 && last <= TEAMS) {
+    const c = grid.querySelector('.teamcell[data-team="' + last + '"]');
+    if (c) c.click();
+  }
 } catch (e) {}
