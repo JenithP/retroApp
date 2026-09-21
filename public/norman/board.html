@@ -81,9 +81,9 @@
       <th style="width:52px">조</th>
       <th>지금 맡은 주문서</th>
       <th class="n" style="width:78px">포인트</th>
-      <th class="n" style="width:66px">내놓음</th>
+      <th class="n" style="width:70px">만든 앱</th>
       <th class="n" style="width:88px">번 포인트</th>
-      <th class="n" style="width:74px">붙인 단서</th>
+      <th class="n" style="width:92px">시그니파이어</th>
       <th class="n" style="width:66px">재료</th>
       <th class="n" style="width:74px">만든 단서</th>
       <th class="n" style="width:74px">문제</th>
@@ -166,8 +166,8 @@ function paint(j) {
   $("strip").innerHTML = [
     ["들어온 조", rows.length + " / 20"],
     ["움직인 조", live.length + "조"],
-    ["내놓은 화면", rows.reduce((a, r) => a + r.done, 0) + "개"],
-    ["붙인 단서", rows.reduce((a, r) => a + r.worn, 0) + "개"],
+    ["만든 앱", rows.reduce((a, r) => a + r.done, 0) + "개"],
+    ["완성한 시그니파이어", rows.reduce((a, r) => a + r.worn, 0) + "개"],
     ["맞힌 문제", rows.reduce((a, r) => a + r.quiz, 0) + "개"],
     ["가장 많이 번 조", (() => {
       const top = rows.slice().sort((a, b) => b.point - a.point)[0];

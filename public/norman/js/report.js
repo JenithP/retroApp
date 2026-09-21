@@ -113,11 +113,11 @@ function jobBlock(j, i) {
   const rows = [
     ["맡은 일", esc(j.task)],
     ["사용자 말", "「" + esc(j.say) + "」"],
-    ["화면에 붙인 단서", j.worn.length
+    ["완성한 시그니파이어", j.worn.length
       ? j.worn.map(w => esc(w.name) + (w.gulf ? " <small>(" + esc(w.gulf) +
-          "의 간극을 메우는 단서)</small>" : "") + (w.arg ? " &mdash; 넣을 글자 「" +
+          "의 간극을 메웁니다)</small>" : "") + (w.arg ? " &mdash; 넣을 글자 「" +
           esc(w.arg) + "」" : "")).join("<br>")
-      : "<i>붙인 단서 없음</i>"],
+      : "<i>완성한 것 없음</i>"],
     ["처음 테스트 결과", j.runs ? runCell(j.runs.first) : none],
     ["마지막 테스트 결과", j.runs ? runCell(j.runs.last) : none],
     ["줄어든 막힌 횟수", j.runs
@@ -192,9 +192,9 @@ export function workbookHTML(g, opts) {
     "고쳐 쓰지 마시고, 이 숫자를 근거로 2부와 3부를 쓰십시오.</p>" +
 
     "<table class=g>" +
-    "<tr><th>앱시장에 내놓은 화면</th><td class=fill><b>" +
+    "<tr><th>만든 앱</th><td class=fill><b>" +
       g.jobs.filter(j => j.price != null).length + "</b>개</td>" +
-    "<th>화면에 붙인 단서</th><td class=fill><b>" + g.totalWorn + "</b>개</td>" +
+    "<th>완성한 시그니파이어</th><td class=fill><b>" + g.totalWorn + "</b>개</td>" +
     "<th>맞힌 문제</th><td class=fill><b>" + g.solved + " / " + g.ofQuiz +
       "</b></td></tr></table>" +
 
@@ -207,10 +207,10 @@ export function workbookHTML(g, opts) {
       "</td></tr>").join("") + "</table>" +
 
     (g.words.length
-      ? "<h3>조가 단서에 넣은 글자</h3>" +
+      ? "<h3>조가 시그니파이어에 넣은 글자</h3>" +
         '<p class="lead">제작대에서 「넣을 글자」 칸에 무슨 말을 쓸지는 ' +
         "조가 정했습니다. 그 말이 사용자에게 무엇을 알렸는지 3부에서 따져 보십시오.</p>" +
-        "<table class=g><tr><th>화면</th><th>단서</th><th>넣을 글자</th></tr>" +
+        "<table class=g><tr><th>앱</th><th>시그니파이어</th><th>넣을 글자</th></tr>" +
         g.words.map(w => "<tr><td>" + esc(w.job) + "</td><td>" + esc(w.name) +
           '</td><td class=fill>「' + esc(w.arg) + "」</td></tr>").join("") +
         "</table>"
@@ -249,13 +249,13 @@ export function workbookHTML(g, opts) {
 
     "<h3>4. <span class=pt>25점</span>하트슨의 네 가지로 조의 단서를 뜯어보십시오.</h3>" +
     '<p class="lead">물리적 &middot; 감각적 &middot; 인지적 &middot; 기능적(18 &middot; ' +
-    "19쪽). 1부의 「화면에 붙인 단서」가 이 가운데 어느 것을 채웠고 " +
+    "19쪽). 1부의 「완성한 시그니파이어」가 이 가운데 어느 것을 채웠고 " +
     "어느 것을 비워 두었는지 쓰십시오.</p>" +
     "<table class=ask><tr><td>&nbsp;</td></tr></table>" +
 
     "<h3>5. <span class=pt>20점</span>덜어 낼 수 있었겠는가.</h3>" +
     '<p class="lead">단서를 많이 붙일수록 화면은 시끄러워집니다(25쪽). ' +
-    "1부의 「화면에 붙인 단서」 가운데 <b>없어도 되었을 것</b>을 하나 " +
+    "1부의 「완성한 시그니파이어」 가운데 <b>없어도 되었을 것</b>을 하나 " +
     "고르고, 그래도 된다고 보는 까닭을 쓰십시오.</p>" +
     "<table class=ask><tr><td>&nbsp;</td></tr></table>" +
 

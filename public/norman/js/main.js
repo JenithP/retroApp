@@ -5,7 +5,7 @@
 // 어느 조가 앉아 있는지 알리는 일(hci4_presence)뿐이다.
 
 import { fresh, render, act, wears, argOf, partOf, canWear } from "./app.js";
-import { queueFor, partnerOf, TEAMS, JOBS } from "./jobs.js";
+import { queueFor, TEAMS, JOBS, jobById } from "./jobs.js";
 const JOBCOUNT = JOBS.length;
 import { recipeById } from "./parts.js";
 
@@ -50,10 +50,42 @@ function redraw(opt = {}) {
   }
   if (opt.craft !== false) Craft.paint();
   paintOrder();
+  paintShelf();
+}
+
+/** 선반 — 앱시장에 내놓은 것이 쌓인다. 무엇을 만들어 팔았는지 보인다. */
+function paintShelf() {
+  const box = $("shelf");
+  if (!box) return;
+  const sold = purse.sold || [];
+  box.hidden = false;
+  const worn = sold.reduce(function (a, s) { return a + (s.worn || []).length; }, 0);
+  box.innerHTML =
+    "<h4>만든 앱 <em>" + sold.length + (worn ? " · 시그니파이어 " + worn : "") +
+      "</em></h4>" +
+    (sold.length
+      ? "<ol>" + sold.map(function (s) {
+          const j = jobById(s.job) || {};
+          return "<li><i>+" + (s.price || 0) + "</i><b>" + (j.app || "") + "</b>" +
+            "<span>" + (j.screen || s.job) +
+            ((s.worn || []).length ? " · 시그니파이어 " + s.worn.length + "개" : "") +
+            "</span></li>";
+        }).join("") + "</ol>"
+      : '<p class="none">아직 앱시장에 내놓은 것이 없습니다. ' +
+        "하나를 고쳐 팔면 여기에 쌓입니다.</p>");
 }
 
 /** 주문서 — 어디가 문제인지는 적지 않는다. 찾아내는 것이 과업이다. */
 function paintOrder() {
+  if (noMore) {
+    nodes.order.innerHTML =
+      '<p class="oeyebrow">주문서</p>' +
+      "<h1>더 들어온 의뢰가 없습니다</h1>" +
+      '<p class="otask">마흔 가지를 모두 앱시장에 내놓았습니다. ' +
+      "왼쪽 선반에 만든 앱이 쌓여 있습니다. 남은 시간에는 <b>문제 풀기</b>로 " +
+      "포인트를 더 벌 수 있습니다.</p>";
+    return;
+  }
   if (!job) return;
   nodes.order.innerHTML =
     '<p class="oeyebrow">주문서 · ' + (purse.done.length + 1) + '번째</p>' +
@@ -70,7 +102,12 @@ function paintOrder() {
 }
 
 /** 의뢰를 하나 집어 든다 — 화면도 붙인 것도 새로 시작한다. */
+let noMore = false;
+
 async function takeJob(j) {
+  if (!j) { noMore = true; paintOrder(); Talk.cut("norman",
+    "마흔 가지 의뢰를 모두 끝냈습니다. 남은 시간에는 문제를 풀어 더 버십시오."); return; }
+  noMore = false;
   job = j;
   st = fresh(job);
   layout = job.parts.map(function (p) { return p.id; });
@@ -321,7 +358,7 @@ nodes.verdict.addEventListener("click", function (e) {
 
 const PLACES = ["bench", "shop", "market", "quiz"];
 
-function coin() { $("coin").textContent = purse.point; nudgePortrait(); }
+function coin() { $("coin").textContent = purse.point; nudgePortrait(); paintShelf(); }
 
 function lit(who) {
   const p = $("portrait");
@@ -418,8 +455,7 @@ grid.addEventListener("click", function (e) {
     '<p class="pk">' + picking + "조의 첫 의뢰</p>" +
     "<h2>" + first.app + ' <span>' + first.screen + '</span></h2>' +
     '<p class="pkline">' + first.task + "</p>" +
-    '<p class="pkmate">같은 화면을 ' + partnerOf(picking) +
-    "조도 맡습니다 — 끝나고 둘을 나란히 놓고 봅니다.<br>" +
+    '<p class="pkmate">공방에서 열심히 고쳐 좋은 상품을 만들어 앱시장에 내십시오.<br>' +
     "하나를 완성해 팔면 다음 의뢰가 들어옵니다. 모두 " + JOBCOUNT + "가지입니다.</p>";
   enterBtn.disabled = false;
 });
@@ -531,8 +567,8 @@ function close() {
   report().then(function (r) {
     const g = Report.gather(r.team || team, r.purse || purse);
     box.querySelector(".mine").innerHTML =
-      "내놓은 화면 <b>" + g.jobs.filter(function (j) { return j.price != null; }).length +
-      "</b>개 · 붙인 단서 <b>" + g.totalWorn + "</b>개 · 맞힌 문제 <b>" +
+      "만든 앱 <b>" + g.jobs.filter(function (j) { return j.price != null; }).length +
+      "</b>개 · 완성한 시그니파이어 <b>" + g.totalWorn + "</b>개 · 맞힌 문제 <b>" +
       g.solved + " / " + g.ofQuiz + "</b> · 남은 포인트 <b>" + g.point + "</b>";
   });
 
@@ -562,7 +598,7 @@ let saved = null;
 function pickJob() {
   const done = purse.done || [];
   for (const j of queue) if (done.indexOf(j.id) < 0) return j;
-  return queue[0];
+  return null;                        // 마흔을 다 끝냈다
 }
 
 /** 부품을 어떤 차례로 놓았는지만 되살린다. 붙인 단서는 서버 지갑에 있다. */
