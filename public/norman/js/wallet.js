@@ -19,10 +19,21 @@ const MAX_TOOLS = 60;
 
 export const purse = {
   point: START, mats: {}, tools: [], attached: {},
-  job: null, quiz: {}, done: [], sold: [],
+  job: null, quiz: {}, done: [], sold: [], runs: [],
 };
 
 export const mode = { server: false, team: null, ready: false, why: "" };
+
+/** 교수가 활동을 닫았는가. 닫히면 포인트가 움직이지 않고 기록만 내려받는다. */
+export const session = { ended: false };
+
+// 한 조가 피시 네 대로 들어온다. 네 대가 같은 지갑을 쓰므로, 한 대에서 산
+// 재료가 다른 대에도 바로 보여야 한다. 지갑이 바뀔 때마다 부를 사람들.
+const eyes = [];
+export function onChange(fn) { eyes.push(fn); return () => {
+  const i = eyes.indexOf(fn); if (i >= 0) eyes.splice(i, 1);
+}; }
+const stir = () => eyes.forEach(f => { try { f(purse); } catch (e) {} });
 
 export const priceOf = id => (mat(id) || {}).price || 40;
 export const countMat = id => purse.mats[id] || 0;
@@ -37,6 +48,7 @@ function soak(w) {
   purse.quiz = w.quiz || {};
   purse.done = w.done || [];
   purse.sold = w.sold || [];
+  purse.runs = w.runs || [];
   return purse;
 }
 
@@ -81,7 +93,34 @@ export async function connect(team) {
       : "서버에 닿지 못해 연습 모드입니다";
     local.load();
   }
+  if (mode.server) watchTogether();
   return purse;
+}
+
+/* ── 네 대가 같이 보기 ────────────────────────────────────────
+   피시 한 대가 재료를 사면 나머지 세 대의 화면도 따라 바뀐다. 지갑 한 칸과
+   활동 상태 한 칸만 지켜보므로 읽기 수가 거의 늘지 않는다. */
+
+async function watchTogether() {
+  let fb;
+  try { fb = await import("../../js/firebase.js"); }
+  catch (e) { return; }
+  try {
+    await fb.watchDoc("hci4_wallets", "team" + mode.team, function (w) {
+      if (!w) return;
+      const before = JSON.stringify([purse.point, purse.mats, purse.tools,
+        purse.attached, purse.job, purse.done, purse.sold]);
+      soak(w);
+      const after = JSON.stringify([purse.point, purse.mats, purse.tools,
+        purse.attached, purse.job, purse.done, purse.sold]);
+      if (before !== after) stir();
+    });
+    await fb.watchDoc("hci4_wallets", "_session", function (d) {
+      const was = session.ended;
+      session.ended = !!(d && d.ended);
+      if (was !== session.ended) stir();
+    });
+  } catch (e) { /* 규칙이 막거나 불이 꺼졌으면 그냥 혼자 본다 */ }
 }
 
 /* ── 하는 일 ──────────────────────────────────────────────── */
@@ -200,6 +239,34 @@ export async function sell() {
 }
 
 /* ── 세어 보는 것들 ───────────────────────────────────────── */
+
+/** 테스트를 한 번 돌릴 때마다 남긴다. 처음과 마지막을 견주면 고친 폭이 보인다. */
+export async function logRun(v) {
+  const row = {
+    job: purse.job, exec: v.exec, stray: v.evalGap,
+    secs: Math.round(v.secs * 10) / 10, done: v.right, of: v.of,
+    worn: Object.values(purse.attached || {})
+      .reduce(function (a, l) { return a + l.length; }, 0),
+    at: Date.now(),
+  };
+  if (mode.server) {
+    try { return soak(await ask("run", { run: v })); } catch (e) { return purse; }
+  }
+  purse.runs = (purse.runs || []).concat([row]).slice(-80);
+  local.save();
+  return purse;
+}
+
+/** 워크북에 넣을 기록. 서버가 있으면 서버가 가진 것을 그대로 받아 온다. */
+export async function report() {
+  if (mode.server) {
+    try {
+      const j = await ask("report");
+      if (j && j.wallet) { soak(j.wallet); session.ended = !!j.ended; }
+    } catch (e) { /* 못 받으면 지금 비쳐 둔 것으로 쓴다 */ }
+  }
+  return { team: mode.team, purse: purse, server: mode.server, ended: session.ended };
+}
 
 export const solvedCount = () =>
   Object.keys(purse.quiz).filter(k => purse.quiz[k] === true).length;

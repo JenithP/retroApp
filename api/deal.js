@@ -116,15 +116,26 @@ function appraise(job, attached) {
 
 /* ── 지갑 ─────────────────────────────────────────────────── */
 
+const SESSION = "_session";
+
+/** 활동이 끝났는가. 끝난 뒤에는 포인트가 움직이지 않는다. */
+async function sessionOf(fs, t) {
+  const ref = fs.collection("hci4_wallets").doc(SESSION);
+  const snap = t ? await t.get(ref) : await ref.get();
+  return snap.exists ? snap.data() : { ended: false };
+}
+
+const MONEY = ["buy", "craft", "attach", "detach", "quiz", "sell", "take", "arg"];
+
 const fresh = team => ({
   team, point: START, mats: {}, tools: [], attached: {},
-  job: null, quiz: {}, done: [], sold: [],
+  job: null, quiz: {}, done: [], sold: [], runs: [],
 });
 
 const clean = w => ({
   point: w.point, mats: w.mats || {}, tools: w.tools || [],
   attached: w.attached || {}, job: w.job || null,
-  quiz: w.quiz || {}, done: w.done || [], sold: w.sold || [],
+  quiz: w.quiz || {}, done: w.done || [], sold: w.sold || [], runs: w.runs || [],
 });
 
 /* ── 창구 ─────────────────────────────────────────────────── */
@@ -169,6 +180,52 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, 되돌린조: nums });
   }
 
+  /* ── 교수용 — 활동을 닫고 열기, 조별 한눈에 보기 ───────────── */
+  if (body.op === "end" || body.op === "open" || body.op === "board") {
+    const key = process.env.HCI4_ADMIN;
+    if (!key) return res.status(503).json({ error: "버셀에 HCI4_ADMIN 이 없습니다" });
+    if (body.key !== key) return res.status(403).json({ error: "암호가 틀렸습니다" });
+
+    let fsB;
+    try { fsB = await store(); }
+    catch (e) { return res.status(503).json({ error: "server-off" }); }
+
+    if (body.op !== "board") {
+      const ended = body.op === "end";
+      await fsB.collection("hci4_wallets").doc(SESSION)
+        .set({ ended: ended, at: new Date() });
+      await fsB.collection("hci4_ledger").doc()
+        .set({ kind: ended ? "end" : "open", at: new Date() });
+      return res.status(200).json({ ok: true, ended: ended });
+    }
+
+    // 조별 한눈에 — 지갑을 그대로 훑어 요약만 돌려준다
+    const snap = await fsB.collection("hci4_wallets").get();
+    const rows = [];
+    let session = { ended: false };
+    snap.forEach(d => {
+      if (d.id === SESSION) { session = d.data(); return; }
+      const w = d.data();
+      const runs = w.runs || [];
+      rows.push({
+        team: w.team,
+        point: w.point,
+        job: w.job || null,
+        done: (w.done || []).length,
+        sold: (w.sold || []).reduce((a, x) => a + (x.price || 0), 0),
+        mats: Object.values(w.mats || {}).reduce((a, n) => a + n, 0),
+        tools: (w.tools || []).length,
+        worn: Object.values(w.attached || {}).reduce((a, l) => a + l.length, 0),
+        quiz: Object.values(w.quiz || {}).filter(v => v === true).length,
+        runs: runs.length,
+        first: runs.length ? runs[0] : null,
+        last: runs.length ? runs[runs.length - 1] : null,
+      });
+    });
+    rows.sort((a, b) => a.team - b.team);
+    return res.status(200).json({ session: session, rows: rows });
+  }
+
   const team = Number(body.team);
   if (!Number.isInteger(team) || team < 1 || team > TEAMS)
     return res.status(400).json({ error: "조 번호가 잘못되었습니다" });
@@ -185,6 +242,10 @@ export default async function handler(req, res) {
 
   try {
     const out = await fs.runTransaction(async t => {
+      if (MONEY.indexOf(body.op) >= 0) {
+        const ses = await sessionOf(fs, t);
+        if (ses.ended) throw new Error("활동이 끝났습니다. 기록은 내려받을 수 있습니다.");
+      }
       const snap = await t.get(ref);
       const w = snap.exists ? Object.assign(fresh(team), snap.data()) : fresh(team);
       const log = row => t.set(ledger.doc(), Object.assign({ team, at: new Date() }, row));
@@ -308,12 +369,43 @@ export default async function handler(req, res) {
           if (!a.passed) return { refused: true, appraisal: a, wallet: clean(w) };
           w.point += a.price;
           w.done.push(job.id);
-          w.sold.push({ job: job.id, price: a.price, at: Date.now() });
+          // 붙인 단서는 화면과 함께 팔려 나가므로, 무엇을 붙였는지 여기 남긴다.
+          // 워크북에 「무엇으로 고쳤는가」를 적으려면 이 기록이 있어야 한다.
+          const worn = [];
+          for (const [pid, list] of Object.entries(w.attached || {}))
+            for (const tl of list) worn.push({ part: pid, recipe: tl.recipe, arg: tl.arg || "" });
+          w.sold.push({ job: job.id, price: a.price, worn: worn, at: Date.now() });
           w.attached = {};                       // 붙인 것은 화면과 함께 갔다
           w.job = null;
           save();
           log({ kind: "sell", job: job.id, price: a.price, worn: a.worn });
           return Object.assign(clean(w), { appraisal: a });
+        }
+
+        /* 돌려 본 결과 — 처음과 마지막을 견주려면 남겨야 한다 */
+        case "run": {
+          const job = jobOf(w.job);
+          if (!job) throw new Error("맡은 의뢰가 없습니다");
+          const r = body.run || {};
+          const row = {
+            job: job.id,
+            exec: Number(r.exec) || 0,
+            stray: Number(r.evalGap) || 0,
+            secs: Math.round((Number(r.secs) || 0) * 10) / 10,
+            done: Number(r.right) || 0,
+            of: Number(r.of) || 0,
+            worn: Object.values(w.attached || {}).reduce((a, l) => a + l.length, 0),
+            at: Date.now(),
+          };
+          w.runs = (w.runs || []).concat([row]).slice(-80);
+          save();
+          return clean(w);
+        }
+
+        /* 내려받을 기록 — 활동이 끝난 뒤 학생이 워크북에 옮겨 적는다 */
+        case "report": {
+          const ses = await sessionOf(fs, t);
+          return { wallet: clean(w), ended: !!ses.ended };
         }
 
         default: throw new Error("무엇을 할지 모르겠습니다");

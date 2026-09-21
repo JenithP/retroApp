@@ -499,3 +499,25 @@ input.box{cursor:text;justify-content:flex-start}
 .vend{margin-top:11px;border-top:1px solid var(--line);padding-top:11px}
 .vend .big{margin-top:0;padding:11px}
 .notyet{margin:0;font-size:.8rem;color:var(--ui-soft);line-height:1.6}
+
+
+/* ── 조별 활동 종료 ───────────────────────────────────────────
+   교수가 현황판에서 문을 닫으면 공방을 덮는다. 여기서 할 일은 하나 —
+   조 기록이 적힌 실습보고서를 내려받는 것. */
+
+#closing{position:fixed;inset:0;z-index:900;display:grid;place-items:center;
+  background:rgba(12,10,8,.93);backdrop-filter:blur(3px);padding:24px}
+#closing[hidden]{display:none!important}
+#closing .closebox{max-width:460px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:26px 28px 22px;
+  text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+#closing h2{font-family:var(--serif);font-size:1.4rem;margin:2px 0 12px}
+#closing p{font-size:.86rem;line-height:1.75;color:var(--ui-soft);margin:0 0 14px}
+#closing p.mine{background:var(--panel-2);border-left:3px solid var(--lamp);
+  border-radius:4px;padding:10px 12px;font-size:.82rem;color:var(--ui)}
+#closing p.mine b{color:var(--lamp)}
+#closing p.dim{font-size:.76rem;color:#6E655C;margin:10px 0 0}
+#closing button.big{width:100%;font-family:var(--sans);font-size:.95rem;
+  font-weight:500;color:#1A1409;background:var(--ok);border:0;border-radius:7px;
+  padding:13px;cursor:pointer}
+#closing button.big:disabled{background:var(--panel-2);color:#5E564E;cursor:default}

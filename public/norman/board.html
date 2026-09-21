@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노만의 공방 — 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="css/norman.css">
+<style>
+  body{overflow:auto}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+  .top{display:flex;align-items:flex-end;justify-content:space-between;
+    gap:18px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-family:var(--serif);font-size:1.5rem;margin:2px 0 4px}
+  .lead{margin:0;font-size:.82rem;color:var(--ui-soft);line-height:1.7}
+  .keybar{display:flex;gap:8px;align-items:center}
+  .keybar input{background:#12100E;border:1px solid var(--line);color:var(--ui);
+    border-radius:5px;padding:9px 11px;font-family:var(--sans);font-size:.85rem;width:170px}
+  button{font-family:var(--sans);font-size:.85rem;font-weight:500;color:#1A1409;
+    background:var(--ok);border:0;border-radius:6px;padding:10px 15px;cursor:pointer}
+  button.ghost{background:var(--panel-2);color:var(--ui);border:1px solid var(--line)}
+  button.warn{background:var(--bad);color:#FFF}
+  button:disabled{background:var(--panel-2);color:#5E564E;cursor:default}
+
+  .strip{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+  .stat{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:11px 14px}
+  .stat b{display:block;font-family:var(--serif);font-size:1.35rem;color:var(--lamp)}
+  .stat span{font-size:.74rem;color:var(--ui-soft)}
+
+  table{width:100%;border-collapse:collapse;margin-top:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    overflow:hidden;font-size:.82rem}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:var(--panel-2);color:var(--ui-soft);font-weight:400;font-size:.76rem;
+    position:sticky;top:0;z-index:2}
+  tbody tr:last-child td{border-bottom:0}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  td.team{font-family:var(--serif);font-size:1rem;color:var(--lamp)}
+  tr.idle td{color:#5E564E}
+  tr.idle td.team{color:#5E564E}
+  .bar{display:inline-block;height:6px;border-radius:3px;background:var(--ok);
+    vertical-align:middle;min-width:2px}
+  .barwrap{display:flex;align-items:center;gap:7px}
+  .drop{color:var(--ok)}.rise{color:var(--bad)}
+  .job{color:var(--ui-soft);font-size:.78rem}
+  .said{margin:14px 0 0;font-size:.82rem;line-height:1.6;padding:10px 12px;
+    border-radius:6px;border-left:3px solid var(--line);background:var(--panel-2)}
+  .said.ok{border-left-color:var(--ok);color:#CFE0C4}
+  .said.bad{border-left-color:var(--bad);color:#E6C0B9}
+  .ended{background:#3A2418;border:1px solid #6B4A2E;color:#F0C89A;
+    border-radius:8px;padding:12px 15px;margin:16px 0 0;font-size:.85rem}
+  .note{font-size:.75rem;color:#6E655C;line-height:1.8;margin-top:26px}
+  .note b{color:var(--ui-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <p class="oeyebrow">HCI와 커뮤니케이션 · 4주차</p>
+      <h1>노만의 공방 <span style="font-family:var(--sans);font-size:.85rem;color:var(--ui-soft)">현황판</span></h1>
+      <p class="lead">스무 조가 무엇을 하고 있는지 한눈에 봅니다.
+        읽기만 하므로 조의 기록에는 손대지 않습니다.</p>
+    </div>
+    <div class="keybar">
+      <input id="key" type="password" placeholder="교수용 암호" autocomplete="off">
+      <button id="look">보기</button>
+      <button id="auto" class="ghost">자동 새로고침 끔</button>
+    </div>
+  </div>
+
+  <div class="strip" id="strip" hidden></div>
+  <div id="endbox" hidden></div>
+  <p id="said" class="said" hidden></p>
+
+  <table id="tbl" hidden>
+    <thead><tr>
+      <th style="width:52px">조</th>
+      <th>지금 맡은 주문서</th>
+      <th class="n" style="width:78px">포인트</th>
+      <th class="n" style="width:66px">내놓음</th>
+      <th class="n" style="width:88px">번 포인트</th>
+      <th class="n" style="width:74px">붙인 단서</th>
+      <th class="n" style="width:66px">재료</th>
+      <th class="n" style="width:74px">만든 단서</th>
+      <th class="n" style="width:74px">문제</th>
+      <th class="n" style="width:66px">테스트</th>
+      <th style="width:190px">막힌 횟수 — 처음 → 마지막</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">
+    <button id="end" class="warn" disabled>조별 활동 종료</button>
+    <button id="open" class="ghost" disabled>다시 열기</button>
+  </div>
+
+  <p class="note">
+    <b>종료를 누르면</b> — 스무 조 모두 포인트가 멈춥니다. 재료를 사거나 단서를
+    붙이거나 화면을 내놓을 수 없습니다. 학생 화면에는 <b>실습보고서 내려받기</b>가
+    뜨고, 각자 자기 피시에서 내려받아 워크북을 씁니다. 조 기록은 지워지지 않으므로
+    <b>다시 열기</b>로 언제든 되돌릴 수 있습니다.<br><br>
+    <b>한 조가 피시 네 대로 들어와도</b> 같은 조 이름으로 들어오면 한 지갑을
+    씁니다. 한 대에서 산 재료가 나머지 세 대에도 곧바로 보입니다.<br><br>
+    <b>주소</b> /norman/board.html &nbsp;·&nbsp; 지갑을 되돌리려면 /norman/admin.html
+  </p>
+</div>
+
+<script type="module">
+import { JOBS } from "./js/jobs.js";
+const jobName = id => {
+  const j = JOBS.find(x => x.id === id);
+  return j ? j.app + " " + j.screen : id;
+};
+
+const $ = id => document.getElementById(id);
+const said = $("said");
+let ticker = 0, ended = false;
+
+function tell(text, ok) {
+  said.hidden = false;
+  said.className = "said " + (ok ? "ok" : "bad");
+  said.textContent = text;
+}
+
+async function call(op) {
+  const key = $("key").value.trim();
+  if (!key) { tell("암호를 먼저 적어 주세요.", false); return null; }
+  const r = await fetch("/api/deal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ op: op, key: key }),
+  });
+  const j = await r.json().catch(() => ({ error: "응답을 읽지 못했습니다" }));
+  if (!r.ok) { tell(j.error || "불러오지 못했습니다.", false); return null; }
+  return j;
+}
+
+/* ── 그리기 ───────────────────────────────────────────────── */
+
+function bar(n, most) {
+  const w = most > 0 ? Math.round((n / most) * 60) : 0;
+  return '<span class="barwrap"><span class="bar" style="width:' + w +
+    'px"></span>' + n + "</span>";
+}
+
+function stuckCell(r) {
+  if (!r.first) return '<span class="job">테스트 전</span>';
+  const a = r.first.exec, b = r.last.exec;
+  const arrow = b < a ? "drop" : (b > a ? "rise" : "");
+  return a + " &rarr; <b class=\"" + arrow + "\">" + b + "</b>" +
+    ' <span class="job">(' + r.runs + "번)</span>";
+}
+
+function paint(j) {
+  const rows = j.rows || [];
+  ended = !!(j.session && j.session.ended);
+
+  const live = rows.filter(r => r.point !== 1000 || r.runs || r.done);
+  const mostPoint = Math.max(1, ...rows.map(r => r.point));
+
+  $("strip").hidden = false;
+  $("strip").innerHTML = [
+    ["들어온 조", rows.length + " / 20"],
+    ["움직인 조", live.length + "조"],
+    ["내놓은 화면", rows.reduce((a, r) => a + r.done, 0) + "개"],
+    ["붙인 단서", rows.reduce((a, r) => a + r.worn, 0) + "개"],
+    ["맞힌 문제", rows.reduce((a, r) => a + r.quiz, 0) + "개"],
+    ["가장 많이 번 조", (() => {
+      const top = rows.slice().sort((a, b) => b.point - a.point)[0];
+      return top ? top.team + "조 · " + top.point : "—";
+    })()],
+  ].map(s => '<div class="stat"><b>' + s[1] + "</b><span>" + s[0] +
+    "</span></div>").join("");
+
+  $("tbl").hidden = false;
+  $("rows").innerHTML = rows.map(function (r) {
+    const quiet = !r.runs && !r.done && r.point === 1000 && !r.worn;
+    return '<tr class="' + (quiet ? "idle" : "") + '">' +
+      '<td class="team">' + r.team + "</td>" +
+      '<td class="job">' + (r.job ? jobName(r.job) : "—") + "</td>" +
+      '<td class="n">' + bar(r.point, mostPoint) + "</td>" +
+      '<td class="n">' + r.done + "</td>" +
+      '<td class="n">' + r.sold + "</td>" +
+      '<td class="n">' + r.worn + "</td>" +
+      '<td class="n">' + r.mats + "</td>" +
+      '<td class="n">' + r.tools + "</td>" +
+      '<td class="n">' + r.quiz + "</td>" +
+      '<td class="n">' + r.runs + "</td>" +
+      "<td>" + stuckCell(r) + "</td>" +
+      "</tr>";
+  }).join("");
+
+  $("end").disabled = ended;
+  $("open").disabled = !ended;
+  $("endbox").hidden = !ended;
+  if (ended) $("endbox").innerHTML =
+    '<p class="ended"><b>활동이 닫혀 있습니다.</b> 조의 포인트는 움직이지 않고, ' +
+    "학생 화면에는 실습보고서 내려받기가 떠 있습니다.</p>";
+}
+
+async function look(quiet) {
+  const j = await call("board");
+  if (!j) return;
+  paint(j);
+  if (!quiet) tell("불러왔습니다. " + new Date().toLocaleTimeString("ko-KR"), true);
+}
+
+/* ── 단추 ─────────────────────────────────────────────────── */
+
+$("look").addEventListener("click", () => look(false));
+$("key").addEventListener("keydown", e => { if (e.key === "Enter") look(false); });
+
+$("auto").addEventListener("click", function () {
+  if (ticker) {
+    clearInterval(ticker); ticker = 0;
+    this.textContent = "자동 새로고침 끔"; this.classList.add("ghost");
+  } else {
+    ticker = setInterval(() => look(true), 20000);
+    this.textContent = "자동 새로고침 켬 (20초)"; this.classList.remove("ghost");
+    look(true);
+  }
+});
+
+$("end").addEventListener("click", async function () {
+  if (!confirm("스무 조의 활동을 닫습니다.\n\n포인트가 멈추고, 학생 화면에 " +
+    "실습보고서 내려받기가 뜹니다.\n기록은 지워지지 않으며 다시 열 수 있습니다."))
+    return;
+  this.disabled = true;
+  const j = await call("end");
+  if (j) { tell("활동을 닫았습니다. 학생들이 실습보고서를 내려받을 수 있습니다.", true); }
+  look(true);
+});
+
+$("open").addEventListener("click", async function () {
+  this.disabled = true;
+  const j = await call("open");
+  if (j) tell("활동을 다시 열었습니다.", true);
+  look(true);
+});
+</script>
+</body>
+</html>

@@ -11,7 +11,9 @@ import { recipeById } from "./parts.js";
 
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
-import { purse, mode, connect, takeJob as claimJob, quizLeft } from "./wallet.js";
+import { purse, mode, session, connect, takeJob as claimJob, quizLeft,
+         logRun, report, onChange as onWallet } from "./wallet.js";
+import * as Report from "./report.js";
 import * as Talk from "./talk.js";
 import * as Craft from "./craft.js";
 import * as Shop from "./shop.js";
@@ -252,7 +254,11 @@ $("cold").addEventListener("click", async function () {
     },
   });
   dot.remove();
-  if (v) { lastRun = v; showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); stash(); }
+  if (v) {
+    lastRun = v; showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); stash();
+    // 워크북에 「처음엔 이랬고 고친 뒤엔 이랬다」를 적으려면 남겨야 한다
+    logRun(v);
+  }
 });
 
 function unbare() {
@@ -470,6 +476,73 @@ async function enter(n) {
   Talk.say("norman", NORMAN.broke);
   go("bench");
   beat();
+  follow();
+  // 활동이 이미 닫힌 뒤에 들어왔다면 곧바로 닫힌 화면을 보여 준다
+  if (session.ended) close();
+}
+
+/* ── 네 대가 같이 본다 ────────────────────────────────────────
+   한 조가 피시 네 대로 들어온다. 네 대 모두 같은 지갑(hci4_wallets/team N)을
+   쓰므로 산 것도 붙인 것도 이미 공유되지만, 화면은 제 차례가 올 때까지 옛
+   숫자를 들고 있었다. 지갑이 바뀔 때마다 다시 그려 준다. */
+
+function follow() {
+  onWallet(function () {
+    if (session.ended) return close();
+    coin();
+    // 옆자리가 화면을 팔고 다음 의뢰를 집었다면 이쪽도 따라간다
+    if (purse.job && (!job || purse.job !== job.id)) {
+      const next = queue.find(function (j) { return j.id === purse.job; });
+      if (next) {
+        takeJob(next).then(function () { restoreLayout(); redraw(); });
+        Talk.cut("norman", "옆자리에서 다음 의뢰를 집었습니다 — " +
+          next.app + " " + next.screen + ".");
+        return;
+      }
+    }
+    redraw();
+  });
+}
+
+/* ── 활동이 끝났을 때 ─────────────────────────────────────────
+   교수가 현황판에서 종료를 누르면 서버가 포인트를 더 움직이지 않는다.
+   학생 화면은 여기서 멈추고, 자기 조 기록이 적힌 워크북을 내려 준다. */
+
+let closedAlready = false;
+function close() {
+  if (closedAlready) return;
+  closedAlready = true;
+  stopSim();
+  coin();
+  const box = $("closing");
+  box.hidden = false;
+  box.innerHTML =
+    '<div class="closebox">' +
+      "<p class=\"oeyebrow\">조별 활동 종료</p>" +
+      "<h2>오늘 공방 문을 닫습니다</h2>" +
+      "<p>" + team + "조가 한 일이 그대로 적힌 <b>4주차 실습보고서</b>를 " +
+      "내려받으십시오. 숫자는 이미 채워져 있습니다 — 학번과 이름, 그리고 " +
+      "생각만 적으면 됩니다.</p>" +
+      '<p class="mine"></p>' +
+      '<button class="big" id="getdoc">실습보고서 내려받기</button>' +
+      '<p class="dim">워드와 한글에서 열립니다. 한 사람씩 각자 내려받으세요.</p>' +
+    "</div>";
+
+  report().then(function (r) {
+    const g = Report.gather(r.team || team, r.purse || purse);
+    box.querySelector(".mine").innerHTML =
+      "내놓은 화면 <b>" + g.jobs.filter(function (j) { return j.price != null; }).length +
+      "</b>개 · 붙인 단서 <b>" + g.totalWorn + "</b>개 · 맞힌 문제 <b>" +
+      g.solved + " / " + g.ofQuiz + "</b> · 남은 포인트 <b>" + g.point + "</b>";
+  });
+
+  $("getdoc").addEventListener("click", function () {
+    this.disabled = true;
+    report().then(function (r) {
+      Report.download(r.team || team, r.purse || purse, { practice: !r.server });
+      document.getElementById("getdoc").disabled = false;
+    });
+  });
 }
 
 /** 끌고 있는 단서가 이 부품에 붙을 수 있는가 — 테두리를 띄울 때 쓴다 */
