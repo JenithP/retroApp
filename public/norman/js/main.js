@@ -272,8 +272,8 @@ function stopSim() {
 
 function showVerdict(v) {
   const rows = [
-    ["실행의 간극", v.exec, "무엇을 해야 할지 몰라 막힌 횟수", v.exec > 0],
-    ["평가의 간극", v.evalGap, "무슨 일이 생겼는지 몰라 잘못 쌓인 건수", v.evalGap > 0],
+    ["막힌 횟수", v.exec, "무엇을 해야 할지 몰라 멈춘 횟수", v.exec > 0],
+    ["헛누름", v.evalGap, "엉뚱한 곳을 누르거나 같은 곳을 또 누른 횟수", v.evalGap > 0],
     ["시킨 일", v.right + " / " + v.of,
       v.passed ? "끝까지 해냈습니다" : "중간에 막혔습니다", !v.passed],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],

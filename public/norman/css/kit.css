@@ -131,3 +131,19 @@
 .order h1 span{font-family:var(--sans);font-size:.92rem;font-weight:400;color:var(--ui-soft)}
 .osay{margin:6px 0 0;font-size:.82rem;color:#C9C0B4;border-left:2px solid var(--line);
   padding-left:9px}
+
+
+/* ── 앱의 틀 ──────────────────────────────────────────────── */
+/* 화면 이름은 조가 붙이는 단서가 아니라 앱이 원래 가진 틀이다. */
+.appbar{display:flex;align-items:center;gap:8px;margin:0 0 4px;padding:0 2px 9px;
+  border-bottom:1px solid #E6E6E3}
+.appback{color:#9A9A98;font-size:1.1rem;line-height:1}
+.apphead{font-family:var(--sans);font-size:.92rem;font-weight:500;color:var(--ink)}
+
+/* 얇은 부품도 한 칸을 차지한다 — 실처럼 보이면 있는 줄도 모른다 */
+.k-progress,.k-slider,.k-status{display:flex;align-items:center;min-height:40px}
+.k-progress > .box,.k-slider > .box{width:100%}
+.k-icon{min-height:40px;display:flex;align-items:center}
+
+/* 화면이 하얗게 비어 보이지 않게 */
+.screen{gap:10px}

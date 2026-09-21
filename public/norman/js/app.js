@@ -100,6 +100,12 @@ export function render(screen, job, st, at, layout, arrange) {
   screen.textContent = "";
   screen.classList.toggle("arranging", !!arrange);
 
+  // 화면 이름은 앱이 원래 가진 틀이다 — 이것까지 지우면 무슨 앱인지도 모른다.
+  // 조가 붙일 단서는 저 아래 부품들에 붙는다.
+  const head = el("div", "appbar");
+  head.append(el("span", "appback", "\u2039"), el("span", "apphead", job.screen));
+  screen.appendChild(head);
+
   const ids = (layout && layout.length ? layout : st.order)
     .filter(id => partOf(job, id));
   for (const p of job.parts) if (ids.indexOf(p.id) < 0) ids.push(p.id);
