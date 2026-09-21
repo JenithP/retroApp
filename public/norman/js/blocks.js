@@ -68,6 +68,10 @@ export const BLOCKS = [
     tip: "밑에 작은 글씨로 한 줄 덧붙는다",
     arg: { kind: "text", ph: "한 줄로 알려 주기", max: 22 } },
 
+  { id: "group",  name: "옆엣것과 묶어 두기", cat: "cog", fits: ["idle"],
+    tip: "같은 이름을 적은 부품끼리 한 칸에 담긴다",
+    arg: { kind: "text", ph: "묶음 이름 (예: 세트)", max: 10 } },
+
   { id: "status", name: "지금 어떤지 보여 주기", cat: "cog", fits: ["idle", "after"],
     tip: "「3세트 기록됨」 「쉬는 중 42초」가 뜬다" },
 

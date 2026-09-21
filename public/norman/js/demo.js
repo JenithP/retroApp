@@ -16,6 +16,8 @@ const PAIR = {
   unit:   [box("", "60"), box("", "60 kg")],
   hint:   [box(), `${box()}<span class="mh">양옆을 눌러 조절</span>`],
   status: [box(), `${box()}<span class="ms">3세트 기록됨</span>`],
+  group:  [`${box()}${box()}`,
+           `<span class="mg"><b>세트</b>${box()}${box()}</span>`],
   toast:  [box(), `${box()}<span class="mt">기록됐어요</span>`],
 
   strong: [box(), box("m-strong")],

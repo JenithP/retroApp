@@ -25,6 +25,9 @@ const findable = (s, el) =>
   !!(has(s, el, "idle", "label") || has(s, el, "idle", "icon") ||
      has(s, el, "idle", "hint")  || has(s, el, "idle", "status"));
 
+/** 묶어 두기만 되어 있으면 어느 언저리인지는 안다 — 다만 무엇인지는 모른다. */
+const grouped = (s, el) => !!has(s, el, "idle", "group");
+
 /** 하고 난 뒤 **무슨 일이 생겼는지** 알 수 있는가. */
 const answered = (s, el) =>
   ["toast", "check", "buzz", "status"].some(b => has(s, el, "after", b));
@@ -68,7 +71,9 @@ export async function cold(ui) {
     if (findable(s, el)) { say("hit", el, "단서를 보고 곧장 찾는다", pickLine("direct", GUEST.direct));
       await point(el); await wait(320); return; }
     say("seek", el, "어디를 눌러야 할지 모른다", pickLine("seek", GUEST.seek));
-    for (const w of others) {
+    // 묶여 있으면 언저리는 아니까 한 번만 헛짚는다
+    const tries = grouped(s, el) ? others.slice(0, 1) : others;
+    for (const w of tries) {
       await point(w);
       await wait(520);
       say("miss", w, "여기가 아니다", pickLine("miss", GUEST.miss));

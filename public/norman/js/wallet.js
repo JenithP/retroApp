@@ -10,7 +10,7 @@ export const START = 1000;
 
 /** 연장 값. 오래 보이는 것일수록, 여러 곳에 쓰이는 것일수록 비싸다. */
 export const PRICE = {
-  label: 60, icon: 50, unit: 40, hint: 70, status: 110, toast: 90,
+  label: 60, icon: 50, unit: 40, hint: 70, status: 110, toast: 90, group: 70,
   strong: 50, big: 40, glow: 60, check: 80, buzz: 70,
   wide: 60, press: 70, grip: 80,
   lock: 50,

@@ -4,7 +4,7 @@
 // 어느 조가 앉아 있는지 알리는 것(hci4_presence). 둘 다 돈과 무관하다.
 // 상점·장부·품평은 아직 없다. 그쪽은 서버 함수를 거쳐야 하므로 나중에 얹는다.
 
-import { APP, fresh, render, act, argOf, has } from "./app.js";
+import { APP, fresh, render, act, argOf, has, DEFAULT_LAYOUT } from "./app.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
@@ -29,6 +29,8 @@ let sel = null;
 let tok = null;                       // 시연 중단용
 let where = "bench";                  // 지금 있는 자리 — 공방·상점·앱시장
 let lastRun = null;                   // 손님이 마지막으로 써 본 결과
+let layout = [...DEFAULT_LAYOUT];     // 부품 순서 — 조가 바꾼다
+let arrange = false;                  // 자리 옮기는 중
 let bare = false;                     // 손대기 전 물건을 견주어 보는 중
 let team = null;                      // 조 번호
 let order = null;                     // 맡은 물건
@@ -40,7 +42,7 @@ function redraw(opt = {}) {
   const keep = a?.classList?.contains("namebox")
     ? { v: a.value, s: a.selectionStart } : null;
 
-  render(nodes.screen, st, bare ? {} : scripts, sel);
+  render(nodes.screen, st, bare ? {} : scripts, sel, layout, arrange);
 
   if (keep) {
     const n = nodes.screen.querySelector(".namebox");
@@ -111,9 +113,59 @@ function fire(el) {
   Sim.glow(nodes.hats, "after");
 }
 
+/* ── 자리 옮기기 — 어디에 두느냐도 단서다 ────────────────── */
+
+$("arrange").addEventListener("click", e => {
+  arrange = !arrange;
+  e.currentTarget.classList.toggle("on", arrange);
+  e.currentTarget.setAttribute("aria-pressed", String(arrange));
+  nodes.note.innerHTML = arrange
+    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸십시오. " +
+      "가까이 둔 것은 한 덩어리로 읽힙니다."
+    : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
+  if (arrange) Talk.cut("norman", "어디에 두느냐도 알려 주는 일일세. " +
+    "붙여 놓으면 한 덩어리로 보이고, 떼어 놓으면 남남으로 보이지.");
+  redraw({ hats: false });
+});
+
+let lift = null;
+nodes.screen.addEventListener("pointerdown", e => {
+  const h = e.target.closest("[data-grab]");
+  if (!h) return;
+  e.preventDefault();
+  lift = h.dataset.grab;
+  document.body.classList.add("dragging");
+});
+
+addEventListener("pointermove", e => {
+  if (!lift) return;
+  const fields = [...nodes.screen.querySelectorAll(".field")];
+  let to = fields.length - 1;
+  for (let i = 0; i < fields.length; i++) {
+    const r = fields[i].getBoundingClientRect();
+    if (e.clientY < r.top + r.height / 2) { to = i; break; }
+  }
+  const from = layout.indexOf(lift);
+  if (from < 0 || from === to) return;
+  layout.splice(to, 0, layout.splice(from, 1)[0]);
+  redraw({ hats: false });
+});
+
+addEventListener("pointerup", () => {
+  if (!lift) return;
+  lift = null;
+  document.body.classList.remove("dragging");
+  stash();
+});
+
 /* ── 손대기 ───────────────────────────────────────────────── */
 
 nodes.screen.addEventListener("click", e => {
+  if (arrange) {                               // 옮기는 중에는 눌리지 않는다
+    const box = e.target.closest(".field");
+    if (box) pick(box.dataset.el);
+    return;
+  }
   const ctl = e.target.closest("[data-act]");
   if (ctl) {                                   // 진짜로 작동한다 — 언제나
     if (ctl.dataset.act === "name") { pick("name"); return; }
@@ -462,6 +514,11 @@ async function restore() {
   try {
     const d = await readDoc("hci4_drafts", "team" + team);
     if (d?.purse) load(JSON.parse(d.purse));
+    if (d?.layout) {
+      const L = JSON.parse(d.layout);
+      if (Array.isArray(L) && L.length) layout = L.filter(x => DEFAULT_LAYOUT.includes(x));
+      for (const id of DEFAULT_LAYOUT) if (!layout.includes(id)) layout.push(id);
+    }
     const saved = d?.scripts ? JSON.parse(d.scripts) : null;
     if (saved && typeof saved === "object") {
       for (const k of Object.keys(scripts)) delete scripts[k];
@@ -482,7 +539,7 @@ function stash() {
   saveTimer = setTimeout(() => {
     putDoc("hci4_drafts", "team" + team,
       { team, order: order.id, scripts: JSON.stringify(scripts),
-        purse: JSON.stringify(dump()) })
+        layout: JSON.stringify(layout), purse: JSON.stringify(dump()) })
       .catch(e => console.warn("저장", e?.code || e?.message));
   }, 1600);
 }

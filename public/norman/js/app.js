@@ -97,45 +97,23 @@ function wrap(el, s, inner, statusText) {
 
 const unitOf = (s, el) => argOf(s, el, "idle", "unit");
 
-/* ── 화면 그리기 ──────────────────────────────────────────── */
+/* ── 부품 하나씩 짓기 ─────────────────────────────────────── */
+/* 순서를 조가 바꿀 수 있으므로, 부품마다 따로 지어 두고 나중에 늘어놓는다. */
 
-export function render(screen, st, s, hot) {
-  screen.textContent = "";
-
-  /* 운동 이름 칸 */
-  {
+const BUILD = {
+  name(st, s) {
     const inp = make("input", "box namebox");
     inp.value = st.name;
     inp.placeholder = "";
     inp.dataset.act = "name";
     dress(inp, s, "name");
-    screen.appendChild(wrap("name", s, inp, st.name || "아직 비어 있음"));
-  }
+    return wrap("name", s, inp, st.name || "아직 비어 있음");
+  },
 
-  /* 무게·횟수 조절 */
-  for (const el of ["weight", "reps"]) {
-    const row = make("div", "row3");
-    const minus = dress(make("button", "box step", ""), s, el);
-    const plus  = dress(make("button", "box step", ""), s, el);
-    minus.dataset.act = el + ":-";
-    plus.dataset.act  = el + ":+";
+  weight(st, s) { return stepper(st, s, "weight"); },
+  reps(st, s)   { return stepper(st, s, "reps"); },
 
-    const ico = argOf(s, el, "idle", "icon");
-    if (ico === "plus" || ico === "minus") {
-      minus.appendChild(svg(ICONS.minus));
-      plus.appendChild(svg(ICONS.plus));
-    }
-
-    const u = unitOf(s, el);
-    const val = make("span", "box val", st[el] + (u ? " " + u : ""));
-
-    row.append(minus, val, plus);
-    const words = el === "weight" ? `${st.weight} 킬로그램` : `${st.reps} 회`;
-    screen.appendChild(wrap(el, s, row, words));
-  }
-
-  /* 기록 단추 */
-  {
+  save(st, s) {
     const btn = make("button", "box savebtn", argOf(s, "save", "idle", "label") || "");
     btn.dataset.act = "save";
     dress(btn, s, "save");
@@ -144,16 +122,16 @@ export function render(screen, st, s, hot) {
 
     const box = make("div", "field");
     box.dataset.el = "save";
+    const lab = argOf(s, "save", "idle", "label");
     box.appendChild(btn);
     if (has(s, "save", "idle", "status"))
       box.appendChild(make("p", "sg-status", `지금까지 ${st.sets.length}세트`));
     const hint = argOf(s, "save", "idle", "hint");
     if (hint) box.appendChild(make("p", "sg-hint", hint));
-    screen.appendChild(box);
-  }
+    return box;
+  },
 
-  /* 세트 목록과 쉬는 시계 */
-  {
+  list(st, s) {
     const ul = make("ul", "setlist");
     dress(ul, s, "list");
     st.sets.forEach((x, i) => {
@@ -169,13 +147,72 @@ export function render(screen, st, s, hot) {
     });
     if (!st.sets.length) ul.appendChild(make("li", "box setrow empty", ""));
 
-    const words = st.rest > 0
-      ? `쉬는 중 ${st.rest}초`
-      : `${st.sets.length}세트 기록됨`;
-    screen.appendChild(wrap("list", s, ul, words));
+    const words = st.rest > 0 ? `쉬는 중 ${st.rest}초` : `${st.sets.length}세트 기록됨`;
+    return wrap("list", s, ul, words);
+  },
+};
+
+function stepper(st, s, el) {
+  const row = make("div", "row3");
+  const minus = dress(make("button", "box step", ""), s, el);
+  const plus  = dress(make("button", "box step", ""), s, el);
+  minus.dataset.act = el + ":-";
+  plus.dataset.act  = el + ":+";
+
+  const ico = argOf(s, el, "idle", "icon");
+  if (ico === "plus" || ico === "minus") {
+    minus.appendChild(svg(ICONS.minus));
+    plus.appendChild(svg(ICONS.plus));
   }
 
-  /* 고른 부품을 작업대에서 짚어 준다 */
+  const u = unitOf(s, el);
+  const val = make("span", "box val", st[el] + (u ? " " + u : ""));
+  row.append(minus, val, plus);
+
+  const words = el === "weight" ? `${st.weight} 킬로그램` : `${st.reps} 회`;
+  return wrap(el, s, row, words);
+}
+
+/* ── 화면 그리기 ──────────────────────────────────────────── */
+
+export const DEFAULT_LAYOUT = APP.elements.map(e => e.id);
+
+/** 같은 이름으로 묶어 둔 이웃끼리 한 상자에 들어간다 — 가까이 두는 것도 단서다. */
+export const groupOf = (s, el) => argOf(s, el, "idle", "group");
+
+export function render(screen, st, s, hot, layout, arrange) {
+  screen.textContent = "";
+  screen.classList.toggle("arranging", !!arrange);
+
+  const order = (layout && layout.length ? layout : DEFAULT_LAYOUT)
+    .filter(id => BUILD[id]);
+  for (const id of DEFAULT_LAYOUT) if (!order.includes(id)) order.push(id);
+
+  const parts = order.map(id => ({ id, node: BUILD[id](st, s), grp: groupOf(s, id) }));
+
+  let i = 0;
+  while (i < parts.length) {
+    const g = parts[i].grp;
+    if (g) {
+      let j = i;
+      while (j + 1 < parts.length && parts[j + 1].grp === g) j++;
+      const box = make("div", "grouped");
+      box.appendChild(make("p", "gtitle", g));
+      for (let k = i; k <= j; k++) box.appendChild(parts[k].node);
+      screen.appendChild(box);
+      i = j + 1;
+      continue;
+    }
+    screen.appendChild(parts[i].node);
+    i++;
+  }
+
+  if (arrange) screen.querySelectorAll(".field").forEach(f => {
+    const h = make("span", "grab", "⠿");
+    h.dataset.grab = f.dataset.el;
+    f.prepend(h);
+  });
+
   if (hot) screen.querySelector(`.field[data-el="${hot}"]`)?.classList.add("picked");
 }
 

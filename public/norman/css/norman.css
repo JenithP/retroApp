@@ -525,3 +525,22 @@ input.box{cursor:text;justify-content:flex-start}
 /* 작업대 나무 위에서도 글자가 읽히게 */
 .phonenote{background:rgba(13,11,9,.72);border-radius:6px;padding:7px 12px;
   backdrop-filter:blur(2px)}
+
+/* ── 자리 옮기기 · 묶어 두기 ──────────────────────────────── */
+.grouped{border:1px solid #C9C5BC;border-radius:7px;padding:9px 8px 10px;
+  display:flex;flex-direction:column;gap:7px;background:rgba(0,0,0,.025)}
+.gtitle{margin:0 0 1px;font-size:.74rem;font-weight:500;color:var(--ink)}
+
+.screen.arranging .box{pointer-events:none}
+.screen.arranging .field{border:1px dashed #B9B5AC;border-radius:6px;padding:7px 7px 7px 26px;
+  position:relative;background:rgba(0,0,0,.02)}
+.grab{position:absolute;left:5px;top:50%;transform:translateY(-50%);cursor:grab;
+  color:#8A8681;font-size:.9rem;letter-spacing:-2px;line-height:1;user-select:none;
+  touch-action:none;padding:6px 2px}
+.grab:active{cursor:grabbing}
+.screen.arranging .field.picked{border-color:var(--lamp);border-style:solid}
+
+/* 상점 카드의 묶기 축소판 */
+.mg{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;
+  border:1px solid #BFBBB2;border-radius:4px;padding:4px 5px 5px}
+.mg b{font-size:.56rem;color:#232323;align-self:flex-start;font-weight:500}
