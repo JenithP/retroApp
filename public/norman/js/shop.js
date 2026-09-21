@@ -4,6 +4,7 @@
 // 여기서 파는 것은 전부 단서다. 어포던스는 팔지 않는다 — 이미 물건에 들어 있으니까.
 
 import { CATS } from "./blocks.js";
+import { demo } from "./demo.js";
 import { CATALOG, purse, countOwn, priceOf, buy } from "./wallet.js";
 
 const cart = {};
@@ -66,6 +67,7 @@ function card(b) {
   const inCart = cart[b.id] || 0;
   return `<button class="good c-${b.cat}" data-buy="${b.id}">
       <span class="gname">${b.name}</span>
+      ${demo(b.id)}
       <span class="gtip">${b.tip}</span>
       <span class="gfoot">
         <b>${b.price}</b>
@@ -84,7 +86,7 @@ document.addEventListener("click", e => {
     cart[id] = (cart[id] || 0) + 1;
     if (bill() > purse.point) {
       cart[id]--;
-      talk?.("tinker", "포인트가 모자라오. 하나 빼든지, 퀴즈라도 풀고 오시오.");
+      talk?.("tinker", "포인트가 모자라오. 하나 빼든지, 위에 「문제 풀기」에 들렀다 오시오.");
     }
     paint();
     return;

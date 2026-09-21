@@ -11,6 +11,7 @@ import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
 import { purse, dump, load } from "./wallet.js";
 import * as Shop from "./shop.js";
 import * as Market from "./market.js";
+import * as Quiz from "./quiz.js";
 import * as Talk from "./talk.js";
 import * as Ed from "./editor.js";
 import * as Sim from "./sim.js";
@@ -214,7 +215,7 @@ $("cold").addEventListener("click", async () => {
   st = fresh();
   redraw();
   Sim.markAstray(nodes.hats);
-  nodes.note.innerHTML = "<b>이 물건을 처음 본 사람</b>이 써 보는 중입니다. 화면에 붙은 것만 보고 합니다.";
+  nodes.note.innerHTML = "<b>처음 만져 보는 사람</b>이 테스트하는 중입니다. 화면에 붙은 것만 보고 합니다.";
 
   const dot = document.createElement("div");
   dot.className = "cursor"; dot.hidden = true;
@@ -223,14 +224,14 @@ $("cold").addEventListener("click", async () => {
   const who = document.createElement("div");
   who.className = "guestbox";
   who.innerHTML = `<div class="port p-guest">${faceSVG("guest")}` +
-    (hasArt("guest") ? `<img src="img/guest.webp" alt="">` : "") + `</div><p>손님</p>`;
+    (hasArt("guest") ? `<img src="img/guest.webp" alt="">` : "") + `</div><p>테스트</p>`;
   document.getElementById("phone").appendChild(who);
 
   Talk.hush();
   Talk.say("norman", NORMAN.beforeGuest, 1800);
 
   nodes.verdict.hidden = false;
-  nodes.verdict.innerHTML = `<h3>처음 본 사람</h3><ol class="tl" id="tl"></ol>`;
+  nodes.verdict.innerHTML = `<h3>테스트 사용자</h3><ol class="tl" id="tl"></ol>`;
   const tl = $("tl");
 
   tok = { dead: false, cancels: [] };
@@ -287,7 +288,7 @@ function showVerdict(v) {
   ];
 
   nodes.verdict.innerHTML =
-    `<h3>처음 본 사람 ${v.clean ? "<em class='good'>막힘 없이 해냈습니다</em>" : "<em class='bad'>막혔습니다</em>"}</h3>
+    `<h3>테스트 사용자 ${v.clean ? "<em class='good'>막힘 없이 해냈습니다</em>" : "<em class='bad'>막혔습니다</em>"}</h3>
      <div class="scores">${rows.map(([k, n, d, hot]) =>
         `<div class="score${hot ? " hot" : ""}">
            <b>${n}</b><span>${k}</span><small>${d}</small></div>`).join("")}</div>
@@ -318,6 +319,7 @@ function go(to) {
   $("bench").hidden  = to !== "bench";
   $("shop").hidden   = to !== "shop";
   $("market").hidden = to !== "market";
+  $("quiz").hidden   = to !== "quiz";
   coin();
 
   if (to === "shop")
@@ -340,6 +342,13 @@ function go(to) {
       onBack: () => go("bench"),
       onSold: a => { coin(); stash(); go("bench");
         Talk.say("norman", `${a.price}포인트 받아 왔구먼. 다음 주문도 있네.`); },
+    });
+
+  if (to === "quiz")
+    Quiz.open($("quiz"), {
+      talk: (w, t) => Talk.cut(w, t),
+      onChange: () => { coin(); stash(); },
+      onBack: () => go("bench"),
     });
 
   if (to === "bench") { Ed.shelf(); redraw(); }
@@ -408,7 +417,8 @@ async function enter(n) {
   BROKER.knock.forEach((t, i) => Talk.say("critic", t, i < 2 ? 2600 : 3000));
   Talk.say("norman", NORMAN.heard(n), 3400);
   Talk.say("norman", NORMAN.rule, 3600);
-  Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.");
+  Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.", 3800);
+  Talk.say("norman", NORMAN.broke);
 
   await restore();
   beat();

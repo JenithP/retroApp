@@ -41,6 +41,7 @@
     <button class="place on" data-go="bench">공방</button>
     <button class="place" data-go="shop">상점</button>
     <button class="place" data-go="market">앱시장</button>
+    <button class="place" data-go="quiz">문제 풀기</button>
   </nav>
   <div class="right">
     <span class="coin" id="coin">1000</span>
@@ -50,7 +51,7 @@
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1v14M3 2h9l-2 3 2 3H3z"/></svg>
       내가 써 보기
     </button>
-    <button class="flag ghost" id="cold" title="이 물건을 오늘 처음 만져 보는 사람에게 쥐여 본다">처음 쓰는 사람</button>
+    <button class="flag ghost" id="cold" title="이 물건을 처음 만져 보는 사람에게 쥐여 본다">테스트해 보기</button>
     <button class="flag ghost" id="before" aria-pressed="false" title="터치하기 전 물건과 견준다">원래 물건</button>
     <button class="flag ghost" id="reset" title="처음 상태로">되돌리기</button>
     <button class="flag ghost" id="swap" title="다른 조로 들어간다">조 바꾸기</button>
@@ -110,6 +111,7 @@
 
 <section id="shop" class="place-view" hidden></section>
 <section id="market" class="place-view" hidden></section>
+<section id="quiz" class="place-view" hidden></section>
 
 <div class="drag" id="drag" hidden></div>
 

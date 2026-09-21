@@ -26,7 +26,7 @@ export function appraise(scripts, run) {
 
   // ① 두 간극 — 값의 대부분이 여기서 갈린다
   if (run.exec === 0) { price += 350; notes.push(["good", "어디를 눌러야 할지 바로 알겠더군. 실행의 간극이 없소."]); }
-  else notes.push(["bad", `처음 쓰는 사람이 ${run.exec}번 헤맸소. 실행의 간극이오 — 무엇을 해야 할지 모르는 것.`]);
+  else notes.push(["bad", `테스트 사용자가 ${run.exec}번 헤맸소. 실행의 간극이오 — 무엇을 해야 할지 모르는 것.`]);
 
   if (run.evalGap === 0) { price += 400; notes.push(["good", "누른 뒤에 어찌 됐는지 분명했소. 평가의 간극이 없소."]); }
   else notes.push(["bad", `누르고도 몰라 ${run.evalGap}건이 잘못 쌓였소. 평가의 간극이오.`]);
@@ -85,8 +85,8 @@ function paint() {
         <p class="oeyebrow">앱시장</p><h1>아직 값을 매길 수 없소</h1></div>
         <p class="purse">남은 포인트 <b>${purse.point}</b></p></div>
       <div class="mkempty">
-        <p>한 번도 돌려 보지 않은 물건은 받지 않습니다.</p>
-        <p class="dim">공방에서 <b>「처음 쓰는 사람」</b>으로 한 번 돌려 보고 오십시오.</p>
+        <p>한 번도 테스트하지 않은 물건은 받지 않습니다.</p>
+        <p class="dim">공방에서 <b>「테스트해 보기」</b>를 한 번 돌려 보고 오십시오.</p>
         <button class="flag ghost" id="mkback">공방으로 돌아가기</button>
       </div>`;
     return;
@@ -113,7 +113,7 @@ function paint() {
              <button class="big" id="sell">이 값에 판다</button>`
           : `<p class="opre">출품 반려</p>
              <p class="oprice bad">—</p>
-             <p class="odim">처음 쓰는 사람이 주문대로 해낸 것이
+             <p class="odim">테스트 사용자가 주문대로 해낸 것이
                ${ctx.run.right} / 3 줄입니다.<br>세 줄을 채워야 받습니다.</p>`}
         <button class="flag ghost wide2" id="mkback">${
           a.passed ? "더 고치고 오겠소" : "공방으로 돌아가 고친다"}</button>

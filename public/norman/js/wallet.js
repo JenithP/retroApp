@@ -22,6 +22,7 @@ export const purse = {
   point: START,
   own: {},          // { 연장 이름: 남은 개수 }
   sold: [],         // 앱시장에 판 기록
+  quiz: {},         // 푼 문제 — 번호: 맞혔나
 };
 
 export const countOwn = id => purse.own[id] || 0;
@@ -57,6 +58,9 @@ export function give(id) {
   purse.own[id] = countOwn(id) + 1;
 }
 
+/** 품삯처럼 그냥 들어오는 돈 — 판 기록에는 남기지 않는다. */
+export function gain(amount) { purse.point += amount; }
+
 /** 물건을 팔아 돈을 받는다. */
 export function earn(amount, row) {
   purse.point += amount;
@@ -66,7 +70,7 @@ export function earn(amount, row) {
 /* ── 담아 두기 ────────────────────────────────────────────── */
 
 export function dump() {
-  return { point: purse.point, own: purse.own, sold: purse.sold, spent };
+  return { point: purse.point, own: purse.own, sold: purse.sold, quiz: purse.quiz, spent };
 }
 
 export function load(d) {
@@ -74,6 +78,7 @@ export function load(d) {
   if (Number.isFinite(d.point)) purse.point = d.point;
   if (d.own && typeof d.own === "object") purse.own = { ...d.own };
   if (Array.isArray(d.sold)) purse.sold = d.sold;
+  if (d.quiz && typeof d.quiz === "object") purse.quiz = { ...d.quiz };
   if (Number.isFinite(d.spent)) spent = d.spent;
 }
 
