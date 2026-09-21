@@ -67,27 +67,36 @@ h2{font-family:var(--serif);font-size:1rem;margin:0}
 .racknote b{color:var(--ui);font-weight:500}
 
 /* ── 주문서 ───────────────────────────────────────────────── */
-.stage{display:flex;flex-direction:column;align-items:center}
-.order{width:100%;max-width:420px}
+/* 세 기둥 — 왼쪽은 공방 주인과 선반, 가운데는 주문서와 앱 화면,
+   오른쪽은 노만 영감의 말과 테스트 결과. 손대는 것(가운데)을 가장 크게
+   두고, 읽는 것(오른쪽)을 옆으로 뺀다. */
+.stage{display:grid;align-items:start;column-gap:20px;
+  grid-template-columns:156px minmax(420px,1.2fr) minmax(300px,368px)}
+.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.mid{min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.side{min-width:0;display:flex;flex-direction:column;gap:14px}
+.order{width:100%;max-width:560px}
 .oeyebrow{margin:0;font-size:.72rem;letter-spacing:.14em;color:var(--lamp)}
-.order h1{font-family:var(--serif);font-size:1.4rem;margin:1px 0 4px}
-.otask{margin:0 0 10px;font-size:.88rem}
+.order h1{font-family:var(--serif);font-size:1.6rem;margin:1px 0 5px}
+.otask{margin:0 0 11px;font-size:.95rem}
 .oparts{display:flex;flex-wrap:wrap;gap:5px;margin:0}
 /* 옛 주문서 칩 스타일이었다. 지금 .part 는 화면 속 부품이라 이름이 겹쳐
    어두운 패널색이 부품 뒤에 깔렸다. 칩은 .part-chip 으로 옮겼으므로 지운다. */
 .onote{margin:7px 0 0;font-size:.76rem;color:var(--ui-soft)}
 
 /* ── 화면 ─────────────────────────────────────────────────── */
-.phonewrap{margin:18px 0 0;display:flex;flex-direction:column;align-items:center}
-.phone{position:relative;width:300px;background:#0D0B09;border:1px solid #3B322B;
-  border-radius:26px;padding:9px;box-shadow:0 26px 54px -18px #000}
+.phonewrap{margin:18px 0 0;display:flex;flex-direction:column;align-items:flex-start;
+  width:100%}
+.phone{position:relative;width:min(400px,100%);background:#0D0B09;
+  border:1px solid #3B322B;
+  border-radius:30px;padding:10px;box-shadow:0 26px 54px -18px #000}
 .phone.shake{animation:shake .24s}
 @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .statusbar{display:flex;justify-content:space-between;color:#7E756B;font-size:.64rem;
   padding:1px 10px 5px}
-.screen{background:var(--paper);border-radius:18px;padding:18px 14px 22px;color:var(--ink);
-  font-weight:400;min-height:318px;display:flex;flex-direction:column;gap:7px}
-.phonenote{max-width:330px;margin:13px 0 0;font-size:.78rem;color:var(--ui-soft);text-align:center}
+.screen{background:var(--paper);border-radius:21px;padding:20px 16px 24px;color:var(--ink);
+  font-weight:400;min-height:424px;display:flex;flex-direction:column;gap:8px}
+.phonenote{max-width:400px;text-align:left;margin:13px 0 0;font-size:.78rem;color:var(--ui-soft);text-align:center}
 .phonenote b{color:var(--ui);font-weight:500}
 
 /* 부품 한 칸 */
@@ -149,7 +158,7 @@ input.box{cursor:text;justify-content:flex-start}
 .cursor.tapping{background:var(--lamp)}
 
 /* ── 판정 ─────────────────────────────────────────────────── */
-.verdict{width:100%;max-width:420px;margin:18px 0 0;background:var(--panel);
+.verdict{width:100%;margin:0;background:var(--panel);
   border:1px solid var(--line);border-radius:8px;padding:13px 15px 15px}
 .verdict h3{font-family:var(--serif);font-size:1rem;margin:0 0 9px}
 .verdict h3 em{font-style:normal;font-size:.8rem;font-family:var(--sans);font-weight:400}
@@ -237,7 +246,7 @@ input.box{cursor:text;justify-content:flex-start}
   repeating-linear-gradient(180deg,rgba(0,0,0,.14) 0 1px,transparent 1px 15px)}
 
 /* ── 대화창 ───────────────────────────────────────────────── */
-.talk{width:100%;max-width:420px;margin:14px 0 0;display:flex;gap:12px;align-items:flex-start;
+.talk{width:100%;margin:0;display:flex;gap:12px;align-items:flex-start;
   background:rgba(13,11,9,.93);border:1px solid var(--line);border-left:3px solid var(--lamp);
   border-radius:8px;padding:12px 14px;cursor:pointer;min-height:76px;
   box-shadow:0 12px 26px -12px #000}
@@ -427,9 +436,8 @@ input.box{cursor:text;justify-content:flex-start}
 
 /* ── 벽에 걸린 노만 영감 ──────────────────────────────────── */
 /* 공방 주인은 조 자신이다. 노만은 벽에서 거든다. */
-.portrait{position:absolute;left:18px;top:74px;z-index:2;width:104px;padding:0;cursor:pointer;
+.portrait{width:104px;padding:0;cursor:pointer;align-self:flex-start;
   background:transparent;border:0;display:flex;flex-direction:column;align-items:center;gap:0}
-@media(max-width:1180px){.portrait{position:static;margin:0 0 12px;align-self:flex-start}}
 .frame{display:block;width:104px;height:104px;padding:6px;border-radius:3px;
   background:linear-gradient(150deg,#8A6A3C,#4A3520 46%,#6E5230);
   box-shadow:0 10px 22px -8px #000,inset 0 0 0 1px rgba(0,0,0,.45);
@@ -472,19 +480,10 @@ input.box{cursor:text;justify-content:flex-start}
 .phonenote{background:rgba(13,11,9,.72);border-radius:6px;padding:7px 12px;
   backdrop-filter:blur(2px)}
 
-/* ── 자리 옮기기 · 묶어 두기 ──────────────────────────────── */
+/* ── 묶어 두기 ────────────────────────────────────────────── */
 .grouped{border:1px solid #C9C5BC;border-radius:7px;padding:9px 8px 10px;
   display:flex;flex-direction:column;gap:7px;background:rgba(0,0,0,.025)}
 .gtitle{margin:0 0 1px;font-size:.74rem;font-weight:500;color:var(--ink)}
-
-.screen.arranging .box{pointer-events:none}
-.screen.arranging .field{border:1px dashed #B9B5AC;border-radius:6px;padding:7px 7px 7px 26px;
-  position:relative;background:rgba(0,0,0,.02)}
-.grab{position:absolute;left:5px;top:50%;transform:translateY(-50%);cursor:grab;
-  color:#8A8681;font-size:.9rem;letter-spacing:-2px;line-height:1;user-select:none;
-  touch-action:none;padding:6px 2px}
-.grab:active{cursor:grabbing}
-.screen.arranging .field.picked{border-color:var(--lamp);border-style:solid}
 
 /* 상점 카드의 묶기 축소판 */
 .mg{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;
@@ -526,8 +525,7 @@ input.box{cursor:text;justify-content:flex-start}
    앱시장에 내놓은 화면이 여기에 쌓인다. 판 것은 화면과 함께 갔으므로
    공방에는 남지 않지만, 무엇을 만들어 팔았는지는 보여야 한다. */
 
-.shelf{position:absolute;left:18px;top:236px;z-index:2;width:150px;
-  max-height:calc(100% - 260px);overflow-y:auto;
+.shelf{width:100%;max-height:calc(100vh - 300px);overflow-y:auto;
   background:linear-gradient(180deg,#2B2320,#241E1B);
   border:1px solid var(--line);border-top:3px solid #55402B;border-radius:3px;
   padding:9px 9px 10px;box-shadow:0 12px 26px -12px #000}
@@ -542,7 +540,10 @@ input.box{cursor:text;justify-content:flex-start}
 .shelf li span{color:#8E8272}
 .shelf li i{font-style:normal;float:right;color:var(--ok)}
 .shelf p.none{margin:0;font-size:.68rem;color:#6E655C;line-height:1.6}
-@media(max-width:1180px){
-  .shelf{position:static;width:100%;max-width:420px;max-height:none;margin:0 0 12px;
-    align-self:flex-start}
+/* 좁은 화면에서는 세 기둥을 한 줄로 내린다 */
+@media(max-width:1120px){
+  .stage{grid-template-columns:1fr;row-gap:16px;justify-items:center}
+  .rail{flex-direction:row;align-items:flex-start;width:100%;max-width:560px}
+  .shelf{max-height:none}
+  .side{width:100%;max-width:560px}
 }

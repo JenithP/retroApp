@@ -101,9 +101,8 @@ function dress(box, core, at, id, words) {
 
 const noBg = {};              // 배경 그림이 없는 의뢰 — 한 번만 찾아본다
 
-export function render(screen, job, st, at, layout, arrange) {
+export function render(screen, job, st, at, layout) {
   screen.textContent = "";
-  screen.classList.toggle("arranging", !!arrange);
 
   // 화면 이름은 앱이 원래 가진 틀이다 — 이것까지 지우면 무슨 앱인지도 모른다.
   // 조가 붙일 단서는 저 아래 부품들에 붙는다.
@@ -157,11 +156,6 @@ export function render(screen, job, st, at, layout, arrange) {
     screen.appendChild(dress(box, core, at, id, stateText(p, st)));
   }
 
-  if (arrange) screen.querySelectorAll(".part").forEach(f => {
-    const h = el("span", "grab", "⠿");
-    h.dataset.grab = f.dataset.part;
-    f.prepend(h);
-  });
 }
 
 /* ── 진짜로 일어나는 일 ───────────────────────────────────── */

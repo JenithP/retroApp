@@ -55,7 +55,6 @@
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1v14M3 2h9l-2 3 2 3H3z"/></svg>
       테스트해 보기
     </button>
-    <button class="flag ghost" id="arrange" aria-pressed="false" title="화면 요소의 순서를 바꾸고 묶는다">자리 옮기기</button>
     <button class="flag ghost" id="before" aria-pressed="false" title="단서를 붙이기 전 화면과 비교한다">원래 화면</button>
     <button class="flag ghost" id="reset" title="화면에 입력한 값과 테스트 결과를 지운다. 포인트와 붙인 단서는 그대로다">화면 비우기</button>
     <button class="flag ghost" id="swap" title="다른 조로 들어간다">조 바꾸기</button>
@@ -69,16 +68,21 @@
     <div class="bench" aria-hidden="true"></div>
     <div class="lamp" aria-hidden="true"></div>
 
-    <!-- 공방을 세운 사람. 조언할 때 액자가 빛난다. -->
-    <button class="portrait" id="portrait" title="노만 영감에게 묻는다 — 문제를 맞히면 포인트를 준다">
-      <span class="frame"><img src="img/norman.webp" alt="노만 영감의 초상화"></span>
-      <span class="plate">노만 영감</span>
-      <span class="ping" id="portping" hidden>?</span>
-    </button>
+    <!-- ── 왼쪽 기둥 · 공방 주인과 선반 ───────────────────── -->
+    <div class="rail">
+      <!-- 공방을 세운 사람. 조언할 때 액자가 빛난다. -->
+      <button class="portrait" id="portrait" title="노만 영감에게 묻는다 — 문제를 맞히면 포인트를 준다">
+        <span class="frame"><img src="img/norman.webp" alt="노만 영감의 초상화"></span>
+        <span class="plate">노만 영감</span>
+        <span class="ping" id="portping" hidden>?</span>
+      </button>
 
-    <!-- 왼쪽 선반 — 앱시장에 내놓은 화면이 쌓인다 -->
-    <aside class="shelf" id="shelf" hidden></aside>
+      <!-- 앱시장에 내놓은 화면이 쌓인다 -->
+      <aside class="shelf" id="shelf" hidden></aside>
+    </div>
 
+    <!-- ── 가운데 기둥 · 주문서와 앱 화면 ─────────────────── -->
+    <div class="mid">
     <div class="order" id="order"></div>
 
     <div class="phonewrap">
@@ -94,9 +98,13 @@
         이 화면은 <b>이미 다 작동합니다.</b> 무엇을 할 수 있는지 알려 주지 않을 뿐입니다.
       </p>
     </div>
+    </div>
 
-    <div class="talk" id="talk" hidden></div>
-    <div class="verdict" id="verdict" hidden></div>
+    <!-- ── 오른쪽 기둥 · 노만 영감의 말과 테스트 결과 ─────── -->
+    <div class="side">
+      <div class="talk" id="talk" hidden></div>
+      <div class="verdict" id="verdict" hidden></div>
+    </div>
   </section>
 
   <!-- ══ 오른쪽 · 제작대 ═══════════════════════════════════ -->

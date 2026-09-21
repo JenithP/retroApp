@@ -30,7 +30,7 @@ const nodes = {
 
 let queue = [], job = null, st = null;
 let layout = [];                      // 부품 차례. 붙인 단서는 서버 지갑에 있다.
-let arrange = false, bare = false;
+let bare = false;
 let where = "bench", lastRun = null;
 let team = null, tok = null;
 
@@ -42,7 +42,7 @@ function redraw(opt = {}) {
     ? { act: a.dataset.act, s: a.selectionStart } : null;
 
   if (!job) return;
-  render(nodes.screen, job, st, bare ? {} : purse.attached, layout, arrange);
+  render(nodes.screen, job, st, bare ? {} : purse.attached, layout, false);
 
   if (keep) {
     const n = nodes.screen.querySelector('[data-act="' + keep.act + '"]');
@@ -169,7 +169,6 @@ function fire(part) {
 /* ── 손대기 — 화면은 언제나 진짜로 작동한다 ───────────────── */
 
 nodes.screen.addEventListener("click", function (e) {
-  if (arrange) return;
   const ctl = e.target.closest("[data-act]");
   if (!ctl || ctl.dataset.act.indexOf("type") === 0) return;
   if (ctl.dataset.act.indexOf("read") === 0) return;
@@ -202,46 +201,6 @@ nodes.order.addEventListener("click", function (e) {
   setTimeout(function () { box.classList.remove("picked"); }, 1800);
 });
 
-/* ── 자리 옮기기 ──────────────────────────────────────────── */
-
-$("arrange").addEventListener("click", function (e) {
-  arrange = !arrange;
-  e.currentTarget.classList.toggle("on", arrange);
-  nodes.note.innerHTML = arrange
-    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸세요."
-    : "이 화면은 <b>이미 다 작동합니다.</b> 무엇을 할 수 있는지 알려 주지 않을 뿐입니다.";
-  if (arrange) Talk.cut("norman",
-    "어디에 두느냐도 중요한 단서입니다. 가까이 두면 같은 묶음으로 보입니다.");
-  redraw({ craft: false });
-});
-
-let lift = null;
-nodes.screen.addEventListener("pointerdown", function (e) {
-  const h = e.target.closest("[data-grab]");
-  if (!h) return;
-  e.preventDefault();
-  lift = h.dataset.grab;
-  document.body.classList.add("dragging");
-});
-addEventListener("pointermove", function (e) {
-  if (!lift) return;
-  const ps = [].slice.call(nodes.screen.querySelectorAll(".part"));
-  let to = ps.length - 1;
-  for (let i = 0; i < ps.length; i++) {
-    const r = ps[i].getBoundingClientRect();
-    if (e.clientY < r.top + r.height / 2) { to = i; break; }
-  }
-  const from = layout.indexOf(lift);
-  if (from < 0 || from === to) return;
-  layout.splice(to, 0, layout.splice(from, 1)[0]);
-  redraw({ craft: false });
-});
-addEventListener("pointerup", function () {
-  if (!lift) return;
-  lift = null;
-  document.body.classList.remove("dragging");
-  stash();
-});
 
 /* ── 머리 버튼 ────────────────────────────────────────────── */
 
