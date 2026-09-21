@@ -1,17 +1,16 @@
 // 제작대 — 재료 둘을 합쳐 연장을 만들고, 만든 연장을 물건 위에 끌어다 붙인다.
 //
-// 자리(해트)를 고르게 하지 않는다. 언제 보이는지는 만든 연장이 스스로 안다.
-// 그래서 조가 할 일은 「어느 칸에 무엇을 넣을까」가 아니라
-// 「무엇을 만들어 어디에 붙일까」가 된다.
+// 무엇과 무엇이 합쳐지는지, 재료가 정말 있는지, 그 자리에 붙을 수 있는지는
+// 전부 서버가 판단한다. 이 파일은 「하겠다」고 말하고 돌아온 지갑을 그린다.
 
 import { MATERIALS, mat, combine, rebuff, recipeById } from "./parts.js";
-import { ICONS, ICON_NAMES, svgOf } from "./icons.js";
-import { purse, countMat, takeMat, giveMat } from "./wallet.js";
-import { bookHTML } from "./book.js";
+import { ICONS, ICON_NAMES } from "./icons.js";
+import { purse, countMat, craft as makeTool, setArg, attach, detach } from "./wallet.js";
 import { allWorn } from "./app.js";
+import { bookHTML } from "./book.js";
 
 const slot = [null, null];
-let ctx = null;
+let ctx = null, scolded = "";
 
 export function mount(c) { ctx = c; }
 
@@ -48,7 +47,7 @@ export function paint() {
         ? `<div class="mgrid">${mine.map(m =>
             `<button class="mchip" data-mat="${m.id}">
                <span>${m.name}</span><em>${countMat(m.id)}</em></button>`).join("")}</div>`
-        : `<p class="cempty">재료가 없습니다. <b>상점</b>에 다녀오십시오.</p>`}
+        : `<p class="cempty">재료가 없습니다. <b>상점</b>에서 재료를 사 오세요.</p>`}
     </div>
 
     <div class="cworn">
@@ -65,134 +64,155 @@ export function paint() {
 }
 
 function wornList() {
-  const w = allWorn(ctx.worn ? ctx.worn() : {});
+  const w = allWorn(purse.attached);
   if (!w.length) return `<p class="cempty">아직 아무것도 붙이지 않았습니다.</p>`;
   const byPart = {};
   w.forEach(x => (byPart[x.part] = byPart[x.part] || []).push(x));
-  return Object.entries(byPart).map(([part, list]) =>
-    `<div class="wpart"><p class="wname">${ctx.labelOf ? ctx.labelOf(part) : part}</p>
-      ${list.map((x, i) => {
+  return Object.keys(byPart).map(part =>
+    `<div class="wpart"><p class="wname">${
+      ctx.labelOf ? ctx.labelOf(part) : part}</p>
+      ${byPart[part].map((x, i) => {
         const r = recipeById(x.recipe);
-        return `<span class="wtag w-${r?.when}">${r?.name}${x.arg ? ` · ${x.arg}` : ""}
+        return `<span class="wtag w-${r ? r.when : ""}">${r ? r.name : "?"}${
+          x.arg ? " · " + x.arg : ""}
           <button class="wx" data-off="${part}:${i}" title="떼어 낸다">×</button></span>`;
       }).join("")}</div>`).join("");
 }
 
+const NEEDS_TEXT = ["label", "unit", "toast", "guide", "bold"];
+const NEEDS_ICON = ["iconbtn", "state"];
+
 function toolChip(t, i) {
   const r = recipeById(t.recipe);
   if (!r) return "";
-  const needArg = r.id === "label" || r.id === "unit" || r.id === "toast" ||
-                  r.id === "guide" || r.id === "bold";
-  const needIcon = r.id === "iconbtn" || r.id === "state";
-  return `<div class="tool w-${r.when}" data-tool="${i}" draggable="false">
+  return `<div class="tool w-${r.when}" data-tool="${i}">
       <span class="tname">${r.name}</span>
       <span class="twhen">${
         r.when === "idle" ? "처음부터 보임" : r.when === "touch" ? "손댈 때 보임" : "조작 후 보임"}</span>
-      ${needArg ? `<input class="targ" data-targ="${i}" value="${t.arg || ""}"
-          placeholder="넣을 글자" maxlength="14">` : ""}
-      ${needIcon ? `<select class="targ" data-targ="${i}">
-          <option value="">그림 고르기</option>
-          ${Object.keys(ICONS).map(k =>
-            `<option value="${k}"${t.arg === k ? " selected" : ""}>${ICON_NAMES[k]}</option>`
-          ).join("")}</select>` : ""}
+      ${NEEDS_TEXT.indexOf(r.id) >= 0
+        ? `<input class="targ" data-targ="${i}" value="${t.arg || ""}"
+             placeholder="넣을 글자" maxlength="14">` : ""}
+      ${NEEDS_ICON.indexOf(r.id) >= 0
+        ? `<select class="targ" data-targ="${i}">
+             <option value="">그림 고르기</option>
+             ${Object.keys(ICONS).map(k =>
+               `<option value="${k}"${t.arg === k ? " selected" : ""}>${
+                 ICON_NAMES[k]}</option>`).join("")}</select>` : ""}
       <span class="ton">${r.on.map(k =>
-        k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대").join(" · ")}에 붙일 수 있음</span>
+        k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대"
+      ).join(" · ")}에 붙일 수 있음</span>
     </div>`;
 }
 
 /* ── 누르기 ───────────────────────────────────────────────── */
 
-document.addEventListener("click", e => {
-  if (!ctx || ctx.nodes.craft.closest("[hidden]")) return;
+document.addEventListener("click", async function (e) {
+  if (!ctx || ctx.nodes.craft.hidden || ctx.nodes.craft.closest("[hidden]")) return;
 
   const m = e.target.closest("[data-mat]");
   if (m) {
     const id = m.dataset.mat;
     const k = slot[0] === null ? 0 : slot[1] === null ? 1 : 0;
-    if (slot[k]) giveMat(slot[k]);
-    if (!takeMat(id)) return;
+    // 같은 재료를 두 칸에 올리려면 두 개가 있어야 한다
+    if (slot[1 - k] === id && countMat(id) < 2) {
+      ctx.talk && ctx.talk("norman", `${mat(id).name}가 하나뿐입니다. 하나 더 사 오세요.`);
+      return;
+    }
     slot[k] = id;
-    paint(); ctx.onChange?.();
+    paint();
+    if (slot[0] && slot[1] && !combine(slot[0], slot[1])) {
+      const key = slot.join("+");
+      if (scolded !== key) { scolded = key; ctx.talk && ctx.talk("norman", rebuff(slot[0], slot[1])); }
+    }
     return;
   }
 
   const s = e.target.closest("[data-slot]");
-  if (s) {
-    const k = Number(s.dataset.slot);
-    if (slot[k]) { giveMat(slot[k]); slot[k] = null; paint(); ctx.onChange?.(); }
-    return;
-  }
+  if (s) { slot[Number(s.dataset.slot)] = null; paint(); return; }
 
   if (e.target.closest("#cmake")) {
-    const r = combine(slot[0], slot[1]);
-    if (!r) return;
-    purse.tools.push({ recipe: r.id, arg: "" });
-    slot[0] = slot[1] = null;
-    paint(); ctx.onChange?.();
-    ctx.talk?.("norman", `「${r.name}」을 만들었습니다. ${r.line} 화면의 알맞은 부분에 끌어다 놓으세요.`);
+    const a = slot[0], b = slot[1];
+    if (!combine(a, b)) return;
+    try {
+      const r = await makeTool(a, b);
+      slot[0] = slot[1] = null;
+      paint();
+      ctx.onChange && ctx.onChange();
+      ctx.talk && ctx.talk("norman",
+        `「${r.name}」 단서를 만들었습니다. ${r.line} 화면의 알맞은 부분에 끌어다 놓으세요.`);
+    } catch (err) {
+      ctx.talk && ctx.talk("norman", String(err.message || err));
+      paint();
+    }
     return;
+  }
+
+  const x = e.target.closest("[data-off]");
+  if (x) {
+    const bits = x.dataset.off.split(":");
+    try { await detach(bits[0], Number(bits[1])); } catch (err) {}
+    paint();
+    ctx.onChange && ctx.onChange();
   }
 });
 
-/** 안 붙는 짝을 올렸을 때 한 번만 일러 준다 */
-let scolded = "";
-export function checkPair() {
-  if (!slot[0] || !slot[1]) return;
-  const key = slot.join("+");
-  if (combine(slot[0], slot[1]) || scolded === key) return;
-  scolded = key;
-  ctx.talk?.("norman", rebuff(slot[0], slot[1]));
-}
-
-document.addEventListener("input", e => {
-  const t = e.target.closest("[data-targ]");
+document.addEventListener("input", function (e) {
+  const t = e.target.closest("input[data-targ]");
   if (!t || !ctx) return;
-  purse.tools[Number(t.dataset.targ)].arg = t.value;
-  ctx.onChange?.({ quiet: true });
+  clearTimeout(t._t);
+  t._t = setTimeout(function () {
+    setArg(Number(t.dataset.targ), t.value).then(function () {
+      ctx.onChange && ctx.onChange({ quiet: true });
+    });
+  }, 400);
 });
-document.addEventListener("change", e => {
+
+document.addEventListener("change", function (e) {
   const t = e.target.closest("select[data-targ]");
   if (!t || !ctx) return;
-  purse.tools[Number(t.dataset.targ)].arg = t.value;
-  ctx.onChange?.();
+  setArg(Number(t.dataset.targ), t.value).then(function () {
+    paint();
+    ctx.onChange && ctx.onChange();
+  });
 });
 
-/* ── 물건 위로 끌어다 놓기 ────────────────────────────────── */
+/* ── 화면 위로 끌어다 놓기 ────────────────────────────────── */
 
 export function drag(dragEl) {
   let live = null;
 
-  document.addEventListener("pointerdown", e => {
+  document.addEventListener("pointerdown", function (e) {
     const src = e.target.closest(".tool");
     if (!src || e.target.closest("input, select")) return;
     e.preventDefault();
     const i = Number(src.dataset.tool);
     const t = purse.tools[i];
+    if (!t) return;
     const r = recipeById(t.recipe);
-    live = { i, t, r };
+    live = { i: i, r: r, drop: null };
 
     const g = src.cloneNode(true);
     g.classList.add("ghost");
-    g.querySelectorAll("input, select").forEach(x => x.remove());
+    g.querySelectorAll("input, select").forEach(function (x) { x.remove(); });
     dragEl.textContent = "";
     dragEl.appendChild(g);
     dragEl.hidden = false;
     dragEl.style.width = src.offsetWidth + "px";
     src.classList.add("lifted");
     document.body.classList.add("dragging");
-    ctx.markTargets?.(r.on);
+    ctx.markTargets && ctx.markTargets(r.on);
     move(e);
   });
 
   function move(e) {
     if (!live) return;
     dragEl.style.transform =
-      `translate(${e.clientX - 70}px, ${e.clientY - 18}px)`;
+      "translate(" + (e.clientX - 70) + "px," + (e.clientY - 18) + "px)";
     dragEl.style.visibility = "hidden";
     const u = document.elementFromPoint(e.clientX, e.clientY);
     dragEl.style.visibility = "";
-    const part = u?.closest?.(".part");
-    document.querySelectorAll(".part.over").forEach(n => n.classList.remove("over"));
+    const part = u && u.closest ? u.closest(".part") : null;
+    document.querySelectorAll(".part.over").forEach(function (n) { n.classList.remove("over"); });
     live.drop = null;
     if (part && ctx.canDrop && ctx.canDrop(part.dataset.part, live.r.id)) {
       part.classList.add("over");
@@ -202,33 +222,26 @@ export function drag(dragEl) {
 
   document.addEventListener("pointermove", move);
 
-  document.addEventListener("pointerup", e => {
+  document.addEventListener("pointerup", async function () {
     if (!live) return;
-    const { i, t, r, drop } = live;
+    const job = live;
     live = null;
     dragEl.hidden = true;
-    dragEl.textContent = "";           // 끌던 복제본을 치운다
+    dragEl.textContent = "";
     document.body.classList.remove("dragging");
-    document.querySelectorAll(".part.over").forEach(n => n.classList.remove("over"));
-    ctx.markTargets?.(null);
+    document.querySelectorAll(".part.over").forEach(function (n) { n.classList.remove("over"); });
+    ctx.markTargets && ctx.markTargets(null);
 
-    if (!drop) {
-      const u = document.elementFromPoint(e.clientX, e.clientY);
-      const part = u?.closest?.(".part");
-      if (part) ctx.talk?.("norman",
-        `이 단서는 ${r.on.map(k => k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대")
-          .join("이나 ")}에만 붙일 수 있습니다.`);
+    if (!job.drop) {
+      ctx.talk && ctx.talk("norman", "그건 " + job.r.on.map(function (k) {
+        return k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대";
+      }).join("이나 ") + "에만 붙일 수 있습니다.");
       paint();
       return;
     }
-    purse.tools.splice(i, 1);
-    ctx.attach?.(drop, { recipe: t.recipe, arg: t.arg });
+    try { await attach(job.i, job.drop); }
+    catch (err) { ctx.talk && ctx.talk("norman", String(err.message || err)); }
     paint();
+    ctx.onAttached && ctx.onAttached(job.drop, job.r);
   });
-}
-
-/** 물건에서 떼어 내면 제작대로 돌아온다 */
-export function unattach(item) {
-  purse.tools.push({ recipe: item.recipe, arg: item.arg });
-  paint();
 }

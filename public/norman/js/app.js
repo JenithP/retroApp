@@ -59,15 +59,15 @@ function el(tag, cls, text) {
 function stateText(p, st) {
   const v = st.vals[p.id];
   switch (p.kind) {
-    case "input":    return v ? "적힌 것 · " + v : "아직 비어 있음";
+    case "input":    return v ? "입력됨 · " + v : "아직 비어 있음";
     case "toggle":   return (v == null ? p.on : v) ? "켜짐" : "꺼짐";
-    case "check":    return v ? "고름" : "안 고름";
-    case "tab":      return (p.opts || [])[(v == null ? 0 : v)] + " 골라짐";
+    case "check":    return v ? "선택됨" : "선택 안 됨";
+    case "tab":      return (p.opts || [])[(v == null ? 0 : v)] + " 선택됨";
     case "list":     return v === "gone" ? "지워짐" : "그대로 있음";
     case "slider":   return Math.round((v || 0) * 100) + "%";
-    case "progress": return st.vals[p.id] ? "끝났음" : "가는 중";
+    case "progress": return st.vals[p.id] ? "완료됨" : "진행 중";
     case "status":   return st.hits.__sent ? "읽음" : "보내는 중";
-    case "button":   return (st.hits[p.id] || 0) + "번 눌렸음";
+    case "button":   return (st.hits[p.id] || 0) + "번 눌림";
     default:         return "";
   }
 }

@@ -10,7 +10,7 @@ import { recipeById } from "./parts.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
-import { purse, dump, load } from "./wallet.js";
+import { purse, mode, connect, takeJob as claimJob, quizLeft } from "./wallet.js";
 import * as Talk from "./talk.js";
 import * as Craft from "./craft.js";
 import * as Shop from "./shop.js";
@@ -26,8 +26,7 @@ const nodes = {
 };
 
 let queue = [], job = null, st = null;
-const attached = {};                  // 부품에 붙인 단서 — 통째로 갈아 끼우지 않는다
-let layout = [];
+let layout = [];                      // 부품 차례. 붙인 단서는 서버 지갑에 있다.
 let arrange = false, bare = false;
 let where = "bench", lastRun = null;
 let team = null, order = null, tok = null;
@@ -40,7 +39,7 @@ function redraw(opt = {}) {
     ? { act: a.dataset.act, s: a.selectionStart } : null;
 
   if (!job) return;
-  render(nodes.screen, job, st, bare ? {} : attached, layout, arrange);
+  render(nodes.screen, job, st, bare ? {} : purse.attached, layout, arrange);
 
   if (keep) {
     const n = nodes.screen.querySelector('[data-act="' + keep.act + '"]');
@@ -68,11 +67,11 @@ function paintOrder() {
 }
 
 /** 의뢰를 하나 집어 든다 — 물건도 붙인 것도 새로 시작한다. */
-function takeJob(j) {
+async function takeJob(j) {
   job = j;
   st = fresh(job);
   layout = job.parts.map(function (p) { return p.id; });
-  Object.keys(attached).forEach(function (k) { delete attached[k]; });
+  try { await claimJob(job.id); } catch (e) { console.warn('의뢰', e); }
   lastRun = null;
   nodes.verdict.hidden = true;
   nodes.whoami.textContent = "맡은 일 — " + job.app + " " + job.screen;
@@ -80,20 +79,11 @@ function takeJob(j) {
 
 /* ── 붙이고 떼기 ──────────────────────────────────────────── */
 
-function attach(part, item) {
-  (attached[part] = attached[part] || []).push(item);
-  const r = recipeById(item.recipe);
+/** 붙이고 떼는 일은 제작대가 서버에 맡긴다. 여기서는 붙은 뒤에 알릴 뿐이다. */
+function afterAttach(part, r) {
   const lp = partOf(job, part);
   Talk.cut("norman", (lp && lp.label ? lp.label : part) + '에 「' + r.name + '」 단서를 붙였습니다.');
   redraw();
-  stash();
-}
-
-function detach(part, i) {
-  const gone = (attached[part] || []).splice(i, 1)[0];
-  if (gone) Craft.unattach(gone);
-  redraw();
-  stash();
 }
 
 /* ── 하고 난 뒤 — 붙은 연장이 실제로 작동한다 ─────────────── */
@@ -114,7 +104,7 @@ function blip() {
 
 let toastTimer = 0;
 function fire(part) {
-  const at = bare ? {} : attached;
+  const at = bare ? {} : purse.attached;
   if (wears(at, part, "toast")) {
     nodes.toast.textContent = argOf(at, part, "toast") || "…";
     nodes.toast.hidden = false;
@@ -251,7 +241,7 @@ $("cold").addEventListener("click", async function () {
 
   tok = { dead: false, cancels: [] };
   const v = await Sim.cold({
-    job: job, st: st, attached: attached, screen: nodes.screen, dot: dot, tok: tok,
+    job: job, st: st, attached: purse.attached, screen: nodes.screen, dot: dot, tok: tok,
     redraw: function () { redraw({ craft: false }); },
     log: function (e) {
       const li = document.createElement("li");
@@ -336,7 +326,7 @@ let nagged = false;
 function nudgePortrait() {
   const port = $("portrait");
   if (!port) return;
-  const low = purse.point < LOW && Quiz.left() > 0;
+  const low = purse.point < LOW && quizLeft() > 0;
   port.classList.toggle("low", low);
   $("portping").hidden = !low;
   if (low && !nagged && where === "bench") {
@@ -370,15 +360,14 @@ function go(to) {
 
   if (to === "market")
     Market.open($("market"), {
-      attached: attached, run: lastRun,
+      
       talk: function (w, t) { Talk.cut(w, t); },
       onBack: function () { go("bench"); },
-      onSold: function (a) {
-        purse.done.push(job.id);
+      onSold: async function (a) {
         coin();
-        takeJob(queue[purse.done.length % queue.length]);
-        stash(); go("bench");
-        Talk.cut("norman", a.price + "포인트 받아 왔구먼. 물건은 시장으로 갔네.");
+        await takeJob(pickJob());
+        go("bench");
+        Talk.cut("norman", a.price + "포인트 받아 왔습니다. 물건은 시장으로 갔습니다.");
         Talk.say("critic", BROKER.next(job), 3400);
       },
     });
@@ -454,7 +443,7 @@ async function enter(n) {
     nodes: nodes,
     talk: function (w, t) { Talk.cut(w, t); },
     onChange: function () { coin(); stash(); },
-    attach: attach,
+    onAttached: afterAttach,
     markTargets: function (kinds) {
       nodes.screen.querySelectorAll(".part").forEach(function (p) {
         p.classList.toggle("target", !!kinds && canDropHere(p.dataset.part, kinds));
@@ -465,13 +454,18 @@ async function enter(n) {
       const p = partOf(job, partId);
       return p ? (p.label || p.text || partId) : partId;
     },
-    worn: function () { return attached; },
   });
   Craft.drag($("drag"));
 
+  await connect(n);
+  if (!mode.server) {
+    const t = $("netmsg"), d = $("netdot");
+    if (t) { t.textContent = "연습 모드"; t.title = mode.why; }
+    if (d) d.className = "dot warn";
+  }
   await restore();
-  takeJob(queue[purse.done.length % queue.length]);
-  restoreWork();
+  await takeJob(pickJob());
+  restoreLayout();
   BROKER.knock(job).forEach(function (t, i) { Talk.say("critic", t, i < 2 ? 2600 : 3200); });
   Talk.say("norman", NORMAN.heard(), 3400);
   Talk.say("norman", "재료는 「상점」에서 사다 제작대에서 둘씩 합치게. " +
@@ -490,25 +484,20 @@ function canDropHere(partId, kinds) {
   return !!p && kinds.indexOf(BUCKET[p.kind]) >= 0;
 }
 
-/* 붙인 연장을 떼어 내는 길 — 제작대의 「붙인 것」 목록에서 */
-nodes.craft.addEventListener("click", function (e) {
-  const x = e.target.closest("[data-off]");
-  if (!x) return;
-  const bits = x.dataset.off.split(":");
-  detach(bits[0], Number(bits[1]));
-});
-
 /* ── 담아 두고 되찾기 ─────────────────────────────────────── */
 
 let saved = null;
 
-/** 하던 의뢰의 붙인 것과 순서를 되살린다 */
-function restoreWork() {
+/** 줄 세운 의뢰 가운데 아직 안 판 것을 집는다 */
+function pickJob() {
+  const done = purse.done || [];
+  for (const j of queue) if (done.indexOf(j.id) < 0) return j;
+  return queue[0];
+}
+
+/** 부품을 어떤 차례로 놓았는지만 되살린다. 붙인 단서는 서버 지갑에 있다. */
+function restoreLayout() {
   if (!saved || !job || saved.job !== job.id) return;
-  if (saved.attached && typeof saved.attached === "object") {
-    Object.keys(attached).forEach(function (k) { delete attached[k]; });
-    Object.assign(attached, saved.attached);
-  }
   if (Array.isArray(saved.layout) && saved.layout.length) {
     layout = saved.layout.filter(function (x) { return !!partOf(job, x); });
     job.parts.forEach(function (p) { if (layout.indexOf(p.id) < 0) layout.push(p.id); });
@@ -518,7 +507,6 @@ function restoreWork() {
 async function restore() {
   try {
     const d = await readDoc("hci4_drafts", "team" + team);
-    if (d && d.purse) load(JSON.parse(d.purse));
     if (d && d.work) saved = JSON.parse(d.work);
   } catch (e) { console.warn("되찾기", (e && (e.code || e.message)) || e); }
   coin();
@@ -531,9 +519,7 @@ function stash() {
   saveTimer = setTimeout(function () {
     putDoc("hci4_drafts", "team" + team, {
       team: team, order: order.id,
-      work: JSON.stringify({ job: job ? job.id : null,
-        attached: attached, layout: layout }),
-      purse: JSON.stringify(dump()),
+      work: JSON.stringify({ job: job ? job.id : null, layout: layout }),
     }).catch(function (e) { console.warn("저장", (e && (e.code || e.message)) || e); });
   }, 1600);
 }

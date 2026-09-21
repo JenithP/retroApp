@@ -12,7 +12,7 @@
 export const CAST = {
   norman: { name: "노만 영감", tone: "norman", face: ["#D9A441", "#4A3B28"] },
   guest:  { name: "테스트 사용자", tone: "guest",  face: ["#8FB5D9", "#2C3F52"] },
-  tinker: { name: "연장 장수", tone: "tinker", face: ["#A07BC4", "#3B2C4A"] },
+  tinker: { name: "상점 주인", tone: "tinker", face: ["#A07BC4", "#3B2C4A"] },
   critic: { name: "앱시장 중개인", tone: "critic", face: ["#7FA86B", "#2C3F28"] },
 };
 
@@ -127,7 +127,7 @@ export const NORMAN = {
 /* ── 손님이 하는 말 — 시연에서 사건마다 한 마디 ───────────── */
 
 export const GUEST = {
-  seek:   ["…어디를 눌러야 하는 거죠?", "음… 이게 뭘 하는 물건이죠?"],
+  seek:   ["…어디를 눌러야 하는 거죠?", "음… 이 화면에서 뭘 해야 하죠?"],
   miss:   ["여기가 아닌가 봐요.", "어… 이것도 아니네요.", "제가 뭘 잘못 눌렀나요?"],
   found:  ["아, 이거였구나.", "여기였네요. 한참 찾았어요."],
   direct: ["아, 여기네요.", "이건 바로 알겠어요."],

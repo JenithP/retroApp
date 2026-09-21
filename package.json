@@ -1,0 +1,9 @@
+{
+  "name": "retroapp",
+  "private": true,
+  "type": "module",
+  "description": "HCI와 커뮤니케이션 오프라인 실습 — 1988년 거실·활자의 문·노만의 공방",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
