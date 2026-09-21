@@ -23,8 +23,8 @@ export function appraise(attached, run) {
   if (run.evalGap === 0) { price += 400; notes.push(["good", "누른 뒤에 어찌 됐는지 분명했소. 평가의 간극이 없소."]); }
   else notes.push(["bad", `누르고도 몰라 ${run.evalGap}건이 잘못 쌓였소. 평가의 간극이오.`]);
 
-  if (run.right === 3 && run.wrong === 0) { price += 300; notes.push(["good", "주문대로 세 줄이 정확히 남았소."]); }
-  else notes.push(["bad", `주문은 세 줄인데 제대로 남은 건 ${run.right}줄이오.`]);
+  if (run.passed) { price += 300; notes.push(["good", "시킨 일을 처음부터 끝까지 해냈소."]); }
+  else notes.push(["bad", `시킨 일 ${run.of}가지 가운데 ${run.right}가지만 해냈소.`]);
 
   if (gulfs.has("실행") && gulfs.has("평가")) {
     price += 150;
@@ -41,7 +41,7 @@ export function appraise(attached, run) {
     notes.push(["warn", `단서가 ${worn.length}개면 도리어 어지럽소. 덜어낼 것도 보시오.`]);
   }
 
-  const passed = run.right >= 3;
+  const passed = !!run.passed;
   price = Math.max(120, Math.min(1800, Math.round(price / 10) * 10));
   return { price, notes, passed, blocks: worn.length, astray: 0 };
 }
@@ -93,8 +93,8 @@ function paint() {
              <button class="big" id="sell">이 값에 판다</button>`
           : `<p class="opre">출품 반려</p>
              <p class="oprice bad">—</p>
-             <p class="odim">테스트 사용자가 주문대로 해낸 것이
-               ${ctx.run.right} / 3 줄입니다.<br>세 줄을 채워야 받습니다.</p>`}
+             <p class="odim">테스트 사용자가 해낸 것이
+               ${ctx.run.right} / ${ctx.run.of} 가지입니다.<br>다 해내야 받습니다.</p>`}
         <button class="flag ghost wide2" id="mkback">${
           a.passed ? "더 고치고 오겠소" : "공방으로 돌아가 고친다"}</button>
         ${sold ? `<p class="odim">지금까지 판 것 ${sold}개</p>` : ""}

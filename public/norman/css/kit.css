@@ -1,0 +1,133 @@
+/* 부품 열넷의 맨 모습.
+   전부 같은 회색, 같은 높이에서 시작한다. 무엇 하나 남보다 도드라지지 않는다.
+   크기도 색도 이름도 조가 사서 붙여야 할 단서이므로 골격이 주지 않는다. */
+
+.k-text{margin:2px 0}
+.plaintext{margin:0;font-size:.84rem;color:var(--ink-soft);line-height:1.5;padding:2px 2px}
+
+/* 쓰는 칸 — 커서가 보이지 않는다. 그래도 글자는 써진다. */
+.inbox{width:100%;height:40px;padding:0 10px;border:0;border-radius:2px;
+  background:var(--bare);font-family:var(--sans);font-size:.9rem;color:var(--ink);
+  caret-color:transparent;outline:none}
+.inbox.tall{height:74px}
+.inbox.faded{opacity:.45}
+
+/* 누르는 곳 */
+.btnstrip{width:100%;height:40px;border:0;border-radius:2px;background:var(--bare);
+  font-family:var(--sans);font-size:.9rem;font-weight:500;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.btnstrip.faded{opacity:.42}
+.btnstrip.asplain{background:transparent;font-weight:400;color:var(--ink-soft);
+  justify-content:flex-start;padding:0 2px}
+
+/* 켜고 끄는 것 — 켜짐과 꺼짐의 차이가 거의 없다 */
+.toggle{width:100%;height:40px;border:0;border-radius:2px;background:var(--bare);
+  display:flex;align-items:center;justify-content:space-between;padding:0 10px;
+  cursor:pointer;font-family:var(--sans);font-size:.86rem;color:var(--ink)}
+.tglknob{width:34px;height:18px;border-radius:9px;background:#C6C6C4;position:relative}
+.tglknob::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;
+  border-radius:50%;background:#EDEDEB;transition:left .18s}
+.toggle.on .tglknob{background:#BDBDBB}
+.toggle.on .tglknob::after{left:18px}
+.toggle.sg-state.on .tglknob,.part:has(.sg-state) .toggle.on .tglknob{background:#2F4A63}
+
+/* 카드 */
+.cardbox{width:100%;min-height:52px;border:0;border-radius:2px;background:var(--bare);
+  font-family:var(--sans);font-size:.88rem;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;padding:0 12px;text-align:left}
+.cardbox.decoy{}
+
+/* 아이콘 — 배지도 이름도 없다 */
+.iconbox{width:40px;height:40px;border:0;border-radius:2px;background:var(--bare);
+  display:grid;place-items:center;cursor:pointer}
+.iconbox svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.k-icon{display:inline-block;margin-right:7px}
+
+/* 목록 줄 — 밀리는데 밀린다고 알려 주지 않는다 */
+.listrow{width:100%;height:38px;border-radius:2px;background:var(--bare);
+  display:flex;align-items:center;padding:0 10px;font-size:.86rem;color:var(--ink);
+  touch-action:pan-y;cursor:default}
+.listrow.gone{opacity:.25;text-decoration:line-through}
+
+/* 끌어서 조절 — 손잡이가 없다 */
+.slidertrack{width:100%;height:14px;border-radius:7px;background:var(--bare);
+  position:relative;overflow:hidden;cursor:pointer}
+.sliderfill{position:absolute;left:0;top:0;bottom:0;background:#BDBDBB;transition:width .2s}
+
+/* 체크 — 목록 점과 비슷하게 생겼다 */
+.checkrow{width:100%;height:38px;border:0;border-radius:2px;background:var(--bare);
+  display:flex;align-items:center;gap:9px;padding:0 10px;cursor:pointer;
+  font-family:var(--sans);font-size:.86rem;color:var(--ink)}
+.cbox{width:12px;height:12px;border-radius:50%;background:#B4B4B2;flex:none}
+.cbox.on{background:#6B6B6B}
+
+/* 탭 — 지금 고른 쪽이 잘 안 보인다 */
+.tabrow{width:100%;height:38px;border-radius:2px;background:var(--bare);display:flex;padding:3px}
+.tabseg{flex:1;border:0;border-radius:2px;background:transparent;cursor:pointer;
+  font-family:var(--sans);font-size:.84rem;color:var(--ink)}
+.tabseg.on{background:#CFCFCD}
+
+/* 지도와 핀 */
+.mapbox{position:relative;width:100%;height:150px;border-radius:2px;background:#E4E4E1;
+  background-image:linear-gradient(90deg,#DCDCD9 1px,transparent 1px),
+    linear-gradient(180deg,#DCDCD9 1px,transparent 1px);
+  background-size:34px 34px;overflow:hidden}
+.part.pinpart{position:absolute;width:auto}
+.pindot{width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  background:#9A9A98;border:0;cursor:pointer;padding:0}
+
+/* 썸네일 — 재생 표시가 흐리다 */
+.thumbbox{width:100%;height:64px;border:0;border-radius:2px;background:var(--bare);
+  position:relative;cursor:pointer;display:flex;align-items:flex-end;padding:8px 10px}
+.thumbplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:1rem;color:rgba(35,35,35,.22)}
+.thumbname{font-size:.8rem;color:var(--ink)}
+
+/* 상태 표시 — 셋이 다 비슷하다 */
+.statusbox{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;
+  border-radius:2px;background:var(--bare)}
+.stdot{width:9px;height:9px;border-radius:50%;background:#AEAEAC}
+
+/* 진행 막대 — 도는 중인지 멈췄는지 모른다 */
+.progbox{width:100%;height:10px;border-radius:5px;background:var(--bare);
+  position:relative;overflow:hidden}
+.progfill{position:absolute;left:0;top:0;bottom:0;background:#BDBDBB}
+
+/* ── 붙은 연장이 입히는 것 ────────────────────────────────── */
+.sg-caret{caret-color:#2F4A63;box-shadow:inset 0 0 0 1px #9A958C;background:#FFF;opacity:1}
+.sg-caret:focus{box-shadow:inset 0 0 0 2px #2F4A63}
+.sg-hot:hover,.sg-hot:focus{filter:brightness(1.06);box-shadow:inset 0 0 0 2px #7FA0BC;opacity:1}
+.sg-press:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,.3)}
+.sg-bigbtn{height:56px;font-size:1.05rem;background:#2F4A63;color:#FFF;opacity:1}
+.sg-bigbtn svg,.sg-bold svg{stroke:#FFF}
+.sg-bold{background:#2F4A63;color:#FFF;font-weight:700;opacity:1}
+.sg-bold .thumbplay,.sg-bold .tglname,.sg-bold .clabel,.sg-bold .thumbname{color:#FFF}
+.sg-grip{background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 2px,transparent 2px 6px);
+  background-size:22px 100%;background-repeat:no-repeat;background-position:right 8px center}
+.sg-icon{box-shadow:inset 0 0 0 1.5px #5E6B78}
+.sg-unit{padding-right:40px}
+.part[data-unit]::after{content:attr(data-unit);position:absolute;right:10px;top:20px;
+  transform:translateY(-50%);font-size:.82rem;color:var(--ink-soft)}
+
+.sg-label{margin:0 0 4px;font-size:.78rem;font-weight:500;color:var(--ink)}
+.sg-guide{display:flex;align-items:center;gap:5px;margin:4px 0 0;font-size:.72rem;
+  color:#3E6B8F;font-weight:500}
+.sg-guide .ar{font-weight:700}
+.sg-state{display:flex;align-items:center;gap:5px;margin:4px 0 0;font-size:.74rem;
+  color:#3E6B8F;font-weight:500}
+
+/* 붙일 수 있는 자리 */
+.part{position:relative;border-radius:4px}
+.part.target{outline:2px dashed rgba(217,164,65,.75);outline-offset:3px}
+.part.over{outline:2px solid var(--lamp);outline-offset:3px;background:rgba(217,164,65,.14)}
+.screen.arranging .box,.screen.arranging .pindot{pointer-events:none}
+.screen.arranging .part{border:1px dashed #B9B5AC;padding:6px 6px 6px 24px}
+.grab{position:absolute;left:4px;top:50%;transform:translateY(-50%);cursor:grab;
+  color:#8A8681;font-size:.9rem;letter-spacing:-2px;line-height:1;user-select:none;
+  touch-action:none;padding:6px 2px;z-index:2}
+
+/* 주문서 */
+.order h1 span{font-family:var(--sans);font-size:.92rem;font-weight:400;color:var(--ui-soft)}
+.osay{margin:6px 0 0;font-size:.82rem;color:#C9C0B4;border-left:2px solid var(--line);
+  padding-left:9px}

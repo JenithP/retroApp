@@ -7,7 +7,7 @@
 import { MATERIALS, mat, combine, rebuff, recipeById } from "./parts.js";
 import { ICONS, ICON_NAMES, svgOf } from "./icons.js";
 import { purse, countMat, takeMat, giveMat } from "./wallet.js";
-import { PART, allWorn } from "./app.js";
+import { allWorn } from "./app.js";
 
 const slot = [null, null];
 let ctx = null;
@@ -67,7 +67,7 @@ function wornList() {
   const byPart = {};
   w.forEach(x => (byPart[x.part] = byPart[x.part] || []).push(x));
   return Object.entries(byPart).map(([part, list]) =>
-    `<div class="wpart"><p class="wname">${PART(part)?.label || part}</p>
+    `<div class="wpart"><p class="wname">${ctx.labelOf ? ctx.labelOf(part) : part}</p>
       ${list.map((x, i) => {
         const r = recipeById(x.recipe);
         return `<span class="wtag w-${r?.when}">${r?.name}${x.arg ? ` · ${x.arg}` : ""}
@@ -191,7 +191,7 @@ export function drag(dragEl) {
     const part = u?.closest?.(".part");
     document.querySelectorAll(".part.over").forEach(n => n.classList.remove("over"));
     live.drop = null;
-    if (part && live.r.on.includes(PART(part.dataset.part)?.kind)) {
+    if (part && ctx.canDrop && ctx.canDrop(part.dataset.part, live.r.id)) {
       part.classList.add("over");
       live.drop = part.dataset.part;
     }

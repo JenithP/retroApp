@@ -4,7 +4,8 @@
 // 파이어베이스에 닿는 것은 붙여 둔 것을 담아 두는 일(hci4_drafts)과
 // 어느 조가 앉아 있는지 알리는 일(hci4_presence)뿐이다.
 
-import { APP, PART, DEFAULT_LAYOUT, fresh, render, act, wears, argOf } from "./app.js";
+import { fresh, render, act, wears, argOf, partOf, canWear } from "./app.js";
+import { queueFor } from "./jobs.js";
 import { recipeById } from "./parts.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
@@ -24,9 +25,9 @@ const nodes = {
   note: $("phonenote"), whoami: $("whoami"),
 };
 
-let st = fresh();
+let queue = [], job = null, st = null;
 const attached = {};                  // 부품에 붙인 연장 — 통째로 갈아 끼우지 않는다
-let layout = [...DEFAULT_LAYOUT];
+let layout = [];
 let arrange = false, bare = false;
 let where = "bench", lastRun = null;
 let team = null, order = null, tok = null;
@@ -38,7 +39,8 @@ function redraw(opt = {}) {
   const keep = a && a.classList && a.classList.contains("inbox")
     ? { act: a.dataset.act, s: a.selectionStart } : null;
 
-  render(nodes.screen, st, bare ? {} : attached, null, layout, arrange);
+  if (!job) return;
+  render(nodes.screen, job, st, bare ? {} : attached, layout, arrange);
 
   if (keep) {
     const n = nodes.screen.querySelector('[data-act="' + keep.act + '"]');
@@ -50,12 +52,25 @@ function redraw(opt = {}) {
 
 /** 주문서 — 어디가 문제인지는 적지 않는다. 찾아내는 것이 과업이다. */
 function paintOrder() {
+  if (!job) return;
   nodes.order.innerHTML =
-    '<p class="oeyebrow">주문서</p>' +
-    '<h1>' + APP.name + '</h1>' +
-    '<p class="otask">' + APP.task + '</p>' +
+    '<p class="oeyebrow">주문서 · ' + (purse.done.length + 1) + '번째</p>' +
+    '<h1>' + job.app + ' <span>' + job.screen + '</span></h1>' +
+    '<p class="otask">' + job.task + '</p>' +
+    '<p class="osay">쓴 사람들 말 — 「' + job.say + '」</p>' +
     '<p class="ofind">어디가 막히는지는 적혀 있지 않습니다. ' +
     '<b>테스트해 보기</b>로 직접 찾아내십시오.</p>';
+}
+
+/** 의뢰를 하나 집어 든다 — 물건도 붙인 것도 새로 시작한다. */
+function takeJob(j) {
+  job = j;
+  st = fresh(job);
+  layout = job.parts.map(function (p) { return p.id; });
+  Object.keys(attached).forEach(function (k) { delete attached[k]; });
+  lastRun = null;
+  nodes.verdict.hidden = true;
+  nodes.whoami.textContent = job.app + " · " + job.screen;
 }
 
 /* ── 붙이고 떼기 ──────────────────────────────────────────── */
@@ -63,7 +78,8 @@ function paintOrder() {
 function attach(part, item) {
   (attached[part] = attached[part] || []).push(item);
   const r = recipeById(item.recipe);
-  Talk.cut("norman", PART(part).label + '에 「' + r.name + '」을 붙였네.');
+  const lp = partOf(job, part);
+  Talk.cut("norman", (lp && lp.label ? lp.label : part) + '에 「' + r.name + '」을 붙였네.');
   redraw();
   stash();
 }
@@ -121,7 +137,8 @@ nodes.screen.addEventListener("click", function (e) {
   if (arrange) return;
   const ctl = e.target.closest("[data-act]");
   if (!ctl || ctl.dataset.act.indexOf("type") === 0) return;
-  const r = act(st, ctl.dataset.act);
+  if (ctl.dataset.act.indexOf("read") === 0) return;
+  const r = act(job, st, ctl.dataset.act);
   redraw({ craft: false });
   if (r.part && r.did && r.did !== "empty") fire(r.part);
   if (r.did === "empty") {
@@ -133,7 +150,7 @@ nodes.screen.addEventListener("click", function (e) {
 nodes.screen.addEventListener("input", function (e) {
   const n = e.target.closest("[data-act]");
   if (!n || n.dataset.act.indexOf("type") !== 0) return;
-  act(st, n.dataset.act, n.value);
+  act(job, st, n.dataset.act, n.value);
   redraw({ craft: false });
 });
 
@@ -191,7 +208,7 @@ $("before").addEventListener("click", function (e) {
 });
 
 $("reset").addEventListener("click", function () {
-  stopSim(); st = fresh();
+  stopSim(); st = fresh(job);
   nodes.verdict.hidden = true;
   const g = document.querySelector(".guestbox"); if (g) g.remove();
   Talk.cut("norman", NORMAN.rule);
@@ -199,7 +216,7 @@ $("reset").addEventListener("click", function () {
 });
 
 $("cold").addEventListener("click", async function () {
-  stopSim(); st = fresh(); unbare();
+  stopSim(); st = fresh(job); unbare();
   redraw();
   nodes.note.innerHTML = "<b>처음 만져 보는 사람</b>이 테스트하는 중입니다.";
 
@@ -222,7 +239,7 @@ $("cold").addEventListener("click", async function () {
 
   tok = { dead: false, cancels: [] };
   const v = await Sim.cold({
-    st: st, attached: attached, screen: nodes.screen, dot: dot, tok: tok,
+    job: job, st: st, attached: attached, screen: nodes.screen, dot: dot, tok: tok,
     redraw: function () { redraw({ craft: false }); },
     speak: function (w, t) { Talk.cut(w, t); },
     log: function (e) {
@@ -257,9 +274,8 @@ function showVerdict(v) {
   const rows = [
     ["실행의 간극", v.exec, "무엇을 해야 할지 몰라 막힌 횟수", v.exec > 0],
     ["평가의 간극", v.evalGap, "무슨 일이 생겼는지 몰라 잘못 쌓인 건수", v.evalGap > 0],
-    ["주문대로 기록", v.right + " / 3",
-      v.wrong ? "엉뚱한 값으로 " + v.wrong + "건" : "알맞습니다",
-      v.right !== 3 || v.wrong > 0],
+    ["시킨 일", v.right + " / " + v.of,
+      v.passed ? "끝까지 해냈습니다" : "중간에 막혔습니다", !v.passed],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],
   ];
 
@@ -336,8 +352,12 @@ function go(to) {
       talk: function (w, t) { Talk.cut(w, t); },
       onBack: function () { go("bench"); },
       onSold: function (a) {
-        coin(); stash(); go("bench");
-        Talk.say("norman", a.price + "포인트 받아 왔구먼.");
+        purse.done.push(job.id);
+        coin();
+        takeJob(queue[purse.done.length % queue.length]);
+        stash(); go("bench");
+        Talk.cut("norman", a.price + "포인트 받아 왔구먼. 물건은 시장으로 갔네.");
+        Talk.say("critic", BROKER.next(job), 3400);
       },
     });
 
@@ -404,13 +424,9 @@ async function enter(n) {
   $("teamtag").textContent = n + "조";
   nodes.whoami.textContent = "주문서 · " + order.name;
 
+  queue = queueFor(n);
   Talk.mount($("talk"), { onWho: lit });
   Talk.say("norman", NORMAN.wake(n), 3200);
-  BROKER.knock.forEach(function (t, i) { Talk.say("critic", t, i < 2 ? 2600 : 3000); });
-  Talk.say("norman", NORMAN.heard(), 3400);
-  Talk.say("norman", "재료는 하나도 없네. 「상점」에서 재료를 사다 제작대에서 " +
-    "둘씩 합치게. 주머니에 1000포인트 있네.", 3800);
-  Talk.say("norman", NORMAN.broke);
 
   Craft.mount({
     nodes: nodes,
@@ -419,17 +435,37 @@ async function enter(n) {
     attach: attach,
     markTargets: function (kinds) {
       nodes.screen.querySelectorAll(".part").forEach(function (p) {
-        const k = PART(p.dataset.part);
-        p.classList.toggle("target", !!kinds && !!k && kinds.indexOf(k.kind) >= 0);
+        p.classList.toggle("target", !!kinds && canDropHere(p.dataset.part, kinds));
       });
+    },
+    canDrop: function (partId, rid) { return canWear(job, partId, rid); },
+    labelOf: function (partId) {
+      const p = partOf(job, partId);
+      return p ? (p.label || p.text || partId) : partId;
     },
     worn: function () { return attached; },
   });
   Craft.drag($("drag"));
 
   await restore();
+  takeJob(queue[purse.done.length % queue.length]);
+  restoreWork();
+  BROKER.knock(job).forEach(function (t, i) { Talk.say("critic", t, i < 2 ? 2600 : 3200); });
+  Talk.say("norman", NORMAN.heard(), 3400);
+  Talk.say("norman", "재료는 「상점」에서 사다 제작대에서 둘씩 합치게. " +
+    "주머니에 1000포인트 있네.", 3600);
+  Talk.say("norman", NORMAN.broke);
   go("bench");
   beat();
+}
+
+/** 끌고 있는 연장이 이 부품에 붙을 수 있는가 — 테두리를 띄울 때 쓴다 */
+const BUCKET = { input: "input", button: "button", card: "button", icon: "button",
+  pin: "button", thumb: "button", check: "button", toggle: "button", tab: "button",
+  list: "list", slider: "list", progress: "list", status: "list", text: "none" };
+function canDropHere(partId, kinds) {
+  const p = partOf(job, partId);
+  return !!p && kinds.indexOf(BUCKET[p.kind]) >= 0;
 }
 
 /* 붙인 연장을 떼어 내는 길 — 제작대의 「붙인 것」 목록에서 */
@@ -442,25 +478,26 @@ nodes.craft.addEventListener("click", function (e) {
 
 /* ── 담아 두고 되찾기 ─────────────────────────────────────── */
 
+let saved = null;
+
+/** 하던 의뢰의 붙인 것과 순서를 되살린다 */
+function restoreWork() {
+  if (!saved || !job || saved.job !== job.id) return;
+  if (saved.attached && typeof saved.attached === "object") {
+    Object.keys(attached).forEach(function (k) { delete attached[k]; });
+    Object.assign(attached, saved.attached);
+  }
+  if (Array.isArray(saved.layout) && saved.layout.length) {
+    layout = saved.layout.filter(function (x) { return !!partOf(job, x); });
+    job.parts.forEach(function (p) { if (layout.indexOf(p.id) < 0) layout.push(p.id); });
+  }
+}
+
 async function restore() {
   try {
     const d = await readDoc("hci4_drafts", "team" + team);
     if (d && d.purse) load(JSON.parse(d.purse));
-    if (d && d.attached) {
-      const A = JSON.parse(d.attached);
-      if (A && typeof A === "object") {
-        Object.keys(attached).forEach(function (k) { delete attached[k]; });
-        Object.assign(attached, A);
-      }
-    }
-    if (d && d.layout) {
-      const L = JSON.parse(d.layout);
-      if (Array.isArray(L) && L.length)
-        layout = L.filter(function (x) { return DEFAULT_LAYOUT.indexOf(x) >= 0; });
-      DEFAULT_LAYOUT.forEach(function (id) {
-        if (layout.indexOf(id) < 0) layout.push(id);
-      });
-    }
+    if (d && d.work) saved = JSON.parse(d.work);
   } catch (e) { console.warn("되찾기", (e && (e.code || e.message)) || e); }
   coin();
 }
@@ -472,8 +509,8 @@ function stash() {
   saveTimer = setTimeout(function () {
     putDoc("hci4_drafts", "team" + team, {
       team: team, order: order.id,
-      attached: JSON.stringify(attached),
-      layout: JSON.stringify(layout),
+      work: JSON.stringify({ job: job ? job.id : null,
+        attached: attached, layout: layout }),
       purse: JSON.stringify(dump()),
     }).catch(function (e) { console.warn("저장", (e && (e.code || e.message)) || e); });
   }, 1600);
@@ -488,17 +525,6 @@ function beat() {
   send();
   heart = setInterval(send, 60000);
 }
-
-/* ── 쉬는 시계 ────────────────────────────────────────────── */
-
-setInterval(function () {
-  if (st.rest <= 0) return;
-  st.rest--;
-  const a = document.activeElement;
-  if (wears(attached, "list", "state") &&
-      !(a && a.classList && a.classList.contains("inbox")))
-    redraw({ craft: false });
-}, 1000);
 
 /* ── 시작 ─────────────────────────────────────────────────── */
 
