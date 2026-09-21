@@ -14,6 +14,7 @@
 //
 // 버셀 프로젝트 설정 → Environment Variables 에 넣을 것
 //   FIREBASE_SERVICE_ACCOUNT   서비스 계정 JSON 통째로 (필수)
+//   HCI4_ADMIN                 교수용 암호 (지갑을 되돌릴 때만 쓴다)
 
 import { MATERIALS, combine, recipeById } from "../public/norman/js/parts.js";
 import { JOBS } from "../public/norman/js/jobs.js";
@@ -140,6 +141,34 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST 로만 부릅니다" });
 
   const body = req.body || {};
+
+  /* ── 교수용 — 지갑 되돌리기 ─────────────────────────────────
+     수업 전에 스무 조를 새 지갑으로 돌리거나, 수업 중에 꼬인 한 조만
+     돌릴 때 쓴다. 암호는 버셀 환경변수에만 두므로 학생은 부를 수 없다.
+     지운 지갑은 다음에 들어올 때 새로 만들어진다. 장부는 남긴다 —
+     무슨 일이 있었는지는 지워지면 안 된다. */
+  if (body.op === "reset") {
+    const key = process.env.HCI4_ADMIN;
+    if (!key) return res.status(503).json({ error: "버셀에 HCI4_ADMIN 이 없습니다" });
+    if (body.key !== key) return res.status(403).json({ error: "암호가 틀렸습니다" });
+
+    let fsA;
+    try { fsA = await store(); }
+    catch (e) { return res.status(503).json({ error: "server-off" }); }
+
+    const only = Number(body.team);
+    const nums = Number.isInteger(only) && only >= 1 && only <= TEAMS
+      ? [only]
+      : Array.from({ length: TEAMS }, (_, i) => i + 1);
+
+    const batch = fsA.batch();
+    for (const n of nums) batch.delete(fsA.collection("hci4_wallets").doc("team" + n));
+    batch.set(fsA.collection("hci4_ledger").doc(),
+      { kind: "reset", teams: nums, at: new Date() });
+    await batch.commit();
+    return res.status(200).json({ ok: true, 되돌린조: nums });
+  }
+
   const team = Number(body.team);
   if (!Number.isInteger(team) || team < 1 || team > TEAMS)
     return res.status(400).json({ error: "조 번호가 잘못되었습니다" });
