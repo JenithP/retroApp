@@ -184,7 +184,8 @@ export function build(p, st) {
       const n = el("button", "box iconbox");
       n.dataset.act = "press:" + p.id;
       n.setAttribute("aria-label", p.label || "그림");
-      n.appendChild(svgOf(ICONS.list));
+      n.appendChild(svgOf(ICONS[p.icon] || ICONS.list));
+      n.appendChild(el("span", "ibadge", String(st.hits[p.counts] || 0)));
       if (p.decoy) n.classList.add("decoy");
       return n;
     }

@@ -175,3 +175,10 @@
 
 /* 그냥 글씨는 만지는 것이 아니다 — 조작하는 것과 달라 보이게 */
 .plaintext{color:#6B6B6B}
+
+/* 장바구니 같은 아이콘에 붙는 개수 배지 — 「지금 상태를 보여주기」가 달아 준다 */
+.iconbox{position:relative}
+.ibadge{display:none}
+.iconbox.sg-state .ibadge{display:grid;place-items:center;position:absolute;
+  right:-5px;top:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+  background:#2F4A63;color:#FFF;font-size:.62rem;font-weight:700;line-height:1}

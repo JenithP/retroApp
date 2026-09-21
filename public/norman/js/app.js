@@ -67,6 +67,7 @@ function stateText(p, st) {
     case "slider":   return Math.round((v || 0) * 100) + "%";
     case "progress": return st.vals[p.id] ? "완료됨" : "진행 중";
     case "status":   return st.hits.__sent ? "읽음" : "보내는 중";
+    case "icon":     return p.counts ? (st.hits[p.counts] || 0) + "개 담김" : "";
     case "button":   return (st.hits[p.id] || 0) + "번 눌림";
     default:         return "";
   }

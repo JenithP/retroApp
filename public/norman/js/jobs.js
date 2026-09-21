@@ -41,10 +41,12 @@ export const JOBS = [
     [{ part: "c2", do: "press" }],
     "사진만 눌러야 하는지 카드 전체가 눌리는지 모르겠어요."),
 
-  J("shop-cart", "쇼핑", "장바구니",
-    "상품을 장바구니에 담고, 담겼는지 확인해 보세요.",
-    [{ id: "add",  kind: "button", label: "담기" },
-     { id: "cart", kind: "icon", label: "장바구니", need: ["state"] }],
+  J("shop-cart", "쇼핑", "상품 상세",
+    "이 코트를 장바구니에 담고, 담겼는지 확인해 보세요.",
+    [{ id: "add",  kind: "button", label: "장바구니에 담기" },
+     { id: "cart", kind: "icon", label: "장바구니", icon: "bag", counts: "add", need: ["state"],
+       stuck: { state: "오른쪽 위 장바구니 그림은 담기 전과 담은 뒤가 똑같습니다. " +
+         "방금 누른 것이 담긴 건지, 몇 개가 들어 있는지 알 수 없습니다." } }],
     [{ part: "add", do: "press" }, { part: "cart", do: "read" }],
     "담긴 건지 아닌지 아이콘만 봐서는 모르겠어요."),
 
