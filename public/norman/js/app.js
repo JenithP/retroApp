@@ -12,11 +12,16 @@ export const APP = {
   name: "운동 기록",
   task: "60킬로그램으로 8회씩, 세 세트를 기록하십시오.",
   elements: [
-    { id: "name",   label: "운동 이름 칸", note: "눌러서 글자를 쓸 수 있다" },
-    { id: "weight", label: "무게 조절",    note: "양옆을 누르면 5씩 오르내린다" },
-    { id: "reps",   label: "횟수 조절",    note: "양옆을 누르면 1씩 오르내린다" },
-    { id: "save",   label: "기록 단추",    note: "누르면 한 세트가 쌓이고 쉬는 시계가 돈다" },
-    { id: "list",   label: "세트 목록",    note: "옆으로 밀면 지워진다" },
+    { id: "name",   label: "운동 이름 쓰는 칸",
+      note: "눌러서 글자를 쓸 수 있습니다" },
+    { id: "weight", label: "무게 올리고 내리는 칸",
+      note: "양옆을 누르면 5씩 오르고 내립니다" },
+    { id: "reps",   label: "횟수 올리고 내리는 칸",
+      note: "양옆을 누르면 1씩 오르고 내립니다" },
+    { id: "save",   label: "기록하는 단추",
+      note: "누르면 지금 값이 아래 목록에 한 줄 쌓입니다" },
+    { id: "list",   label: "쌓인 기록",
+      note: "한 줄을 옆으로 밀면 지워집니다" },
   ],
 };
 

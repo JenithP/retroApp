@@ -3,7 +3,7 @@
 // 붙는 것은 무엇이든 어디에든 붙는다. 막지 않는다.
 // 엉뚱한 자리에 놓은 단서가 왜 쓸모없는지는 시연에서 드러난다.
 
-import { BLOCKS, CATS, HATS, ICONS, byId } from "./blocks.js";
+import { BLOCKS, CATS, HATS, ICONS, ICON_NAMES, byId } from "./blocks.js";
 
 const ctx = { scripts: null, sel: null, onChange: () => {}, nodes: {} };
 
@@ -26,13 +26,15 @@ export function paint(nodes, scripts, onChange) {
   for (const b of BLOCKS) nodes.palette.appendChild(chip(b, null));
 }
 
-/** 연장대에 걸린 한 개. 끌면 복제본이 따라온다. */
+/** 연장대에 걸린 한 개. 끌면 복제본이 따라온다.
+ *  이름만으로는 무엇이 일어나는지 모른다 — 그래서 한 줄을 같이 건다. */
 function chip(b) {
   const n = document.createElement("div");
   n.className = "pblock c-" + b.cat;
   n.dataset.block = b.id;
-  n.innerHTML = `<span class="bname">${b.name}</span>`;
-  if (b.arg) n.insertAdjacentHTML("beforeend", `<span class="bslot"></span>`);
+  n.innerHTML = `<span class="bname">${b.name}</span>` +
+    (b.arg ? `<span class="bslot"></span>` : "") +
+    `<span class="btip">${b.tip}</span>`;
   return n;
 }
 
@@ -97,8 +99,9 @@ function placed(item, el, hat, i) {
   if (b.arg?.kind === "icon") {
     const sel = document.createElement("select");
     sel.className = "barg";
-    sel.innerHTML = `<option value="">고르기</option>` +
-      Object.keys(ICONS).map(k => `<option value="${k}">${k}</option>`).join("");
+    sel.innerHTML = `<option value="">어떤 그림으로</option>` +
+      Object.keys(ICONS).map(k =>
+        `<option value="${k}">${ICON_NAMES[k] || k}</option>`).join("");
     sel.value = item.arg || "";
     sel.addEventListener("change", () => {
       ctx.scripts[el][hat][i].arg = sel.value;

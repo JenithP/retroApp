@@ -227,3 +227,42 @@ select.barg{min-width:78px;padding:3px 5px}
 .blame.ok{color:var(--ok)}
 .blame button{font-family:var(--sans);font-size:.74rem;color:#1A1409;background:var(--bad);
   border:0;border-radius:4px;padding:3px 8px;margin:2px 3px 0 0;cursor:pointer}
+
+/* ── 들머리 · 조 고르기 ───────────────────────────────────── */
+#gate{position:fixed;inset:0;z-index:50;overflow-y:auto;display:grid;place-items:center;
+  padding:28px 18px;background:radial-gradient(120% 80% at 50% 0%,var(--stage-2) 0%,var(--stage) 62%)}
+.gatecard{width:100%;max-width:560px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:26px 26px 22px;box-shadow:0 30px 60px -22px #000}
+.gatecard h1{font-family:var(--serif);font-size:1.85rem;margin:2px 0 12px}
+.glead{margin:0 0 20px;font-size:.9rem;color:#C9C0B4}
+.glead b{color:var(--ui);font-weight:500}
+.glabel{margin:0 0 9px;font-size:.82rem;font-weight:500;color:var(--lamp)}
+.teamgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.teamcell{font-family:var(--sans);font-size:.84rem;color:var(--ui-soft);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:5px;padding:10px 4px;cursor:pointer}
+.teamcell:hover{color:var(--ui);border-color:#584C42}
+.teamcell.on{background:var(--lamp);border-color:var(--lamp);color:#1A1409;font-weight:700}
+.orderpeek{margin:18px 0 0;padding:14px 16px;background:var(--panel-2);
+  border:1px solid var(--line);border-left:3px solid var(--lamp);border-radius:7px}
+.pk{margin:0;font-size:.72rem;letter-spacing:.1em;color:var(--lamp)}
+.orderpeek h2{font-family:var(--serif);font-size:1.25rem;margin:2px 0 4px}
+.pkline{margin:0 0 8px;font-size:.86rem}
+.pkmate{margin:0;font-size:.76rem;color:var(--ui-soft)}
+.pkwarn{margin:8px 0 0;font-size:.76rem;color:var(--warn)}
+.pkwarn b{color:var(--ui)}
+.big{width:100%;margin-top:18px;font-family:var(--sans);font-size:.95rem;font-weight:500;
+  color:#1A1409;background:var(--ok);border:0;border-radius:6px;padding:13px;cursor:pointer}
+.big:disabled{background:var(--panel-2);color:#5E564E;cursor:default}
+.big:not(:disabled):hover{filter:brightness(1.08)}
+.gtip{margin:10px 0 0;font-size:.76rem;color:var(--ui-soft);text-align:center}
+
+/* 머리의 조 딱지 */
+.teamtag{font-family:var(--sans);font-size:.76rem;font-weight:500;color:#1A1409;
+  background:var(--lamp);border-radius:3px;padding:2px 8px;flex:none}
+.netmsg{font-size:.76rem;color:var(--ui-soft);align-self:center}
+#bar .dot{align-self:center}
+
+/* 연장대에 같이 거는 한 줄 — 이름만으로는 그림이 안 그려진다 */
+.btip{flex-basis:100%;margin-top:3px;font-size:.7rem;font-weight:400;color:#2C2317;
+  line-height:1.4}
+.sblock .btip{display:none}

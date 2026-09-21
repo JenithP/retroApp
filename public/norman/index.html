@@ -11,22 +11,46 @@
 </head>
 <body>
 
-<header id="bar">
+<!-- ══ 들머리 · 조 고르기 ══════════════════════════════════ -->
+<section id="gate">
+  <div class="gatecard">
+    <p class="oeyebrow">HCI와 커뮤니케이션 · 4주차 오프라인</p>
+    <h1>노만의 공방</h1>
+    <p class="glead">
+      여러분은 물건을 고쳐 파는 장인입니다. 주문으로 들어온 물건은
+      <b>이미 다 작동합니다.</b> 다만 아무것도 알려 주지 않아 아무도 쓰지 못합니다.
+      기능은 손대지 못합니다. 여러분이 붙일 수 있는 것은 <b>단서</b>뿐입니다.
+    </p>
+
+    <p class="glabel">조를 고르십시오</p>
+    <div class="teamgrid" id="teamgrid"></div>
+
+    <div class="orderpeek" id="orderpeek" hidden></div>
+    <button class="big" id="enter" disabled>공방 문을 연다</button>
+    <p class="gtip" id="gtip">한 조에서 한 사람이 조종간을 잡고, 나머지는 함께 봅니다.</p>
+  </div>
+</section>
+
+<header id="bar" hidden>
   <div class="who">
     <span class="brand">노만의 공방</span>
-    <span class="whoami" id="whoami">주문서 · 운동 기록</span>
+    <span class="teamtag" id="teamtag"></span>
+    <span class="whoami" id="whoami"></span>
   </div>
   <div class="right">
+    <span id="netdot" class="dot" title="연결 상태"></span>
+    <span class="netmsg" id="netmsg">연결 중</span>
     <button class="flag" id="run" title="시연해 본다">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1v14M3 2h9l-2 3 2 3H3z"/></svg>
       시연
     </button>
     <button class="flag ghost" id="cold" title="이 물건을 처음 본 사람이 써 본다">처음 본 사람</button>
     <button class="flag ghost" id="reset" title="처음 상태로">되돌리기</button>
+    <button class="flag ghost" id="swap" title="다른 조로 들어간다">조 바꾸기</button>
   </div>
 </header>
 
-<main id="bench">
+<main id="bench" hidden>
 
   <!-- ══ 왼쪽 · 연장대 ═══════════════════════════════════════ -->
   <section class="rack" aria-label="시그니파이어 연장대">

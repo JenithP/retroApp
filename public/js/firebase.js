@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, setDoc, serverTimestamp,
+import { getFirestore, collection, addDoc, doc, getDoc, setDoc, serverTimestamp,
          onSnapshot, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -117,6 +117,30 @@ export async function ping(team, name, where) {
   } catch (e) { /* 현황판용이라 실패해도 무시한다 */ }
 }
 
+/** 주차마다 자리 모음이 다르다 — 4주차 공방은 hci4_presence 를 쓴다. */
+export async function pingTo(coll, row) {
+  try {
+    await whenReady();
+    await setDoc(doc(db, coll, state.uid), { ...row, at: serverTimestamp() }, { merge: true });
+  } catch (e) { /* 현황판용이라 실패해도 무시한다 */ }
+}
+
+/** 고쳐 쓰는 문서 하나 — 공방의 작업 중인 배치처럼 계속 덮어쓰는 것에 쓴다.
+ *  돈이 오가는 모음에는 쓰지 않는다. 그쪽은 규칙이 학생 쓰기를 막아 두었다. */
+export async function putDoc(coll, id, row) {
+  await ready(9000);
+  await setDoc(doc(db, coll, id), { ...row, uid: state.uid, at: serverTimestamp() },
+    { merge: true });
+}
+
+/** 문서 하나를 지켜본다 — 자기 조 지갑처럼 하나만 볼 때. */
+export async function watchDoc(coll, id, cb) {
+  await whenReady();
+  return onSnapshot(doc(db, coll, id),
+    d => cb(d.exists() ? { id: d.id, ...d.data() } : null),
+    e => console.error(e));
+}
+
 /* ── 교수용 현황판이 읽는 통로 ─────────────────────────
    학생 화면은 쓰기만 하고, 읽기는 현황판에서만 한다. */
 
@@ -142,4 +166,11 @@ export async function watchPresence(cb) {
   return onSnapshot(collection(db, "presence"),
     s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))),
     e => console.error(e));
+}
+
+/** 문서 하나를 한 번 읽는다 — 새로고침한 조가 하던 작업을 되찾을 때. */
+export async function readDoc(coll, id) {
+  await ready(9000);
+  const d = await getDoc(doc(db, coll, id));
+  return d.exists() ? { id: d.id, ...d.data() } : null;
 }

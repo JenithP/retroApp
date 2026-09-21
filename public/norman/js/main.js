@@ -1,9 +1,12 @@
 // 노만의 공방 — 작업대를 잇는다.
 //
-// 이 판은 아직 아무것도 저장하지 않는다. 파이어베이스도 쓰지 않는다.
-// 손맛부터 보고, 상점과 장부는 그 위에 얹는다.
+// 지금 파이어베이스에 닿는 것은 둘뿐이다 — 붙여 둔 단서를 담아 두는 것(hci4_drafts)과
+// 어느 조가 앉아 있는지 알리는 것(hci4_presence). 둘 다 돈과 무관하다.
+// 상점·장부·품평은 아직 없다. 그쪽은 서버 함수를 거쳐야 하므로 나중에 얹는다.
 
 import { APP, fresh, render, act, argOf, has } from "./app.js";
+import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
+import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import * as Ed from "./editor.js";
 import * as Sim from "./sim.js";
 
@@ -11,13 +14,15 @@ const $ = id => document.getElementById(id);
 const nodes = {
   screen: $("screen"), hats: $("hats"), palette: $("palette"), cats: $("cats"),
   order: $("order"), toast: $("toast"), check: $("checkfx"), verdict: $("verdict"),
-  elname: $("elname"), elhint: $("elhint"), note: $("phonenote"),
+  elname: $("elname"), elhint: $("elhint"), note: $("phonenote"), whoami: $("whoami"),
 };
 
 let st = fresh();
-let scripts = {};
+const scripts = {};                   // 자리에 붙은 단서. 통째로 갈아 끼우지 않는다.
 let sel = null;
 let tok = null;                       // 시연 중단용
+let team = null;                      // 조 번호
+let order = null;                     // 맡은 물건
 
 /* ── 화면 ─────────────────────────────────────────────────── */
 
@@ -251,12 +256,114 @@ function showVerdict(v) {
     }));
 }
 
+/* ── 조 고르기 ────────────────────────────────────────────── */
+
+const gate = $("gate"), grid = $("teamgrid"), peek = $("orderpeek"), enterBtn = $("enter");
+let picking = null;
+
+for (let n = 1; n <= TEAMS; n++) {
+  const b = document.createElement("button");
+  b.className = "teamcell";
+  b.dataset.team = n;
+  b.textContent = n + "조";
+  grid.appendChild(b);
+}
+
+grid.addEventListener("click", e => {
+  const b = e.target.closest(".teamcell");
+  if (!b) return;
+  picking = Number(b.dataset.team);
+  grid.querySelectorAll(".teamcell").forEach(x =>
+    x.classList.toggle("on", Number(x.dataset.team) === picking));
+
+  const o = orderOf(picking);
+  const use = o?.ready ? o : FALLBACK;
+  peek.hidden = false;
+  peek.innerHTML =
+    `<p class="pk">${picking}조가 맡은 물건</p>
+     <h2>${use.name}</h2>
+     <p class="pkline">${use.line}</p>
+     <p class="pkmate">같은 물건을 ${partnerOf(picking)}조도 맡습니다 — 끝나고 둘을 나란히 놓고 봅니다.</p>` +
+    (o && !o.ready
+      ? `<p class="pkwarn">「${o.name}」은 아직 준비 중이라 오늘은 <b>${FALLBACK.name}</b>으로 들어갑니다.</p>`
+      : "");
+  enterBtn.disabled = false;
+});
+
+enterBtn.addEventListener("click", () => enter(picking));
+$("swap").addEventListener("click", () => {
+  gate.hidden = false;
+  $("bar").hidden = true;
+  $("bench").hidden = true;
+});
+
+async function enter(n) {
+  team = n;
+  const o = orderOf(n);
+  order = o?.ready ? o : FALLBACK;
+  try { localStorage.setItem("hci4_team", String(n)); } catch (e) {}
+
+  gate.hidden = true;
+  $("bar").hidden = false;
+  $("bench").hidden = false;
+  $("teamtag").textContent = n + "조";
+  nodes.whoami.textContent = "주문서 · " + order.name;
+
+  await restore();
+  beat();
+}
+
+/* ── 하던 작업 되찾기 · 자리 알리기 ───────────────────────── */
+
+/** 새로고침하거나 노트북이 꺼져도 붙여 둔 단서는 남아야 한다. */
+async function restore() {
+  try {
+    const d = await readDoc("hci4_drafts", "team" + team);
+    const saved = d?.scripts ? JSON.parse(d.scripts) : null;
+    if (saved && typeof saved === "object") {
+      for (const k of Object.keys(scripts)) delete scripts[k];
+      Object.assign(scripts, saved);
+    }
+  } catch (e) { console.warn("되찾기", e?.code || e?.message); }
+  pick(null);
+  redraw();
+}
+
+let saveTimer = 0;
+/** 손을 뗀 뒤에 한 번만 보낸다 — 한 글자마다 보내면 읽기·쓰기가 터진다. */
+function stash() {
+  if (!team) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    putDoc("hci4_drafts", "team" + team,
+      { team, order: order.id, scripts: JSON.stringify(scripts) })
+      .catch(e => console.warn("저장", e?.code || e?.message));
+  }, 1600);
+}
+
+/** 오래 앉아 있는 조도 현황판에서 사라지지 않게 일 분에 한 번 알린다. */
+let heart = null;
+function beat() {
+  clearInterval(heart);
+  const send = () => pingTo("hci4_presence", { team, order: order.id, where: "공방" });
+  send();
+  heart = setInterval(send, 60000);
+}
+
 /* ── 시작 ─────────────────────────────────────────────────── */
 
 Ed.paint(nodes, scripts, o => {
   redraw();
+  stash();
   if (o.focus) Ed.focusArg(o.focus);
 });
 Ed.drag($("drag"));
 pick(null);
 redraw();
+
+// 지난번에 고른 조가 있으면 눌러 둔 채로 보여 준다 — 다시 찾게 하지 않는다
+try {
+  const last = Number(localStorage.getItem("hci4_team"));
+  if (last >= 1 && last <= TEAMS)
+    grid.querySelector(`.teamcell[data-team="${last}"]`)?.click();
+} catch (e) {}
