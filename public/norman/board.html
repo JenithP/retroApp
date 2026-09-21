@@ -14,7 +14,6 @@
   .top{display:flex;align-items:flex-end;justify-content:space-between;
     gap:18px;flex-wrap:wrap;margin-bottom:6px}
   h1{font-family:var(--serif);font-size:1.5rem;margin:2px 0 4px}
-  .lead{margin:0;font-size:.82rem;color:var(--ui-soft);line-height:1.7}
   .keybar{display:flex;gap:8px;align-items:center}
   .keybar input{background:#12100E;border:1px solid var(--line);color:var(--ui);
     border-radius:5px;padding:9px 11px;font-family:var(--sans);font-size:.85rem;width:170px}
@@ -52,8 +51,6 @@
   .said.bad{border-left-color:var(--bad);color:#E6C0B9}
   .ended{background:#3A2418;border:1px solid #6B4A2E;color:#F0C89A;
     border-radius:8px;padding:12px 15px;margin:16px 0 0;font-size:.85rem}
-  .note{font-size:.75rem;color:#6E655C;line-height:1.8;margin-top:26px}
-  .note b{color:var(--ui-soft)}
 </style>
 </head>
 <body>
@@ -62,8 +59,6 @@
     <div>
       <p class="oeyebrow">HCI와 커뮤니케이션 · 4주차</p>
       <h1>노만의 공방 <span style="font-family:var(--sans);font-size:.85rem;color:var(--ui-soft)">현황판</span></h1>
-      <p class="lead">스무 조가 무엇을 하고 있는지 한눈에 봅니다.
-        읽기만 하므로 조의 기록에는 손대지 않습니다.</p>
     </div>
     <div class="keybar">
       <input id="key" type="password" placeholder="교수용 암호" autocomplete="off">
@@ -97,16 +92,6 @@
     <button id="end" class="warn" disabled>조별 활동 종료</button>
     <button id="open" class="ghost" disabled>다시 열기</button>
   </div>
-
-  <p class="note">
-    <b>종료를 누르면</b> — 스무 조 모두 포인트가 멈춥니다. 재료를 사거나 단서를
-    붙이거나 화면을 내놓을 수 없습니다. 학생 화면에는 <b>실습보고서 내려받기</b>가
-    뜨고, 각자 자기 피시에서 내려받아 워크북을 씁니다. 조 기록은 지워지지 않으므로
-    <b>다시 열기</b>로 언제든 되돌릴 수 있습니다.<br><br>
-    <b>한 조가 피시 네 대로 들어와도</b> 같은 조 이름으로 들어오면 한 지갑을
-    씁니다. 한 대에서 산 재료가 나머지 세 대에도 곧바로 보입니다.<br><br>
-    <b>주소</b> /norman/board.html &nbsp;·&nbsp; 지갑을 되돌리려면 /norman/admin.html
-  </p>
 </div>
 
 <script type="module">
