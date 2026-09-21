@@ -17,12 +17,20 @@ export const CATS = {
   limit: { name: "제약",   desc: "못 하는 쪽을 막아서" },
 };
 
-// 자리 — 언제 알리는가. 앞의 셋이 노먼의 두 간극을 가른다.
+// 자리 — 손님이 언제 무엇을 궁금해하는가.
+//
+// 「평소 모습」처럼 자리를 이름으로만 부르면 무엇을 넣으라는 건지 알기 어렵다.
+// 그래서 **손님이 그 순간 속으로 하는 말**을 같이 적는다.
+// 앞의 둘이 노먼의 실행의 간극, 셋째가 평가의 간극이다.
 export const HATS = [
-  { id: "idle",  name: "평소 모습",    desc: "손대기 전에 늘 보이는 것", gulf: "실행" },
-  { id: "touch", name: "손댔을 때",    desc: "만지는 동안 달라지는 것",  gulf: "실행" },
-  { id: "after", name: "누르고 난 뒤", desc: "무슨 일이 생겼는지",       gulf: "평가" },
-  { id: "block", name: "막아 두기",    desc: "지금은 안 된다고 알리기",  gulf: "제약" },
+  { id: "idle",  when: "손대기 전",   ask: "뭘 눌러야 하지?",   gulf: "실행",
+    empty: "아무 표시도 없음" },
+  { id: "touch", when: "손대는 동안", ask: "이거 맞나?",        gulf: "실행",
+    empty: "만져도 그대로임" },
+  { id: "after", when: "누른 뒤",     ask: "어떻게 된 거지?",   gulf: "평가",
+    empty: "아무 말도 없음" },
+  { id: "block", when: "못 하게",     ask: "왜 안 되지?",       gulf: "제약",
+    empty: "막아 둔 것 없음" },
 ];
 
 export const ICONS = {

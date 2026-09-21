@@ -7,7 +7,10 @@
 import { APP, fresh, render, act, argOf, has } from "./app.js";
 import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
-import { NORMAN, faceSVG } from "./cast.js";
+import { NORMAN, faceSVG, hasArt } from "./cast.js";
+import { purse, dump, load } from "./wallet.js";
+import * as Shop from "./shop.js";
+import * as Market from "./market.js";
 import * as Talk from "./talk.js";
 import * as Ed from "./editor.js";
 import * as Sim from "./sim.js";
@@ -23,6 +26,9 @@ let st = fresh();
 const scripts = {};                   // 자리에 붙은 단서. 통째로 갈아 끼우지 않는다.
 let sel = null;
 let tok = null;                       // 시연 중단용
+let where = "bench";                  // 지금 있는 자리 — 공방·상점·앱시장
+let lastRun = null;                   // 손님이 마지막으로 써 본 결과
+let bare = false;                     // 손대기 전 물건을 견주어 보는 중
 let team = null;                      // 조 번호
 let order = null;                     // 맡은 물건
 
@@ -33,7 +39,7 @@ function redraw(opt = {}) {
   const keep = a?.classList?.contains("namebox")
     ? { v: a.value, s: a.selectionStart } : null;
 
-  render(nodes.screen, st, scripts, sel);
+  render(nodes.screen, st, bare ? {} : scripts, sel);
 
   if (keep) {
     const n = nodes.screen.querySelector(".namebox");
@@ -167,6 +173,19 @@ setInterval(() => {
 
 /* ── 단추들 ───────────────────────────────────────────────── */
 
+// 붙이기 전과 나란히 — 해 놓고도 티가 안 난다고 느끼는 것은
+// 대개 견줄 것이 없어서다.
+$("before").addEventListener("click", e => {
+  bare = !bare;
+  e.currentTarget.setAttribute("aria-pressed", String(bare));
+  e.currentTarget.classList.toggle("on", bare);
+  e.currentTarget.textContent = bare ? "내 물건" : "원래 물건";
+  nodes.note.innerHTML = bare
+    ? "<b>손대기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
+    : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
+  redraw({ hats: false });
+});
+
 $("reset").addEventListener("click", () => {
   stopSim();
   st = fresh();
@@ -180,6 +199,7 @@ $("reset").addEventListener("click", () => {
 
 $("run").addEventListener("click", () => {
   stopSim();
+  unbare();
   st = fresh();
   nodes.verdict.hidden = true;
   redraw();
@@ -190,6 +210,7 @@ $("run").addEventListener("click", () => {
 
 $("cold").addEventListener("click", async () => {
   stopSim();
+  unbare();
   st = fresh();
   redraw();
   Sim.markAstray(nodes.hats);
@@ -202,7 +223,7 @@ $("cold").addEventListener("click", async () => {
   const who = document.createElement("div");
   who.className = "guestbox";
   who.innerHTML = `<div class="port p-guest">${faceSVG("guest")}` +
-    `<img src="img/guest.webp" alt="" onerror="this.remove()"></div><p>손님</p>`;
+    (hasArt("guest") ? `<img src="img/guest.webp" alt="">` : "") + `</div><p>손님</p>`;
   document.getElementById("phone").appendChild(who);
 
   Talk.hush();
@@ -227,8 +248,22 @@ $("cold").addEventListener("click", async () => {
   });
   dot.remove();
   who.remove();
-  if (v) { showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); }
+  if (v) {
+    lastRun = v;                       // 앱시장이 이걸 보고 값을 매긴다
+    showVerdict(v);
+    Talk.say("norman", NORMAN.verdict(v));
+    stash();
+  }
 });
+
+function unbare() {
+  if (!bare) return;
+  bare = false;
+  const b = $("before");
+  b.setAttribute("aria-pressed", "false");
+  b.classList.remove("on");
+  b.textContent = "원래 물건";
+}
 
 function stopSim() {
   if (!tok) return;
@@ -270,6 +305,50 @@ function showVerdict(v) {
       Sim.flashBlame(nodes.hats, v.blame, b.dataset.pick);
     }));
 }
+
+/* ── 자리 옮기기 — 공방 · 상점 · 앱시장 ───────────────────── */
+
+function coin() { $("coin").textContent = purse.point; }
+
+function go(to) {
+  where = to;
+  stopSim();
+  $("places").querySelectorAll(".place").forEach(b =>
+    b.classList.toggle("on", b.dataset.go === to));
+  $("bench").hidden  = to !== "bench";
+  $("shop").hidden   = to !== "shop";
+  $("market").hidden = to !== "market";
+  coin();
+
+  if (to === "shop")
+    Shop.open($("shop"), {
+      talk: (w, t) => Talk.cut(w, t),
+      onDone: ({ paid, n }) => {
+        go("bench");
+        Ed.shelf();
+        stash();
+        Talk.cut("norman", n
+          ? `${n}개 사 왔구먼. ${paid}포인트 나갔네. 이제 어디에 붙일지 보게.`
+          : NORMAN.rule);
+      },
+    });
+
+  if (to === "market")
+    Market.open($("market"), {
+      scripts, run: lastRun,
+      talk: (w, t) => Talk.cut(w, t),
+      onBack: () => go("bench"),
+      onSold: a => { coin(); stash(); go("bench");
+        Talk.say("norman", `${a.price}포인트 받아 왔구먼. 다음 주문도 있네.`); },
+    });
+
+  if (to === "bench") { Ed.shelf(); redraw(); }
+}
+
+$("places").addEventListener("click", e => {
+  const b = e.target.closest("[data-go]");
+  if (b) go(b.dataset.go);
+});
 
 /* ── 조 고르기 ────────────────────────────────────────────── */
 
@@ -327,6 +406,7 @@ async function enter(n) {
   Talk.mount($("talk"));
   Talk.say("norman", NORMAN.hello(n), 3400);
   Talk.say("norman", NORMAN.rule);
+  Talk.say("norman", "연장은 하나도 없네. 위에 「상점」을 눌러 필요한 것부터 사 오게. 주머니에 1000포인트 있네.");
 
   await restore();
   beat();
@@ -338,6 +418,7 @@ async function enter(n) {
 async function restore() {
   try {
     const d = await readDoc("hci4_drafts", "team" + team);
+    if (d?.purse) load(JSON.parse(d.purse));
     const saved = d?.scripts ? JSON.parse(d.scripts) : null;
     if (saved && typeof saved === "object") {
       for (const k of Object.keys(scripts)) delete scripts[k];
@@ -345,6 +426,8 @@ async function restore() {
     }
   } catch (e) { console.warn("되찾기", e?.code || e?.message); }
   pick(null);
+  Ed.shelf();
+  coin();
   redraw();
 }
 
@@ -355,7 +438,8 @@ function stash() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     putDoc("hci4_drafts", "team" + team,
-      { team, order: order.id, scripts: JSON.stringify(scripts) })
+      { team, order: order.id, scripts: JSON.stringify(scripts),
+        purse: JSON.stringify(dump()) })
       .catch(e => console.warn("저장", e?.code || e?.message));
   }, 1600);
 }
@@ -375,6 +459,7 @@ let greeted = false;
 Ed.paint(nodes, scripts, o => {
   redraw();
   stash();
+  if (o.shelf) { Ed.shelf(); coin(); }
   if (!greeted && o.focus) { greeted = true; Talk.say("norman", NORMAN.first); }
   if (o.focus) Ed.focusArg(o.focus);
 });

@@ -31,6 +31,29 @@ export function faceSVG(who) {
     ${cap}</svg>`;
 }
 
+/* ── 초상 그림이 있는지 한 번만 알아본다 ─────────────────────
+   말할 때마다 찾으면 같은 파일을 스무 번 부르게 된다.
+   그림이 아직 없으면 조용히 그려 둔 얼굴로 간다. */
+
+const art = {};                 // who → true(있다) · false(없다) · undefined(아직 모름)
+const asked = {};
+
+export const hasArt = who => art[who] === true;
+
+export function probeArt(who, whenFound) {
+  if (asked[who]) return;
+  asked[who] = true;
+  const img = new Image();
+  img.onload  = () => { art[who] = true;  whenFound?.(who); };
+  img.onerror = () => { art[who] = false; };
+  img.src = `img/${who}.webp`;
+}
+
+/** 공방에 들어설 때 넷을 한꺼번에 알아본다. */
+export function probeAll(whenFound) {
+  for (const who of Object.keys(CAST)) probeArt(who, whenFound);
+}
+
 /* ── 노만 영감이 하는 말 ──────────────────────────────────── */
 
 export const NORMAN = {

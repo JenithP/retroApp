@@ -37,7 +37,13 @@
     <span class="teamtag" id="teamtag"></span>
     <span class="whoami" id="whoami"></span>
   </div>
+  <nav class="places" id="places">
+    <button class="place on" data-go="bench">공방</button>
+    <button class="place" data-go="shop">상점</button>
+    <button class="place" data-go="market">앱시장</button>
+  </nav>
   <div class="right">
+    <span class="coin" id="coin">1000</span>
     <span id="netdot" class="dot" title="연결 상태"></span>
     <span class="netmsg" id="netmsg">연결 중</span>
     <button class="flag" id="run" title="시연해 본다">
@@ -45,6 +51,7 @@
       시연
     </button>
     <button class="flag ghost" id="cold" title="이 물건을 처음 본 사람이 써 본다">처음 본 사람</button>
+    <button class="flag ghost" id="before" aria-pressed="false" title="손대기 전 물건과 견준다">원래 물건</button>
     <button class="flag ghost" id="reset" title="처음 상태로">되돌리기</button>
     <button class="flag ghost" id="swap" title="다른 조로 들어간다">조 바꾸기</button>
   </div>
@@ -55,8 +62,8 @@
   <!-- ══ 왼쪽 · 연장대 ═══════════════════════════════════════ -->
   <section class="rack" aria-label="시그니파이어 연장대">
     <div class="rackhead">
-      <h2>연장대</h2>
-      <p>끌어다 오른쪽 자리에 붙인다</p>
+      <h2>내 연장</h2>
+      <p>사 온 것만 걸립니다</p>
     </div>
     <div class="cats" id="cats"></div>
     <div class="palette" id="palette"></div>
@@ -100,6 +107,9 @@
   </section>
 
 </main>
+
+<section id="shop" class="place-view" hidden></section>
+<section id="market" class="place-view" hidden></section>
 
 <div class="drag" id="drag" hidden></div>
 

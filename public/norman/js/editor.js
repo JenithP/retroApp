@@ -4,6 +4,7 @@
 // 엉뚱한 자리에 놓은 단서가 왜 쓸모없는지는 시연에서 드러난다.
 
 import { BLOCKS, CATS, HATS, ICONS, ICON_NAMES, byId } from "./blocks.js";
+import { countOwn, take, give } from "./wallet.js";
 
 const ctx = { scripts: null, sel: null, onChange: () => {}, nodes: {} };
 
@@ -22,8 +23,20 @@ export function paint(nodes, scripts, onChange) {
     nodes.cats.appendChild(t);
   }
 
-  nodes.palette.textContent = "";
-  for (const b of BLOCKS) nodes.palette.appendChild(chip(b, null));
+  shelf();
+}
+
+/** 사 온 연장만 건다. 없으면 상점에 다녀오라고 한다. */
+export function shelf() {
+  const box = ctx.nodes.palette;
+  box.textContent = "";
+  const mine = BLOCKS.filter(b => countOwn(b.id) > 0);
+  if (!mine.length) {
+    box.innerHTML = `<p class="noteol">아직 연장이 하나도 없습니다.<br>
+      <b>상점</b>에 들러 필요한 것을 사 오십시오.</p>`;
+    return;
+  }
+  for (const b of mine) box.appendChild(chip(b));
 }
 
 /** 연장대에 걸린 한 개. 끌면 복제본이 따라온다.
@@ -34,6 +47,7 @@ function chip(b) {
   n.dataset.block = b.id;
   n.innerHTML = `<span class="bname">${b.name}</span>` +
     (b.arg ? `<span class="bslot"></span>` : "") +
+    `<span class="bhave">${countOwn(b.id)}</span>` +
     `<span class="btip">${b.tip}</span>`;
   return n;
 }
@@ -52,7 +66,7 @@ export function hats(el) {
     wrap.dataset.hat = h.id;
     wrap.innerHTML =
       `<header class="hathead">
-         <b>${h.name}</b><span>${h.desc}</span>
+         <b>${h.when}</b><span>“${h.ask}”</span>
          <em class="gulf">${h.gulf}</em>
        </header>
        <div class="stack" data-hat="${h.id}"></div>`;
@@ -66,11 +80,13 @@ export function hats(el) {
   }
 }
 
+/** 빈 자리에는 「비어 있음」 대신 **지금 물건이 어떤 상태인지**를 적는다.
+ *  비었다는 사실보다 그래서 어떻다는 것이 눈에 들어와야 한다. */
 function empty(h) {
   const n = document.createElement("p");
   n.className = "hollow";
   n.dataset.gulf = h.gulf;
-  n.textContent = "비어 있음";
+  n.textContent = h.empty;
   return n;
 }
 
@@ -117,7 +133,8 @@ function placed(item, el, hat, i) {
   x.addEventListener("click", ev => {
     ev.stopPropagation();
     ctx.scripts[el][hat].splice(i, 1);
-    ctx.onChange({});
+    give(b.id);
+    ctx.onChange({ shelf: true });
   });
   n.appendChild(x);
 
@@ -140,6 +157,7 @@ export function drag(dragEl) {
     if (!src) return;
     if (e.target.closest("input, select, button")) return;   // 값 칸은 끌리지 않는다
     if (!ctx.sel && src.classList.contains("pblock")) return;
+    if (src.classList.contains("pblock") && countOwn(src.dataset.block) <= 0) return;
 
     e.preventDefault();
     const id = src.dataset.block;
@@ -199,12 +217,12 @@ export function drag(dragEl) {
 
     // 자리 밖에 놓으면 빼낸 것으로 본다
     if (!target) {
-      if (from) S[from.hat].splice(from.idx, 1);
-      ctx.onChange({});
+      if (from) { S[from.hat].splice(from.idx, 1); give(id); ctx.onChange({ shelf: true }); }
       return;
     }
 
     let item = { block: id, arg: "" };
+    if (!from && !take(id)) return;          // 주머니에 없으면 붙지 않는다
     if (from) {
       item = S[from.hat][from.idx];
       S[from.hat].splice(from.idx, 1);
@@ -212,7 +230,7 @@ export function drag(dragEl) {
       if (from.hat === target.hat && from.idx < target.at) target.at--;
     }
     S[target.hat].splice(target.at, 0, item);
-    ctx.onChange({ focus: { hat: target.hat, idx: target.at } });
+    ctx.onChange({ focus: { hat: target.hat, idx: target.at }, shelf: !from });
   });
 }
 

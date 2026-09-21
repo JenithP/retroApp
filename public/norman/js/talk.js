@@ -6,7 +6,7 @@
 // 시연 중에는 손님이 사건에 맞춰 말하므로 기다리지 않고 바로 갈아 끼운다.
 // 노만 영감이 설명할 때만 사람이 읽을 틈을 준다.
 
-import { CAST, faceSVG } from "./cast.js";
+import { CAST, faceSVG, hasArt, probeAll } from "./cast.js";
 
 let box, port, name, line, next;
 let queue = [], busy = false, typer = 0, resting = null;
@@ -23,14 +23,14 @@ export function mount(el) {
   line = box.querySelector("#tline");
   next = box.querySelector("#tnext");
   box.addEventListener("click", skip);
+  probeAll(() => { if (cur) face(cur.who); });
 }
 
 function face(who) {
   const c = CAST[who];
   port.className = "port p-" + who;
-  // 그림 파일이 있으면 그것이 덮고, 없으면 아래 그림이 그대로 보인다
   port.innerHTML = faceSVG(who) +
-    `<img src="img/${who}.webp" alt="" onerror="this.remove()">`;
+    (hasArt(who) ? `<img src="img/${who}.webp" alt="">` : "");
   name.textContent = c?.name || "";
 }
 
