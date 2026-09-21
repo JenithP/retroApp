@@ -310,14 +310,22 @@ export const JOBS = [
     "결제 버튼이 한참 아래에 있는 줄 몰랐어요."),
 ];
 
-/* ── 조마다 다른 의뢰를 다른 차례로 ──────────────────────────
-   스무 조가 같은 것부터 시작하면 옆 조를 베낀다. 조 번호로 차례를 어긋나게
-   돌려 첫 의뢰를 다르게 준다. 중복은 상관없다 — 어차피 같은 개념이다. */
+export const TEAMS = 20;
+
+/* ── 조마다 어느 의뢰부터 맡는가 ─────────────────────────────
+   **두 조씩 짝을 지어 같은 의뢰로 시작한다.** 1·2조가 첫째 의뢰,
+   3·4조가 셋째 의뢰… 이렇게 열 쌍이 된다. 같은 화면을 맡은 두 조가
+   서로 다른 답을 들고 나와야 발표 때 나란히 놓고 볼 수 있다.
+   짝이 아닌 조끼리는 시작이 다르므로 옆자리를 베낄 수 없다. */
 
 export function queueFor(team) {
   const n = JOBS.length;
-  const start = ((Number(team) || 1) - 1) * 2 % n;
+  const start = (Math.floor(((Number(team) || 1) - 1) / 2) * 2) % n;
   return Array.from({ length: n }, (_, i) => JOBS[(start + i) % n]);
 }
+
+/** 같은 의뢰로 시작하는 짝꿍 조 */
+export const partnerOf = team =>
+  Number(team) % 2 === 1 ? Number(team) + 1 : Number(team) - 1;
 
 export const jobById = id => JOBS.find(j => j.id === id);

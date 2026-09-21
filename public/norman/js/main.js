@@ -5,9 +5,10 @@
 // 어느 조가 앉아 있는지 알리는 일(hci4_presence)뿐이다.
 
 import { fresh, render, act, wears, argOf, partOf, canWear } from "./app.js";
-import { queueFor } from "./jobs.js";
+import { queueFor, partnerOf, TEAMS, JOBS } from "./jobs.js";
+const JOBCOUNT = JOBS.length;
 import { recipeById } from "./parts.js";
-import { TEAMS, orderOf, partnerOf, FALLBACK } from "./orders.js";
+
 import { pingTo, putDoc, readDoc } from "../../js/firebase.js";
 import { NORMAN, BROKER, faceSVG, hasArt } from "./cast.js";
 import { purse, mode, connect, takeJob as claimJob, quizLeft } from "./wallet.js";
@@ -29,7 +30,7 @@ let queue = [], job = null, st = null;
 let layout = [];                      // 부품 차례. 붙인 단서는 서버 지갑에 있다.
 let arrange = false, bare = false;
 let where = "bench", lastRun = null;
-let team = null, order = null, tok = null;
+let team = null, tok = null;
 
 /* ── 화면 ─────────────────────────────────────────────────── */
 
@@ -405,16 +406,15 @@ grid.addEventListener("click", function (e) {
   grid.querySelectorAll(".teamcell").forEach(function (x) {
     x.classList.toggle("on", Number(x.dataset.team) === picking);
   });
-  const o = orderOf(picking), use = (o && o.ready) ? o : FALLBACK;
+  const first = queueFor(picking)[0];
   peek.hidden = false;
   peek.innerHTML =
-    '<p class="pk">' + picking + "조가 맡은 의뢰</p><h2>" + use.name + "</h2>" +
-    '<p class="pkline">' + use.line + "</p>" +
-    '<p class="pkmate">같은 의뢰를 ' + partnerOf(picking) + "조도 맡습니다.</p>" +
-    (o && !o.ready
-      ? '<p class="pkwarn">「' + o.name + "」은 아직 준비 중이라 오늘은 <b>" +
-        FALLBACK.name + "</b>으로 들어갑니다.</p>"
-      : "");
+    '<p class="pk">' + picking + "조의 첫 의뢰</p>" +
+    "<h2>" + first.app + ' <span>' + first.screen + '</span></h2>' +
+    '<p class="pkline">' + first.task + "</p>" +
+    '<p class="pkmate">같은 화면을 ' + partnerOf(picking) +
+    "조도 맡습니다 — 끝나고 둘을 나란히 놓고 봅니다.<br>" +
+    "하나를 완성해 팔면 다음 의뢰가 들어옵니다. 모두 " + JOBCOUNT + "가지입니다.</p>";
   enterBtn.disabled = false;
 });
 
@@ -426,14 +426,11 @@ $("swap").addEventListener("click", function () {
 
 async function enter(n) {
   team = n;
-  const o = orderOf(n);
-  order = (o && o.ready) ? o : FALLBACK;
   try { localStorage.setItem("hci4_team", String(n)); } catch (e) {}
 
   gate.hidden = true;
   $("bar").hidden = false;
   $("teamtag").textContent = n + "조";
-  nodes.whoami.textContent = "주문서 · " + order.name;
 
   queue = queueFor(n);
   Talk.mount($("talk"), { onWho: lit });
@@ -518,7 +515,7 @@ function stash() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function () {
     putDoc("hci4_drafts", "team" + team, {
-      team: team, order: order.id,
+      team: team,
       work: JSON.stringify({ job: job ? job.id : null, layout: layout }),
     }).catch(function (e) { console.warn("저장", (e && (e.code || e.message)) || e); });
   }, 1600);
@@ -528,7 +525,7 @@ let heart = null;
 function beat() {
   clearInterval(heart);
   const send = function () {
-    pingTo("hci4_presence", { team: team, order: order.id, where: "공방" });
+    pingTo("hci4_presence", { team: team, job: job ? job.id : null, where: "공방" });
   };
   send();
   heart = setInterval(send, 60000);
