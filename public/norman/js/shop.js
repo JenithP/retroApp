@@ -16,8 +16,8 @@ export function open(el, opts) {
   host = el; onDone = opts.onDone; talk = opts.talk;
   for (const k of Object.keys(cart)) delete cart[k];
   paint();
-  talk?.("tinker", "어서 오시오. 여기 있는 건 죄 재료요. " +
-    "혼자서는 아무것도 못 알리지 — 둘을 합쳐야 연장이 되오.");
+  talk?.("tinker", "어서 오시오. 여기서는 완성된 단서가 아니라 재료를 파오. " +
+    "재료 두 개를 조합하면 화면에 붙일 단서가 되오.");
 }
 
 const bill = () =>
@@ -34,9 +34,9 @@ function paint() {
     </div>
     <div class="shopbody">
       <div class="shelves">
-        <p class="shelfnote">재료 하나로는 아무것도 알리지 못합니다.
-          <b>둘을 합쳐야</b> 연장이 됩니다 — 합치는 일은 공방 제작대에서.
-          지금 만들 수 있는 연장은 모두 <b>${RECIPES.length}가지</b>입니다.</p>
+        <p class="shelfnote">재료 하나만으로는 사용자가 알아볼 단서가 되지 않습니다.
+          <b>두 개를 조합하면</b> 화면에 붙일 수 있는 단서가 됩니다.
+          조합은 공방의 제작대에서 하며, 만들 수 있는 단서는 모두 <b>${RECIPES.length}가지</b>입니다.</p>
         <div class="goods">${MATERIALS.map(card).join("")}</div>
         ${bookHTML(false)}
       </div>
@@ -50,7 +50,7 @@ function paint() {
             }).join("")}</ul>
              <p class="bill${over ? " over" : ""}">합계 <b>${bill()}</b>${
                over ? " — 포인트가 모자랍니다" : ""}</p>
-             <button class="big" id="pay"${over ? " disabled" : ""}>계산하고 공방으로</button>`
+             <button class="big" id="pay"${over ? " disabled" : ""}>구매하고 공방으로</button>`
           : `<p class="cartempty">아직 담은 것이 없습니다.<br>재료를 눌러 담으십시오.</p>`}
         <button class="flag ghost wide2" id="leave">그냥 공방으로 돌아가기</button>
       </aside>
@@ -64,8 +64,8 @@ function card(m) {
       ${demo(m.id)}
       <span class="gtip">${m.tip}</span>
       <span class="gfoot"><b>${m.price}</b>
-        ${have ? `<em class="have">가진 것 ${have}</em>` : ""}
-        ${inCart ? `<em class="incart">담음 ${inCart}</em>` : ""}</span>
+        ${have ? `<em class="have">보유 ${have}</em>` : ""}
+        ${inCart ? `<em class="incart">담은 수 ${inCart}</em>` : ""}</span>
     </button>`;
 }
 
@@ -78,7 +78,7 @@ document.addEventListener("click", e => {
     cart[id] = (cart[id] || 0) + 1;
     if (bill() > purse.point) {
       cart[id]--;
-      talk?.("tinker", "포인트가 모자라오. 하나 빼든지, 「문제 풀기」에 들렀다 오시오.");
+      talk?.("tinker", "포인트가 모자라오. 장바구니에서 하나 빼거나 「문제 풀기」에서 포인트를 벌어 오시오.");
     }
     paint();
     return;

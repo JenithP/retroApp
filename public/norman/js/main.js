@@ -26,7 +26,7 @@ const nodes = {
 };
 
 let queue = [], job = null, st = null;
-const attached = {};                  // 부품에 붙인 연장 — 통째로 갈아 끼우지 않는다
+const attached = {};                  // 부품에 붙인 단서 — 통째로 갈아 끼우지 않는다
 let layout = [];
 let arrange = false, bare = false;
 let where = "bench", lastRun = null;
@@ -63,8 +63,8 @@ function paintOrder() {
       return '<button class="part-chip k-' + p.kind + '" data-point="' + p.id + '">' +
         (p.label || p.text || p.id) + '</button>';
     }).join("") + '</p>' +
-    '<p class="ofind">무엇이 있는지는 적어 두었습니다. ' +
-    '<b>무엇이 빠졌는지</b>는 「돌려 보기」로 직접 찾아내십시오.</p>';
+    '<p class="ofind">화면에 무엇이 있는지는 적어 두었습니다. ' +
+    '<b>어떤 단서가 부족한지</b>는 「테스트해 보기」로 직접 찾아내세요.</p>';
 }
 
 /** 의뢰를 하나 집어 든다 — 물건도 붙인 것도 새로 시작한다. */
@@ -84,7 +84,7 @@ function attach(part, item) {
   (attached[part] = attached[part] || []).push(item);
   const r = recipeById(item.recipe);
   const lp = partOf(job, part);
-  Talk.cut("norman", (lp && lp.label ? lp.label : part) + '에 「' + r.name + '」을 붙였네.');
+  Talk.cut("norman", (lp && lp.label ? lp.label : part) + '에 「' + r.name + '」 단서를 붙였습니다.');
   redraw();
   stash();
 }
@@ -178,10 +178,10 @@ $("arrange").addEventListener("click", function (e) {
   arrange = !arrange;
   e.currentTarget.classList.toggle("on", arrange);
   nodes.note.innerHTML = arrange
-    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸십시오."
+    ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸세요."
     : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
   if (arrange) Talk.cut("norman",
-    "어디에 두느냐도 알려 주는 일일세. 가까이 두면 한 덩어리로 보이지.");
+    "어디에 두느냐도 중요한 단서입니다. 가까이 두면 같은 묶음으로 보입니다.");
   redraw({ craft: false });
 });
 
@@ -236,7 +236,7 @@ $("reset").addEventListener("click", function () {
 $("cold").addEventListener("click", async function () {
   stopSim(); st = fresh(job); unbare();
   redraw();
-  nodes.note.innerHTML = "<b>돌려 보는 중입니다.</b> 어디서 멈추는지 보십시오.";
+  nodes.note.innerHTML = "<b>테스트 중입니다.</b> 사용자가 어디서 막히는지 보세요.";
 
   const dot = document.createElement("div");
   dot.className = "cursor"; dot.hidden = true;
@@ -246,7 +246,7 @@ $("cold").addEventListener("click", async function () {
   Talk.say("norman", NORMAN.beforeTest, 1600);
 
   nodes.verdict.hidden = false;
-  nodes.verdict.innerHTML = '<h3>돌려 보는 중…</h3><ol class="tl" id="tl"></ol>';
+  nodes.verdict.innerHTML = '<h3>테스트 중…</h3><ol class="tl" id="tl"></ol>';
   const tl = $("tl");
 
   tok = { dead: false, cancels: [] };
@@ -285,13 +285,13 @@ function showVerdict(v) {
   const rows = [
     ["막힌 횟수", v.exec, "무엇을 해야 할지 몰라 멈춘 횟수", v.exec > 0],
     ["헛누름", v.evalGap, "엉뚱한 곳을 누르거나 같은 곳을 또 누른 횟수", v.evalGap > 0],
-    ["시킨 일", v.right + " / " + v.of,
-      v.passed ? "끝까지 해냈습니다" : "중간에 막혔습니다", !v.passed],
+    ["과제 완료", v.right + " / " + v.of,
+      v.passed ? "끝까지 성공했습니다" : "중간에 막혔습니다", !v.passed],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],
   ];
 
   nodes.verdict.innerHTML =
-    "<h3>돌려 본 결과 " + (v.clean
+    "<h3>테스트 결과 " + (v.clean
       ? "<em class='good'>막힘이 없었습니다</em>"
       : "<em class='bad'>막히는 데가 있습니다</em>") + "</h3>" +
     '<div class="scores">' + rows.map(function (r) {
@@ -299,15 +299,15 @@ function showVerdict(v) {
         "</b><span>" + r[0] + "</span><small>" + r[2] + "</small></div>";
     }).join("") + "</div>" +
     (v.stuck.length
-      ? '<div class="stuck"><p class="stucktop">멈춘 곳</p><ul>' +
+      ? '<div class="stuck"><p class="stucktop">사용자가 막힌 이유</p><ul>' +
         v.stuck.map(function (t) { return "<li>" + t + "</li>"; }).join("") +
-        '</ul><p class="stuckdim">오른쪽 <b>연장 책</b>에 같은 말로 묶여 있습니다 — ' +
-        '모자란 것을 찾아 그 줄의 재료를 사 오십시오.</p></div>'
+        '</ul><p class="stuckdim">오른쪽 <b>단서 조합표</b>에서 같은 기준을 찾으세요. ' +
+        '그 줄에 적힌 재료를 사 오면 부족한 단서를 만들 수 있습니다.</p></div>'
       : "") +
     '<div class="vend">' +
       (v.passed
         ? '<button class="big" id="tomarket">다 됐다 — 앱시장에 내놓는다</button>'
-        : '<p class="notyet">아직 시킨 일을 끝까지 해내지 못합니다. ' +
+        : '<p class="notyet">아직 사용자가 과제를 끝까지 해내지 못합니다. ' +
           '더 고쳐야 내놓을 수 있습니다.</p>') +
     "</div>" +
     '<ol class="tl">' + v.evs.map(function (e) {

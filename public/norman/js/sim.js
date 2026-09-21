@@ -17,12 +17,12 @@ function sleeper(tok) {
 }
 
 const STUCK = {
-  name:  "무엇을 하는 곳인지 모른다",
-  type:  "눌러도 써지는지 알 수 없다",
-  push:  "눌러도 되는 곳인지 모른다",
-  feed:  "하고 나서 어찌 됐는지 알 수 없다",
-  state: "지금 어떤 상태인지 읽을 수 없다",
-  move:  "밀거나 끌 수 있다는 것을 모른다",
+  name:  "무엇을 하는 곳인지 모름",
+  type:  "입력할 수 있는 칸인지 모름",
+  push:  "누를 수 있는 곳인지 모름",
+  feed:  "조작한 뒤 결과를 알 수 없음",
+  state: "현재 상태를 알 수 없음",
+  move:  "밀거나 끌 수 있는지 모름",
 };
 
 /* ── 돌려 보기 ────────────────────────────────────────── */
@@ -79,37 +79,37 @@ export async function cold(ui) {
       /* ① 찾기 — 무엇인지 모르면 엉뚱한 데를 눌러 본다 */
       if (lacks("name")) {
         note(s.part, "name");
-        say("seek", s.part, "어느 것인지 모른다");
+        say("seek", s.part, "어느 요소를 써야 하는지 모름");
         for (const w of elsewhere(s.part)) {
           await tap(w);
           act(job, st, "press:" + w); redraw();
-          say("miss", w, "여기가 아니다");
+          say("miss", w, "다른 곳을 눌러 봄");
         }
-        say("hit", s.part, "여러 번 만에 겨우 찾는다");
+        say("hit", s.part, "여러 번 시도한 뒤 겨우 찾음");
       } else {
-        say("hit", s.part, "보고 곧장 찾는다");
+        say("hit", s.part, "보고 바로 찾음");
       }
       await tap(s.part);
 
       /* ② 하기 — 할 수 있다는 것을 모르면 한 번 머뭇거린다 */
       if (s.do === "type" && lacks("type")) {
         note(s.part, "type");
-        say("blind", s.part, "눌렀는데 써지는지 알 수 없다");
+        say("blind", s.part, "입력할 수 있는 칸인지 알 수 없음");
         await wait(700);
       }
       if ((s.do === "press") && lacks("push")) {
         note(s.part, "push");
-        say("blind", s.part, "눌러도 되는 곳인지 모른다");
+        say("blind", s.part, "누를 수 있는 곳인지 알 수 없음");
         await wait(700);
       }
       if ((s.do === "swipe" || s.do === "drag") && lacks("move")) {
         note(s.part, "move");
-        say("blind", s.part, "밀 수 있는 줄 모른다");
+        say("blind", s.part, "밀거나 끌 수 있는지 알 수 없음");
         await wait(700);
       }
       if (s.do === "read" && lacks("state")) {
         note(s.part, "state");
-        say("blind", s.part, "읽을 수가 없다");
+        say("blind", s.part, "현재 상태를 읽을 수 없음");
         await wait(700);
         continue;
       }
@@ -120,23 +120,23 @@ export async function cold(ui) {
           act(job, st, "type:" + s.part, String(s.val).slice(0, i));
           redraw(); await wait(110);
         }
-        say("done", s.part, s.val + " 을 적었다");
+        say("done", s.part, s.val + "을 입력함");
       } else if (s.do === "read") {
-        say("done", s.part, "읽어 낸다");
+        say("done", s.part, "상태를 확인함");
       } else {
         act(job, st, s.do + ":" + s.part); redraw();
-        say("done", s.part, "해냈다");
+        say("done", s.part, "조작을 수행함");
       }
 
       /* ④ 어찌 됐는지 — 아무 말이 없으면 연타한다 */
       if (s.do === "press" && lacks("feed")) {
         note(s.part, "feed");
-        say("repeat", s.part, "눌렀는데 아무 말이 없다");
+        say("repeat", s.part, "눌렀지만 결과가 보이지 않음");
         const again = 3;
         for (let k = 0; k < again; k++) {
           await tap(s.part); act(job, st, "press:" + s.part); redraw(); await wait(110);
         }
-        say("repeat", s.part, again + "번 더 눌렀다");
+        say("repeat", s.part, again + "번 더 눌러 봄");
       }
     }
 

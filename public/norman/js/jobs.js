@@ -16,10 +16,10 @@ const J = (id, app, screen, task, parts, steps, say) =>
 
 export const JOBS = [
   J("bank-next", "은행", "이체",
-    "친구에게 30,000원을 보내십시오.",
+    "김서연 님에게 45,000원을 보내십시오.",
     [{ id: "amount", kind: "input", label: "금액", value: "" },
      { id: "next",   kind: "button", label: "다음", look: "dead" }],
-    [{ part: "amount", do: "type", val: "30000" }, { part: "next", do: "press" }],
+    [{ part: "amount", do: "type", val: "45000" }, { part: "next", do: "press" }],
     "회색이라 못 누르는 줄 알았는데 눌리더라고요."),
 
   J("bank-account", "은행", "송금",
@@ -32,24 +32,22 @@ export const JOBS = [
 
   J("shop-card", "쇼핑", "상품 목록",
     "두 번째 상품을 골라 들어가십시오.",
-    [{ id: "c1", kind: "card", label: "겨울 코트" },
-     { id: "c2", kind: "card", label: "니트 가디건" },
-     { id: "c3", kind: "card", label: "기모 바지" }],
+    [{ id: "c1", kind: "card", label: "울 더블 코트" },
+     { id: "c2", kind: "card", label: "패딩 하프 점퍼" }],
     [{ part: "c2", do: "press" }],
     "사진만 눌러야 하는지 카드 전체가 눌리는지 모르겠어요."),
 
   J("shop-cart", "쇼핑", "장바구니",
     "상품을 장바구니에 담고, 담겼는지 확인하십시오.",
-    [{ id: "item", kind: "card", label: "겨울 코트" },
-     { id: "add",  kind: "button", label: "담기" },
+    [{ id: "add",  kind: "button", label: "담기" },
      { id: "cart", kind: "icon", label: "장바구니", need: ["state"] }],
     [{ part: "add", do: "press" }, { part: "cart", do: "read" }],
     "담긴 건지 아닌지 아이콘만 봐서는 모르겠어요."),
 
   J("food-swipe", "배달", "가게 목록",
     "두 번째 가게를 옆으로 밀어 숨기십시오.",
-    [{ id: "s1", kind: "list", label: "본가 김치찌개" },
-     { id: "s2", kind: "list", label: "오늘의 파스타" }],
+    [{ id: "s1", kind: "list", label: "한그릇 찌개집" },
+     { id: "s2", kind: "list", label: "담백한 분식" }],
     [{ part: "s2", do: "swipe" }],
     "밀 수 있는 줄 몰랐어요. 아무 표시가 없어서."),
 
@@ -77,7 +75,7 @@ export const JOBS = [
     "둘이 비슷하게 생겨서 어느 쪽을 눌러야 하는지 모르겠어요."),
 
   J("stay-date", "숙박", "날짜",
-    "날짜 칸을 눌러 달력을 여십시오.",
+    "들어가는 날을 고르고 방을 찾아보십시오.",
     [{ id: "inday",  kind: "button", label: "들어가는 날", look: "flat" },
      { id: "outday", kind: "button", label: "나오는 날",   look: "flat" },
      { id: "find",   kind: "button", label: "찾기" }],
@@ -93,22 +91,21 @@ export const JOBS = [
 
   J("music-cover", "음악", "앨범",
     "앨범을 재생하십시오.",
-    [{ id: "cover", kind: "thumb", label: "밤의 한가운데" },
-     { id: "info",  kind: "text",  text: "12곡 · 48분" }],
+    [{ id: "cover", kind: "thumb", label: "밤의 공방 · 윤하린" }],
     [{ part: "cover", do: "press" }],
     "커버를 누르면 재생되는 건지 상세로 가는 건지 모르겠어요."),
 
   J("video-play", "영상", "추천",
     "두 번째 영상을 재생하십시오.",
-    [{ id: "v1", kind: "thumb", label: "10분 요리" },
-     { id: "v2", kind: "thumb", label: "한강 산책" }],
+    [{ id: "v1", kind: "thumb", label: "집밥 김치볶음밥" },
+     { id: "v2", kind: "thumb", label: "따뜻한 수프 만들기" }],
     [{ part: "v2", do: "press" }],
     "재생 단추가 너무 작고 흐려서 안 보여요."),
 
   J("book-page", "전자책", "본문",
     "다음 쪽으로 넘기십시오.",
-    [{ id: "page", kind: "card", label: "…그리하여 그는 걸음을 옮겼다." },
-     { id: "bar",  kind: "progress", label: "12 / 240쪽" }],
+    [{ id: "page", kind: "card", label: "본문", need: ["push", "move"] },
+     { id: "bar",  kind: "progress", label: "쪽 표시" }],
     [{ part: "page", do: "swipe" }],
     "탭을 해야 하는지 밀어야 하는지 아무 말이 없네요."),
 
@@ -121,7 +118,7 @@ export const JOBS = [
 
   J("camera-lock", "카메라", "촬영",
     "초점을 고정하고 찍으십시오.",
-    [{ id: "focus", kind: "card",   label: "화면", need: ["push", "state"] },
+    [{ id: "focus", kind: "card",   label: "미리보기 화면", need: ["push", "state"] },
      { id: "shot",  kind: "button", label: "찍기" }],
     [{ part: "focus", do: "press" }, { part: "shot", do: "press" }],
     "초점이 잠긴 건지 아닌지 화면만 봐서는 몰라요."),
@@ -137,7 +134,7 @@ export const JOBS = [
 
   J("mail-archive", "이메일", "받은 편지",
     "첫 번째 편지를 보관하십시오. 지우면 안 됩니다.",
-    [{ id: "mail", kind: "list",   label: "안내: 결제가 완료되었습니다" },
+    [{ id: "mail", kind: "list",   label: "성신 도서관 · 예약 도서" },
      { id: "arch", kind: "icon",   label: "보관", need: ["name", "push"] },
      { id: "del",  kind: "icon",   label: "삭제", need: ["name", "push"] }],
     [{ part: "arch", do: "press" }],
@@ -175,8 +172,7 @@ export const JOBS = [
 
   J("health-dot", "건강", "걸음 수",
     "수요일 걸음 수를 확인하십시오.",
-    [{ id: "chart", kind: "card", label: "이번 주 걸음 수", need: ["push", "name"] },
-     { id: "sum",   kind: "text", text: "평균 6,200걸음" }],
+    [{ id: "chart", kind: "card", label: "요일별 막대", need: ["push", "name"] }],
     [{ part: "chart", do: "press" }],
     "점을 누르면 자세한 게 나오는 줄 몰랐어요."),
 
@@ -189,24 +185,22 @@ export const JOBS = [
 
   J("learn-choice", "학습", "퀴즈",
     "두 번째 보기를 고르십시오.",
-    [{ id: "q",  kind: "text", text: "어포던스를 처음 말한 사람은?" },
-     { id: "a1", kind: "button", label: "깁슨",  look: "flat" },
-     { id: "a2", kind: "button", label: "노먼",  look: "flat" },
-     { id: "a3", kind: "button", label: "개버",  look: "flat" }],
+    [{ id: "a1", kind: "button", label: "어포던스",     look: "flat" },
+     { id: "a2", kind: "button", label: "시그니파이어", look: "flat" },
+     { id: "a3", kind: "button", label: "제약",         look: "flat" }],
     [{ part: "a2", do: "press" }],
     "보기가 그냥 글씨 같아서 눌러도 되는지 몰랐어요."),
 
   J("lang-record", "언어 학습", "발음",
     "발음을 녹음하십시오.",
-    [{ id: "word", kind: "text", text: "apple  /ˈæp.əl/" },
-     { id: "mic",  kind: "icon", label: "녹음", need: ["name", "push", "feed"] }],
+    [{ id: "mic",  kind: "icon", label: "녹음", need: ["name", "push", "feed"] }],
     [{ part: "mic", do: "press" }],
     "그림이라 장식인 줄 알았어요. 누르는 건지 몰랐네요."),
 
   J("news-tag", "뉴스", "목록",
     "첫 번째 기사를 여십시오.",
     [{ id: "tag",  kind: "text", text: "경제" },
-     { id: "head", kind: "card", label: "물가 상승률 3개월째 둔화" },
+     { id: "head", kind: "card", label: "오래된 시장에 새 조명이 켜졌다" },
      { id: "tag2", kind: "text", text: "사회" }],
     [{ part: "head", do: "press" }],
     "제목이랑 분류 딱지 중에 뭐가 눌리는 건지 모르겠어요."),
@@ -222,7 +216,7 @@ export const JOBS = [
   J("sns-profile", "SNS", "피드",
     "글쓴이의 프로필로 들어가십시오.",
     [{ id: "face", kind: "icon", label: "프로필 사진", need: ["name", "push"] },
-     { id: "post", kind: "card", label: "오늘의 기록" }],
+     { id: "post", kind: "card", label: "늦은 오후의 산책" }],
     [{ part: "face", do: "press" }],
     "사진을 누르면 크게 보는 건지 프로필로 가는 건지 몰라요."),
 
@@ -271,7 +265,7 @@ export const JOBS = [
 
   J("login-error", "로그인", "오류",
     "비밀번호를 다시 적고 들어가십시오.",
-    [{ id: "id",  kind: "input",  label: "아이디", value: "younjeong" },
+    [{ id: "id",  kind: "input",  label: "아이디", value: "younjeong", need: [] },
      { id: "pw",  kind: "input",  label: "비밀번호", need: ["name", "type", "state"] },
      { id: "go",  kind: "button", label: "들어가기" }],
     [{ part: "pw", do: "type", val: "1234" }, { part: "go", do: "press" }],
@@ -309,8 +303,7 @@ export const JOBS = [
 
   J("pay-final", "결제", "마지막",
     "결제를 끝내십시오.",
-    [{ id: "sum",  kind: "text",   text: "합계 48,000원" },
-     { id: "addr", kind: "input",  label: "받는 곳" },
+    [{ id: "addr", kind: "input",  label: "받는 곳" },
      { id: "memo", kind: "input",  label: "요청 사항" },
      { id: "pay",  kind: "button", label: "결제하기", need: ["name", "push", "feed", "state"] }],
     [{ part: "addr", do: "type", val: "성북구" }, { part: "pay", do: "press" }],

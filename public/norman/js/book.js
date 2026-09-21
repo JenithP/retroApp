@@ -11,16 +11,16 @@ import { givesOf } from "./kit.js";
 
 /** 돌려 보기가 쓰는 말과 똑같이 묶는다 */
 const GROUPS = [
-  ["name",  "무엇을 하는 곳인지 알린다"],
-  ["type",  "여기에 쓸 수 있다고 알린다"],
-  ["push",  "눌러도 되는 곳이라고 알린다"],
-  ["feed",  "하고 난 뒤에 어찌 됐는지 알린다"],
-  ["state", "지금 어떤 상태인지 알린다"],
-  ["move",  "밀거나 끌 수 있다고 알린다"],
+  ["name",  "무엇을 하는 곳인지 알려주기"],
+  ["type",  "입력할 수 있는 칸임을 보여주기"],
+  ["push",  "누를 수 있는 곳임을 보여주기"],
+  ["feed",  "조작한 뒤 결과 알려주기"],
+  ["state", "현재 상태를 계속 보여주기"],
+  ["move",  "밀거나 끌 수 있음을 보여주기"],
 ];
 
-const WHEN = { idle: "늘 보임", touch: "닿을 때", after: "하고 난 뒤" };
-const ON = { input: "쓰는 칸", button: "누르는 곳", list: "목록·막대" };
+const WHEN = { idle: "처음부터 보임", touch: "손댈 때 보임", after: "조작 후 보임" };
+const ON = { input: "입력칸", button: "버튼·선택 항목", list: "목록·막대" };
 
 export function bookHTML(open) {
   const rows = GROUPS.map(g => {
@@ -38,9 +38,9 @@ export function bookHTML(open) {
   }).join("");
 
   return `<details class="book"${open ? " open" : ""}>
-      <summary>연장 책 <small>무엇과 무엇을 합치면 무엇이 되는지</small></summary>
-      <p class="bhead">돌려 보기가 적어 준 <b>멈춘 곳</b>과 같은 말로 묶여 있습니다.
-        모자란 것을 찾아 그 줄의 재료를 사 오십시오.</p>
+      <summary>단서 조합표 <small>재료 두 개로 만들 수 있는 단서</small></summary>
+      <p class="bhead">테스트 결과에 나온 <b>사용자가 막힌 이유</b>와 같은 기준으로 묶었습니다.
+        부족한 단서를 찾고, 그 줄에 적힌 재료를 상점에서 사 오세요.</p>
       ${rows}
     </details>`;
 }

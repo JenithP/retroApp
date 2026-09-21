@@ -10,21 +10,21 @@
 
 export const MATERIALS = [
   { id: "glyph", name: "글자",     price: 40, arg: { kind: "text", ph: "무슨 글자", max: 12 },
-    tip: "쓴 대로 화면에 붙는다" },
+    tip: "입력한 말을 화면에 붙입니다" },
   { id: "icon",  name: "그림",     price: 40, arg: { kind: "icon" },
-    tip: "작은 그림 하나" },
-  { id: "frame", name: "테두리",   price: 30, tip: "칸의 가장자리를 그린다" },
-  { id: "blink", name: "깜박임",   price: 40, tip: "일정하게 깜박인다" },
-  { id: "tint",  name: "진한 색",  price: 30, tip: "바탕을 진하게 물들인다" },
-  { id: "grow",  name: "큰 크기",  price: 30, tip: "붙은 것을 키운다" },
-  { id: "slip",  name: "쪽지",     price: 50, tip: "떴다가 사라지는 종잇조각" },
-  { id: "tick",  name: "체크 표시", price: 40, tip: "✓ 모양" },
-  { id: "arrow", name: "화살표",   price: 30, tip: "한쪽을 가리킨다" },
-  { id: "sound", name: "소리",     price: 40, tip: "짧은 소리 하나" },
-  { id: "shake", name: "떨림",     price: 30, tip: "짧게 흔들린다" },
-  { id: "notch", name: "홈",       price: 30, tip: "손이 걸리는 결" },
-  { id: "shade", name: "그늘",     price: 30, tip: "눌린 것처럼 어둡게" },
-  { id: "line",  name: "밑줄",     price: 20, tip: "아래에 긋는 줄" },
+    tip: "아이콘으로 의미를 보여줍니다" },
+  { id: "frame", name: "테두리",   price: 30, tip: "입력칸이나 영역의 경계를 보여줍니다" },
+  { id: "blink", name: "깜박임",   price: 40, tip: "눈에 띄도록 반복해서 깜박입니다" },
+  { id: "tint",  name: "진한 색",  price: 30, tip: "중요한 부분을 진한 색으로 강조합니다" },
+  { id: "grow",  name: "큰 크기",  price: 30, tip: "더 크고 누르기 쉬워 보이게 만듭니다" },
+  { id: "slip",  name: "쪽지",     price: 50, tip: "잠깐 나타나는 안내 메시지입니다" },
+  { id: "tick",  name: "체크 표시", price: 40, tip: "완료나 선택을 ✓로 보여줍니다" },
+  { id: "arrow", name: "화살표",   price: 30, tip: "봐야 할 곳을 가리킵니다" },
+  { id: "sound", name: "소리",     price: 40, tip: "조작이 받아들여졌음을 소리로 알립니다" },
+  { id: "shake", name: "떨림",     price: 30, tip: "짧은 진동으로 반응을 줍니다" },
+  { id: "notch", name: "홈",       price: 30, tip: "잡거나 밀 수 있는 느낌을 줍니다" },
+  { id: "shade", name: "그늘",     price: 30, tip: "눌린 듯한 깊이를 만듭니다" },
+  { id: "line",  name: "밑줄",     price: 20, tip: "글자나 숫자 아래에 기준선을 긋습니다" },
 ];
 
 export const mat = id => MATERIALS.find(m => m.id === id);
@@ -37,59 +37,59 @@ export const mat = id => MATERIALS.find(m => m.id === id);
 export const RECIPES = [
   { a: "frame", b: "blink", id: "caret", name: "깜박이는 입력칸",
     when: "idle", on: ["input"], gulf: "실행",
-    line: "여기에 쓸 수 있다는 것을 알린다" },
+    line: "입력할 수 있는 칸임을 보여줍니다" },
 
-  { a: "glyph", b: "frame", id: "label", name: "이름표 붙은 칸",
+  { a: "glyph", b: "frame", id: "label", name: "라벨 붙은 요소",
     when: "idle", on: ["input", "button", "list"], gulf: "실행",
-    line: "이 칸이 무엇인지 글자로 알린다" },
+    line: "이 요소의 이름과 역할을 글자로 알려줍니다" },
 
-  { a: "glyph", b: "tint", id: "bold", name: "도드라진 글자",
+  { a: "glyph", b: "tint", id: "bold", name: "강조된 글자",
     when: "idle", on: ["button", "list"], gulf: "실행",
-    line: "진한 바탕 위에 글자를 올려 눈에 띄게 한다" },
+    line: "중요한 글자나 항목을 더 눈에 띄게 만듭니다" },
 
-  { a: "icon", b: "frame", id: "iconbtn", name: "그림 단추",
+  { a: "icon", b: "frame", id: "iconbtn", name: "아이콘 단서",
     when: "idle", on: ["button"], gulf: "실행",
-    line: "글자 없이 그림으로 무엇인지 알린다" },
+    line: "아이콘으로 무엇을 하는 곳인지 알려줍니다" },
 
-  { a: "tint", b: "grow", id: "bigbtn", name: "커다란 단추",
+  { a: "tint", b: "grow", id: "bigbtn", name: "크고 진한 버튼",
     when: "idle", on: ["button"], gulf: "실행",
-    line: "손가락보다 크고 진해서 누를 곳임을 알린다" },
+    line: "크기와 색으로 누를 수 있는 곳임을 보여줍니다" },
 
   { a: "glyph", b: "arrow", id: "guide", name: "가리키는 안내",
     when: "idle", on: ["input", "button", "list"], gulf: "실행",
-    line: "어디를 보라고 화살표로 짚어 준다" },
+    line: "봐야 할 곳을 글자와 화살표로 짚어 줍니다" },
 
   { a: "glyph", b: "line", id: "unit", name: "단위 글자",
     when: "idle", on: ["input"], gulf: "실행",
-    line: "숫자 뒤에 kg·회를 붙여 무슨 수인지 알린다" },
+    line: "숫자가 금액인지 횟수인지처럼 단위를 알려줍니다" },
 
-  { a: "notch", b: "frame", id: "grip", name: "잡는 손잡이",
+  { a: "notch", b: "frame", id: "grip", name: "드래그 손잡이",
     when: "idle", on: ["list"], gulf: "실행",
-    line: "쥐거나 밀 수 있는 자리임을 알린다" },
+    line: "밀거나 끌 수 있는 부분임을 보여줍니다" },
 
-  { a: "blink", b: "tint", id: "hot", name: "닿으면 밝아짐",
+  { a: "blink", b: "tint", id: "hot", name: "터치 강조",
     when: "touch", on: ["input", "button"], gulf: "실행",
-    line: "손가락이 닿는 동안 밝아져 지금 만지는 곳을 알린다" },
+    line: "손이 닿으면 색이 바뀌어 지금 만지는 곳을 보여줍니다" },
 
-  { a: "shade", b: "frame", id: "press", name: "눌리는 단추",
+  { a: "shade", b: "frame", id: "press", name: "눌림 반응",
     when: "touch", on: ["button"], gulf: "실행",
-    line: "누르는 동안 쑥 들어가 눌렸다는 것을 알린다" },
+    line: "누르는 동안 눌린 느낌을 보여줍니다" },
 
   { a: "glyph", b: "slip", id: "toast", name: "알림 쪽지",
     when: "after", on: ["input", "button", "list"], gulf: "평가",
-    line: "일이 끝난 뒤 무슨 일이 있었는지 쪽지로 알린다" },
+    line: "조작 후 결과를 짧은 메시지로 알려줍니다" },
 
   { a: "tick", b: "blink", id: "done", name: "완료 표시",
     when: "after", on: ["input", "button"], gulf: "평가",
-    line: "끝났다는 것을 ✓ 로 알린다" },
+    line: "작업이 끝났음을 ✓ 표시로 알려줍니다" },
 
   { a: "sound", b: "shake", id: "feel", name: "손끝 알림",
     when: "after", on: ["button"], gulf: "평가",
-    line: "소리와 떨림으로 받아들여졌다는 것을 알린다" },
+    line: "소리와 떨림으로 조작이 받아들여졌음을 알려줍니다" },
 
-  { a: "icon", b: "tint", id: "state", name: "상태 그림",
+  { a: "icon", b: "tint", id: "state", name: "상태 표시",
     when: "idle", on: ["list", "input"], gulf: "평가",
-    line: "지금 어떤 상태인지 그림과 글자로 계속 보여 준다" },
+    line: "현재 상태를 그림과 글자로 계속 보여줍니다" },
 ];
 
 /** 두 재료로 무엇이 되는가. 순서는 상관없다. */
@@ -107,11 +107,11 @@ export const RECIPE_COUNT = RECIPES.length;
 export function rebuff(x, y) {
   const nx = mat(x)?.name, ny = mat(y)?.name;
   const near = RECIPES.filter(r => r.a === x || r.b === x || r.a === y || r.b === y);
-  if (!near.length) return `${nx}와 ${ny}… 이 둘로는 아무것도 안 되네.`;
+  if (!near.length) return `${nx}와 ${ny}로는 만들 수 있는 단서가 없습니다.`;
   const hint = near[0];
   const other = mat(hint.a === x || hint.b === x
     ? (hint.a === x ? hint.b : hint.a)
     : (hint.a === y ? hint.b : hint.a))?.name;
-  return `${nx}와 ${ny}는 안 붙네. ${
-    mat(hint.a === x || hint.b === x ? x : y)?.name}는 ${other}와 붙여 보게.`;
+  return `${nx}와 ${ny}는 조합되지 않습니다. ${
+    mat(hint.a === x || hint.b === x ? x : y)?.name}는 ${other}와 조합해 보세요.`;
 }

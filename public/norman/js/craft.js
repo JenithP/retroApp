@@ -25,7 +25,7 @@ export function paint() {
   box.innerHTML = `
     <div class="cbench">
       <h2>제작대</h2>
-      <p class="csub">재료 둘을 올려 합칩니다</p>
+      <p class="csub">재료 두 개를 골라 단서를 만듭니다</p>
       <div class="cslots">
         <button class="cslot${slot[0] ? " full" : ""}" data-slot="0">${
           slot[0] ? mat(slot[0]).name : "재료"}</button>
@@ -34,16 +34,16 @@ export function paint() {
           slot[1] ? mat(slot[1]).name : "재료"}</button>
         <span class="cplus">→</span>
         <span class="cout${found ? " got" : ""}">${
-          found ? found.name : (slot[0] && slot[1] ? "안 붙음" : "?")}</span>
+          found ? found.name : (slot[0] && slot[1] ? "조합 없음" : "?")}</span>
       </div>
       ${found ? `<p class="cline">${found.line}</p>` : ""}
-      <button class="big cmake" id="cmake"${found ? "" : " disabled"}>만든다</button>
+      <button class="big cmake" id="cmake"${found ? "" : " disabled"}>단서 만들기</button>
     </div>
 
     ${bookHTML(!mine.length)}
 
     <div class="cmats">
-      <h3>내 재료 <small>눌러서 올립니다</small></h3>
+      <h3>내 재료 <small>누르면 조합대에 올라갑니다</small></h3>
       ${mine.length
         ? `<div class="mgrid">${mine.map(m =>
             `<button class="mchip" data-mat="${m.id}">
@@ -52,15 +52,15 @@ export function paint() {
     </div>
 
     <div class="cworn">
-      <h3>물건에 붙인 것 <small>×를 누르면 도로 떼어집니다</small></h3>
+      <h3>화면에 붙인 단서 <small>×를 누르면 떼어집니다</small></h3>
       ${wornList()}
     </div>
 
     <div class="ctools">
-      <h3>만든 연장 <small>물건 위로 끌어다 놓습니다</small></h3>
+      <h3>만든 단서 <small>화면 위로 끌어다 놓습니다</small></h3>
       ${purse.tools.length
         ? `<div class="tlist">${purse.tools.map(toolChip).join("")}</div>`
-        : `<p class="cempty">아직 만든 연장이 없습니다.</p>`}
+        : `<p class="cempty">아직 만든 단서가 없습니다.</p>`}
     </div>`;
 }
 
@@ -87,16 +87,16 @@ function toolChip(t, i) {
   return `<div class="tool w-${r.when}" data-tool="${i}" draggable="false">
       <span class="tname">${r.name}</span>
       <span class="twhen">${
-        r.when === "idle" ? "늘 보임" : r.when === "touch" ? "닿을 때" : "하고 난 뒤"}</span>
+        r.when === "idle" ? "처음부터 보임" : r.when === "touch" ? "손댈 때 보임" : "조작 후 보임"}</span>
       ${needArg ? `<input class="targ" data-targ="${i}" value="${t.arg || ""}"
-          placeholder="무슨 글자" maxlength="14">` : ""}
+          placeholder="넣을 글자" maxlength="14">` : ""}
       ${needIcon ? `<select class="targ" data-targ="${i}">
           <option value="">그림 고르기</option>
           ${Object.keys(ICONS).map(k =>
             `<option value="${k}"${t.arg === k ? " selected" : ""}>${ICON_NAMES[k]}</option>`
           ).join("")}</select>` : ""}
       <span class="ton">${r.on.map(k =>
-        k === "input" ? "쓰는 칸" : k === "button" ? "누르는 곳" : "목록").join(" · ")}에</span>
+        k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대").join(" · ")}에 붙일 수 있음</span>
     </div>`;
 }
 
@@ -129,7 +129,7 @@ document.addEventListener("click", e => {
     purse.tools.push({ recipe: r.id, arg: "" });
     slot[0] = slot[1] = null;
     paint(); ctx.onChange?.();
-    ctx.talk?.("norman", `「${r.name}」이 되었구먼. ${r.line} 물건 위에 끌어다 놓게.`);
+    ctx.talk?.("norman", `「${r.name}」을 만들었습니다. ${r.line} 화면의 알맞은 부분에 끌어다 놓으세요.`);
     return;
   }
 });
@@ -216,8 +216,8 @@ export function drag(dragEl) {
       const u = document.elementFromPoint(e.clientX, e.clientY);
       const part = u?.closest?.(".part");
       if (part) ctx.talk?.("norman",
-        `그건 ${r.on.map(k => k === "input" ? "쓰는 칸" : k === "button" ? "누르는 곳" : "목록")
-          .join("이나 ")}에만 붙네.`);
+        `이 단서는 ${r.on.map(k => k === "input" ? "입력칸" : k === "button" ? "버튼·선택 항목" : "목록·막대")
+          .join("이나 ")}에만 붙일 수 있습니다.`);
       paint();
       return;
     }
