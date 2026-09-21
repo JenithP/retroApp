@@ -2,3 +2,5 @@ node_modules/
 .firebase/
 *.log
 media_src/
+*-adminsdk-*.json
+serviceAccount*.json

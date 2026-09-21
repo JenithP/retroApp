@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>노만의 공방 — HCI와 커뮤니케이션 4주차 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="css/norman.css">
+</head>
+<body>
+
+<header id="bar">
+  <div class="who">
+    <span class="brand">노만의 공방</span>
+    <span class="whoami" id="whoami">주문서 · 운동 기록</span>
+  </div>
+  <div class="right">
+    <button class="flag" id="run" title="시연해 본다">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1v14M3 2h9l-2 3 2 3H3z"/></svg>
+      시연
+    </button>
+    <button class="flag ghost" id="cold" title="이 물건을 처음 본 사람이 써 본다">처음 본 사람</button>
+    <button class="flag ghost" id="reset" title="처음 상태로">되돌리기</button>
+  </div>
+</header>
+
+<main id="bench">
+
+  <!-- ══ 왼쪽 · 연장대 ═══════════════════════════════════════ -->
+  <section class="rack" aria-label="시그니파이어 연장대">
+    <div class="rackhead">
+      <h2>연장대</h2>
+      <p>끌어다 오른쪽 자리에 붙인다</p>
+    </div>
+    <div class="cats" id="cats"></div>
+    <div class="palette" id="palette"></div>
+    <p class="racknote">
+      색은 <b>무엇으로 알리는가</b>, 자리는 <b>언제 알리는가</b>.
+    </p>
+  </section>
+
+  <!-- ══ 가운데 · 작업대 ═════════════════════════════════════ -->
+  <section class="stage" aria-label="작업대">
+    <div class="order" id="order"></div>
+
+    <div class="phonewrap">
+      <div class="phone" id="phone">
+        <div class="statusbar"><span>9:41</span><span class="bars"></span></div>
+        <div class="screen" id="screen"></div>
+        <div class="toast" id="toast" hidden></div>
+        <div class="checkfx" id="checkfx" hidden>
+          <svg viewBox="0 0 48 48"><path d="M10 25l9 9 19-21"/></svg>
+        </div>
+      </div>
+      <p class="phonenote" id="phonenote">
+        이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.
+      </p>
+    </div>
+
+    <div class="verdict" id="verdict" hidden></div>
+  </section>
+
+  <!-- ══ 오른쪽 · 부품별 자리 ════════════════════════════════ -->
+  <section class="scripts" aria-label="부품에 붙인 단서">
+    <div class="scripthead">
+      <h2 id="elname">부품을 고르세요</h2>
+      <p id="elhint">가운데 화면에서 손볼 곳을 누릅니다</p>
+    </div>
+    <div class="hats" id="hats"></div>
+  </section>
+
+</main>
+
+<div class="drag" id="drag" hidden></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,8 +1,26 @@
 rules_version = '2';
+
+// ══════════════════════════════════════════════════════════════
+//  gccrc-crae — 세 수업이 한 프로젝트를 나눠 쓴다.
+//  이 파일이 유일한 원본이다. 콘솔에서 직접 고치지 말 것.
+//
+//    배포:  firebase deploy --only firestore:rules
+//    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
+//    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
+//
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_*
+//    지능형콘텐츠         icp_teams · icp3_*
+//
+//  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
+// ══════════════════════════════════════════════════════════════
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 실습 기록 — 로그인(익명)한 사람만 남길 수 있고, 고치거나 지울 수 없다.
+    /* ══ HCI와 커뮤니케이션 ═══════════════════════════════════ */
+
+    // 2주차 1988년 거실 — 실습 기록.
+    // 로그인(익명)한 사람만 남길 수 있고, 고치거나 지울 수 없다.
     match /runs/{id} {
       allow create: if request.auth != null
                     && request.resource.data.team is string
@@ -22,11 +40,70 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // 지금 어느 스테이션에 있는지 — 자기 것만 쓴다.
+    // 2·3주차 — 지금 어느 스테이션에 있는지. 자기 것만 쓴다.
     match /presence/{uid} {
       allow read:  if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
+
+    /* ── 4주차 노만의 공방 ────────────────────────────────────
+       포인트가 과제 점수에 걸린다. 그래서 돈이 움직이는 모음은
+       학생 브라우저에서 한 글자도 못 쓰게 막고, 버셀 함수만 쓴다.
+       Admin SDK 는 이 규칙을 통과하므로 write:false 라도 서버는 쓸 수 있다. */
+
+    match /hci4_wallets/{team} {          // 조별 포인트와 재고
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci4_ledger/{id} {             // 장부 — 모든 거래
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci4_shop/{id} {               // 상점 카탈로그
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci4_works/{id} {              // 출품작과 품평 결과
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+
+    // 블록 배치 자동저장 — 돈과 무관하므로 조가 직접 쓴다.
+    match /hci4_drafts/{team} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && team.size() > 0 && team.size() < 40;
+    }
+
+    // 지금 어느 조가 무엇을 하고 있는지 — 자기 것만 쓴다.
+    // 3주차 현황판에 4주차 학생이 섞이지 않게 모음을 따로 둔다.
+    match /hci4_presence/{uid} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    /* ══ 지능형콘텐츠 ════════════════════════════════════════ */
+
+    // 2주차 · 모듈 조립대
+    match /icp_teams/{teamId} {
+      allow read, write: if request.auth != null
+                         && teamId.size() > 0 && teamId.size() < 40;
+    }
+
+    // 3주차 · 검색 교환대 (week03/)
+    //
+    // 조끼리 서로 읽어야 하는 실습이다. 플랫폼 조는 검색엔진 조의 표를
+    // 검색해야 하고, 검색엔진 조는 플랫폼 조의 명세서를 읽어야 한다.
+    // 그래서 이 여섯 모음은 로그인한 사람이면 모두 읽고 쓸 수 있다.
+    // 민감한 내용은 넣지 않는다 — 한 방에 있는 학생들끼리 보는 실습판이다.
+    match /icp3_config/{id} { allow read, write: if request.auth != null; }
+    match /icp3_teams/{id}  { allow read, write: if request.auth != null; }  // 역할·저장방식
+    match /icp3_data/{id}   { allow read, write: if request.auth != null; }  // 검색엔진 조의 표
+    match /icp3_specs/{id}  { allow read, write: if request.auth != null; }  // 플랫폼 조의 명세서
+    match /icp3_reqs/{id}   { allow read, write: if request.auth != null; }  // 요청과 답
+    match /icp3_wb/{id}     { allow read, write: if request.auth != null; }  // 워크북
+
+    /* ═══════════════════════════════════════════════════════ */
 
     match /{document=**} { allow read, write: if false; }
   }
