@@ -7,6 +7,7 @@
 import { MATERIALS, mat, combine, rebuff, recipeById } from "./parts.js";
 import { ICONS, ICON_NAMES, svgOf } from "./icons.js";
 import { purse, countMat, takeMat, giveMat } from "./wallet.js";
+import { bookHTML } from "./book.js";
 import { allWorn } from "./app.js";
 
 const slot = [null, null];
@@ -38,6 +39,8 @@ export function paint() {
       ${found ? `<p class="cline">${found.line}</p>` : ""}
       <button class="big cmake" id="cmake"${found ? "" : " disabled"}>만든다</button>
     </div>
+
+    ${bookHTML(!mine.length)}
 
     <div class="cmats">
       <h3>내 재료 <small>눌러서 올립니다</small></h3>

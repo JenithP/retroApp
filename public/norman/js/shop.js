@@ -7,6 +7,7 @@
 import { MATERIALS, RECIPES } from "./parts.js";
 import { purse, countMat, priceOf, buyMats } from "./wallet.js";
 import { demo } from "./demo.js";
+import { bookHTML } from "./book.js";
 
 const cart = {};
 let host = null, onDone = null, talk = null;
@@ -37,6 +38,7 @@ function paint() {
           <b>둘을 합쳐야</b> 연장이 됩니다 — 합치는 일은 공방 제작대에서.
           지금 만들 수 있는 연장은 모두 <b>${RECIPES.length}가지</b>입니다.</p>
         <div class="goods">${MATERIALS.map(card).join("")}</div>
+        ${bookHTML(false)}
       </div>
       <aside class="cart">
         <h3>장바구니</h3>

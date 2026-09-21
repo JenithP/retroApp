@@ -283,7 +283,8 @@ function showVerdict(v) {
     (v.stuck.length
       ? '<div class="stuck"><p class="stucktop">멈춘 곳</p><ul>' +
         v.stuck.map(function (t) { return "<li>" + t + "</li>"; }).join("") +
-        '</ul><p class="stuckdim">어느 연장을 만들어 어디에 붙일지는 여러분이 정합니다.</p></div>'
+        '</ul><p class="stuckdim">오른쪽 <b>연장 책</b>에 같은 말로 묶여 있습니다 — ' +
+        '모자란 것을 찾아 그 줄의 재료를 사 오십시오.</p></div>'
       : "") +
     '<div class="vend">' +
       (v.passed
