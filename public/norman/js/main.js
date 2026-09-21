@@ -58,8 +58,13 @@ function paintOrder() {
     '<h1>' + job.app + ' <span>' + job.screen + '</span></h1>' +
     '<p class="otask">' + job.task + '</p>' +
     '<p class="osay">쓴 사람들 말 — 「' + job.say + '」</p>' +
-    '<p class="ofind">어디가 막히는지는 적혀 있지 않습니다. ' +
-    '<b>테스트해 보기</b>로 직접 찾아내십시오.</p>';
+    '<p class="opartstop">이 화면에 있는 것 <small>눌러서 짚어 봅니다</small></p>' +
+    '<p class="oparts">' + job.parts.map(function (p) {
+      return '<button class="part-chip k-' + p.kind + '" data-point="' + p.id + '">' +
+        (p.label || p.text || p.id) + '</button>';
+    }).join("") + '</p>' +
+    '<p class="ofind">무엇이 있는지는 적어 두었습니다. ' +
+    '<b>무엇이 빠졌는지</b>는 「돌려 보기」로 직접 찾아내십시오.</p>';
 }
 
 /** 의뢰를 하나 집어 든다 — 물건도 붙인 것도 새로 시작한다. */
@@ -152,6 +157,19 @@ nodes.screen.addEventListener("input", function (e) {
   if (!n || n.dataset.act.indexOf("type") !== 0) return;
   act(job, st, n.dataset.act, n.value);
   redraw({ craft: false });
+});
+
+/** 부품 이름을 누르면 화면에서 잠깐 짚어 준다 */
+nodes.order.addEventListener("click", function (e) {
+  const c = e.target.closest("[data-point]");
+  if (!c) return;
+  const box = nodes.screen.querySelector('.part[data-part="' + c.dataset.point + '"]');
+  if (!box) return;
+  nodes.screen.querySelectorAll(".part.picked").forEach(function (n) {
+    n.classList.remove("picked");
+  });
+  box.classList.add("picked");
+  setTimeout(function () { box.classList.remove("picked"); }, 1800);
 });
 
 /* ── 자리 옮기기 ──────────────────────────────────────────── */

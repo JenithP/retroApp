@@ -302,8 +302,7 @@ export const JOBS = [
 
   J("coupon-apply", "예약", "결제",
     "쿠폰을 적용하십시오.",
-    [{ id: "price",  kind: "text",   text: "48,000원" },
-     { id: "coupon", kind: "input",  label: "쿠폰 번호" },
+    [{ id: "coupon", kind: "input",  label: "쿠폰 번호" },
      { id: "apply",  kind: "button", label: "적용", need: ["name", "push", "feed"] }],
     [{ part: "coupon", do: "type", val: "WELCOME" }, { part: "apply", do: "press" }],
     "적용된 건지 값만 보고 짐작해야 하네요."),

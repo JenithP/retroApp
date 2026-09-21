@@ -157,3 +157,21 @@
   max-height:170px;display:none}
 .appbg.got{display:block}
 .appbg img{width:100%;display:block;object-fit:cover;max-height:170px}
+
+
+/* ── 주문서의 부품 목록 ───────────────────────────────────────
+   조는 설계자다. 무엇이 있는지는 알아야 한다.
+   가리는 것은 「무엇이 빠졌는가」뿐이고, 그것은 돌려 보기가 찾아 준다. */
+.opartstop{margin:12px 0 5px;font-size:.76rem;color:var(--lamp);font-weight:500}
+.opartstop small{font-family:var(--sans);font-size:.68rem;font-weight:400;
+  color:var(--ui-soft);margin-left:5px}
+.oparts{display:flex;flex-wrap:wrap;gap:5px;margin:0}
+.part-chip{font-family:var(--sans);font-size:.74rem;color:var(--ui-soft);
+  background:var(--panel);border:1px solid var(--line);border-radius:4px;
+  padding:4px 9px;cursor:pointer}
+.part-chip:hover{color:var(--lamp);border-color:#5A4229}
+.part-chip.k-text{opacity:.5;cursor:default}
+.part.picked{outline:2px solid var(--lamp);outline-offset:3px}
+
+/* 그냥 글씨는 만지는 것이 아니다 — 조작하는 것과 달라 보이게 */
+.plaintext{color:#6B6B6B}
