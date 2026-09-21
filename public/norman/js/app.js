@@ -1,6 +1,6 @@
-// 주문으로 들어온 물건 — 의뢰 데이터로 조립해 그린다.
+// 주문으로 들어온 화면 — 의뢰 데이터로 조립해 그린다.
 //
-// 어느 의뢰든 **처음부터 다 작동한다.** 칸에는 글자가 써지고 단추는 눌리고
+// 어느 의뢰든 **처음부터 다 작동한다.** 칸에는 글자가 써지고 버튼은 눌리고
 // 목록은 밀린다. 다만 그렇다고 알려 주지 않는다.
 // 어포던스는 다 있고, 없는 것은 시그니파이어뿐이다.
 
@@ -15,7 +15,7 @@ export const fresh = job => ({
 
 export const partOf = (job, id) => job.parts.find(p => p.id === id);
 
-/* ── 붙은 연장 꺼내 보기 ──────────────────────────────────── */
+/* ── 붙은 단서 꺼내 보기 ──────────────────────────────────── */
 
 const listOf = (at, id) => (at && at[id]) || [];
 export const wears = (at, id, rid) => listOf(at, id).some(x => x.recipe === rid);
@@ -72,7 +72,7 @@ function stateText(p, st) {
   }
 }
 
-/** 붙은 연장을 부품에 입힌다. 언제 보이는지는 연장이 스스로 안다. */
+/** 붙은 단서를 부품에 입힌다. 언제 보이는지는 단서가 스스로 안다. */
 function dress(box, core, at, id, words) {
   const on = rid => wears(at, id, rid);
   const arg = rid => argOf(at, id, rid);

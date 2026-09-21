@@ -1,4 +1,4 @@
-// 돌려 보기 — 만든 물건을 공방에서 직접 시험한다.
+// 돌려 보기 — 만든 화면을 공방에서 직접 시험한다.
 //
 // 곁에서 누가 떠드는 것이 아니다. 의뢰에 적힌 차례(steps)를 그대로 걷고,
 // 부품이 알려야 할 것(need)이 빠져 있으면 그 자리에서 멈춘다.
@@ -114,7 +114,7 @@ export async function cold(ui) {
         continue;
       }
 
-      /* ③ 실제로 한다 — 단서가 있든 없든 물건은 작동한다 */
+      /* ③ 실제로 한다 — 단서가 있든 없든 화면은 작동한다 */
       if (s.do === "type") {
         for (let i = 1; i <= String(s.val).length; i++) {
           act(job, st, "type:" + s.part, String(s.val).slice(0, i));

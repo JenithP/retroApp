@@ -1,6 +1,6 @@
 // 부품 라이브러리 — 의뢰마다 조립해 쓰는 진짜 위젯들.
 //
-// 전부 **처음부터 작동한다.** 칸에는 글자가 써지고, 단추는 눌리고,
+// 전부 **처음부터 작동한다.** 칸에는 글자가 써지고, 버튼은 눌리고,
 // 목록은 밀리고, 막대는 끌린다. 다만 그렇다고 알려 주지 않을 뿐이다.
 // 무엇이 빠졌는지는 need 가 적어 두고, 테스트 사용자가 그걸로 불평한다.
 
@@ -29,7 +29,7 @@ const NEED = {
 
 export const needOf = p => p.need || (NEED[p.kind] || (() => []))(p);
 
-/** 어떤 연장이 무엇을 알려 주는가 */
+/** 어떤 단서가 무엇을 알려 주는가 */
 const GIVES = {
   label: ["name"], guide: ["name"], unit: ["name"],
   bold: ["name", "push"], iconbtn: ["name", "push"],
@@ -40,7 +40,7 @@ const GIVES = {
 };
 export const givesOf = rid => GIVES[rid] || [];
 
-/** 연장이 붙을 수 있는 자리인가 — 조합표의 on 과 맞춘다 */
+/** 단서가 붙을 수 있는 자리인가 — 조합표의 on 과 맞춘다 */
 const BUCKET = {
   input: "input",
   button: "button", card: "button", icon: "button", pin: "button",
@@ -76,7 +76,7 @@ export function build(p, st) {
         (p.look === "dead" ? " faded" : p.look === "flat" ? " asplain" : ""),
         p.look ? (p.label || "") : "");
       n.dataset.act = "press:" + p.id;
-      n.setAttribute("aria-label", p.label || "단추");
+      n.setAttribute("aria-label", p.label || "버튼");
       return n;
     }
     case "toggle": {

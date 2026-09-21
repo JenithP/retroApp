@@ -1,6 +1,6 @@
-/* 제작대와 물건 — 재료를 합쳐 만든 연장을 물건 위에 붙이는 쪽의 모양. */
+/* 제작대와 화면 — 재료를 합쳐 만든 단서를 화면 위에 붙이는 쪽의 모양. */
 
-/* ── 물건의 부품 ──────────────────────────────────────────── */
+/* ── 화면의 부품 ──────────────────────────────────────────── */
 .part{position:relative;border-radius:6px}
 .part.picked{box-shadow:0 0 0 2px var(--lamp)}
 .part.target{outline:2px dashed rgba(217,164,65,.75);outline-offset:3px}
@@ -25,7 +25,7 @@
 .swipe{margin-left:auto;color:var(--ink-soft);font-size:.7rem}
 .nope{animation:shake .3s}
 
-/* ── 붙은 연장이 입히는 것 ────────────────────────────────── */
+/* ── 붙은 단서가 입히는 것 ────────────────────────────────── */
 .sg-caret{caret-color:#2F4A63;box-shadow:inset 0 0 0 1px #9A958C;background:#FFF}
 .sg-caret:focus{box-shadow:inset 0 0 0 2px #2F4A63}
 .sg-hot:hover,.sg-hot:focus{filter:brightness(1.06);box-shadow:inset 0 0 0 2px #7FA0BC}
@@ -151,8 +151,8 @@
 .d-line{width:56px;border-bottom:2px solid #232323;height:14px}
 
 
-/* ── 연장 책 ──────────────────────────────────────────────── */
-/* 조합을 맞혀 보게 하지 않는다. 맞혀야 할 것은 어떤 단서가 필요한가다. */
+/* ── 단서 조합표 ──────────────────────────────────────────── */
+/* 조합을 맞히게 하지 않는다. 맞혀야 할 것은 어떤 단서가 필요한가다. */
 .book{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .book > summary{font-family:var(--serif);font-size:.94rem;cursor:pointer;list-style:none;
   display:flex;align-items:baseline;gap:7px}

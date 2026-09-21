@@ -5,8 +5,8 @@
 //
 // 그려 넣을 그림 (public/norman/img/)
 //   norman.webp  늙은 장인. 공방 벽에 걸린 초상화로 쓴다 — 이 공방을 세운 사람
-//   guest.webp   테스트 사용자. 물건을 처음 만져 보는 사람. 곤란해하는 표정
-//   tinker.webp  연장 장수. 연장대를 지키는 사람
+//   guest.webp   테스트 사용자. 화면을 처음 만져 보는 사람. 곤란해하는 표정
+//   tinker.webp  상점 주인. 재료 진열대를 지키는 사람
 //   critic.webp  앱시장 중개인. 주문을 물어 오고, 출품을 심사하고, 값을 매긴다
 
 export const CAST = {

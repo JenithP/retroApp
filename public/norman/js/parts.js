@@ -2,14 +2,14 @@
 //
 // 상점에서는 **완성된 단서를 팔지 않는다.** 재료만 판다.
 // 글자·테두리·깜박임 같은 것들이고, 그 자체로는 아무것도 알리지 못한다.
-// 둘을 합쳐야 비로소 연장이 된다 — 테두리 + 깜박임 = 커서 깜박이는 입력칸.
+// 둘을 합쳐야 비로소 단서가 된다 — 테두리 + 깜박임 = 커서 깜박이는 입력칸.
 //
-// 언제 보이는지(when)는 조가 고르는 것이 아니라 **만든 물건이 정한다.**
+// 언제 보이는지(when)는 조가 고르는 것이 아니라 **만든 단서가 정한다.**
 // 깜박이는 커서는 늘 보이는 것이고, 알림 쪽지는 누른 뒤에만 뜬다.
 // 그래서 무엇을 만들지 고르는 일이 곧 어느 간극을 메울지 고르는 일이 된다.
 
 export const MATERIALS = [
-  { id: "glyph", name: "글자",     price: 40, arg: { kind: "text", ph: "무슨 글자", max: 12 },
+  { id: "glyph", name: "글자",     price: 40, arg: { kind: "text", ph: "넣을 글자", max: 12 },
     tip: "입력한 말을 화면에 붙입니다" },
   { id: "icon",  name: "그림",     price: 40, arg: { kind: "icon" },
     tip: "아이콘으로 의미를 보여줍니다" },
@@ -81,7 +81,7 @@ export const RECIPES = [
 
   { a: "tick", b: "blink", id: "done", name: "완료 표시",
     when: "after", on: ["input", "button"], gulf: "평가",
-    line: "작업이 끝났음을 ✓ 표시로 알려줍니다" },
+    line: "작업 완료를 ✓ 표시로 알려줍니다" },
 
   { a: "sound", b: "shake", id: "feel", name: "손끝 알림",
     when: "after", on: ["button"], gulf: "평가",

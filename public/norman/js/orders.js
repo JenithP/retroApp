@@ -1,10 +1,10 @@
-// 주문서 — 어느 조가 어느 물건을 맡는가.
+// 주문서 — 어느 조가 어느 화면을 맡는가.
 //
-// 스무 조가 열 가지 물건을 **두 조씩 나눠** 맡는다.
-// 같은 물건을 맡은 두 조가 서로 다른 답을 들고 나오게 하려는 것이다.
+// 스무 조가 열 가지 화면을 **두 조씩 나눠** 맡는다.
+// 같은 화면을 맡은 두 조가 서로 다른 답을 들고 나오게 하려는 것이다.
 // 발표 때 그 둘을 나란히 놓으면 토론이 저절로 열린다.
 //
-// bottle — 이 물건이 실제로 막히는 곳. 앱시장 품평이 이것과 견주어 값을 매긴다.
+// bottle — 이 화면이 실제로 막히는 곳. 앱시장 품평이 이것과 견주어 값을 매긴다.
 //          조에게는 보여 주지 않는다. 스스로 진단하는 것이 과업이기 때문이다.
 
 export const ORDERS = [
@@ -32,16 +32,16 @@ export const ORDERS = [
 
 export const TEAMS = 20;
 
-/** 조 번호로 맡은 물건을 찾는다. 1·2조가 첫째, 3·4조가 둘째… */
+/** 조 번호로 맡은 화면을 찾는다. 1·2조가 첫째, 3·4조가 둘째… */
 export function orderOf(team) {
   const n = Number(team);
   if (!Number.isInteger(n) || n < 1 || n > TEAMS) return null;
   return ORDERS[Math.floor((n - 1) / 2)] || null;
 }
 
-/** 같은 물건을 맡은 옆 조. */
+/** 같은 화면을 맡은 옆 조. */
 export const partnerOf = team =>
   Number(team) % 2 === 1 ? Number(team) + 1 : Number(team) - 1;
 
-/** 아직 못 만든 물건을 맡은 조도 오늘은 들어와 볼 수 있게 한다. */
+/** 아직 못 만든 화면을 맡은 조도 오늘은 들어와 볼 수 있게 한다. */
 export const FALLBACK = ORDERS[0];

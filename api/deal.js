@@ -1,13 +1,13 @@
-// 노만의 공방 — 값어치가 있는 모든 일이 여기를 지난다.
+// 노만의 공방 — 포인트가 오가는 모든 일이 여기를 지난다.
 //
 // 왜 서버로 옮겼나. 과제 점수가 걸린 판에서 포인트가 학생 브라우저 안에만
 // 있으면 개발자도구로 고칠 수 있다. 그래서 **클라이언트는 아무것도 정하지
-// 않는다.** 재료 값도, 무엇과 무엇이 합쳐지는지도, 퀴즈 정답도, 물건 값도
+// 않는다.** 재료 값도, 무엇과 무엇이 합쳐지는지도, 퀴즈 정답도, 화면 값도
 // 전부 이 파일이 센다. 클라이언트가 보내는 것은 「무엇을 하겠다」는 말뿐이다.
 //
-// 포인트만 서버가 쥐어서는 모자란다. 「이 연장을 붙였다」는 말까지 믿어
+// 포인트만 서버가 쥐어서는 모자란다. 「이 단서를 붙였다」는 말까지 믿어
 // 버리면 사지도 만들지도 않은 단서로 값을 받을 수 있다. 그래서
-// 재료·만든 연장·붙인 것을 모두 지갑 안에 둔다. 클라이언트는 비춰 볼 뿐이다.
+// 재료·만든 단서·붙인 것을 모두 지갑 안에 둔다. 클라이언트는 비춰 볼 뿐이다.
 //
 // 지갑과 장부는 Firestore 에 있고, 보안 규칙이 학생 쓰기를 막아 두었다.
 // Admin SDK 는 규칙을 통과하므로 이 파일만 쓸 수 있다.
@@ -54,7 +54,7 @@ const priceOf = id => {
 const jobOf = id => JOBS.find(j => j.id === id);
 const partOf = (job, id) => job.parts.find(p => p.id === id);
 
-/** 돌려 보기와 같은 셈. 의뢰와 붙인 연장만 있으면 결과가 정해진다. */
+/** 돌려 보기와 같은 셈. 의뢰와 붙인 단서만 있으면 결과가 정해진다. */
 function judge(job, attached) {
   const at = attached || {};
   let missing = 0, worn = 0, astray = 0;
@@ -84,28 +84,28 @@ function judge(job, attached) {
   return { gaps, missing, blocked, worn, astray, passed: blocked === 0 };
 }
 
-/** 물건 값. 통과하지 못한 물건은 받지 않는다. */
+/** 화면 값. 통과하지 못한 화면은 받지 않는다. */
 function appraise(job, attached) {
   const v = judge(job, attached);
   const notes = [];
   let price = 300;
 
-  if (v.passed) { price += 700; notes.push(["good", "시킨 일을 처음부터 끝까지 해냈소."]); }
-  else notes.push(["bad", `아직 ${v.blocked}군데에서 막히오.`]);
+  if (v.passed) { price += 700; notes.push(["good", "사용자가 과제를 처음부터 끝까지 해냈습니다."]); }
+  else notes.push(["bad", `아직 ${v.blocked}군데에서 사용자가 막힙니다.`]);
 
-  if (v.missing === 0) { price += 350; notes.push(["good", "화면 어디에도 모자란 단서가 없소."]); }
-  else notes.push(["warn", `과업에 걸리지 않은 곳까지 치면 ${v.missing}가지가 모자라오.`]);
+  if (v.missing === 0) { price += 350; notes.push(["good", "화면 전체에 필요한 단서가 잘 붙어 있습니다."]); }
+  else notes.push(["warn", `과제 진행에 바로 걸리지 않는 곳까지 보면 ${v.missing}가지 단서가 더 필요합니다.`]);
 
   if (v.astray) {
     price -= v.astray * 120;
-    notes.push(["bad", `눌리지도 않는 곳을 누를 수 있게 꾸며 두었소 — 거짓 단서 ${v.astray}개요.`]);
+    notes.push(["bad", `눌리지 않는 곳을 누를 수 있게 보이도록 꾸몄습니다 — 거짓 단서 ${v.astray}개입니다.`]);
   }
   if (v.worn > 12) {
     price -= (v.worn - 12) * 40;
-    notes.push(["warn", `단서가 ${v.worn}개면 도리어 어지럽소. 덜어낼 것도 보시오.`]);
+    notes.push(["warn", `단서가 ${v.worn}개라 조금 복잡합니다. 꼭 필요한 것만 남겨 보세요.`]);
   } else if (v.passed && v.worn <= 6) {
     price += 150;
-    notes.push(["good", `${v.worn}개로 해냈소. 군더더기가 없구려.`]);
+    notes.push(["good", `${v.worn}개의 단서로 해결했습니다. 군더더기가 적습니다.`]);
   }
 
   price = Math.max(120, Math.min(1800, Math.round(price / 10) * 10));
@@ -169,7 +169,7 @@ export default async function handler(req, res) {
           return clean(w);
         }
 
-        /* 의뢰를 집어 든다 — 앞 의뢰에 붙였던 것은 그 물건과 함께 갔다 */
+        /* 의뢰를 집어 든다 — 앞 의뢰에 붙였던 것은 그 화면과 함께 갔다 */
         case "take": {
           const job = jobOf(body.job);
           if (!job) throw new Error("그런 의뢰가 없습니다");
@@ -205,7 +205,7 @@ export default async function handler(req, res) {
           if (!r) throw new Error("그 둘은 합쳐지지 않습니다");
           if (!(w.mats[a] > 0) || !(w.mats[b] > 0)) throw new Error("재료가 없습니다");
           if (a === b && w.mats[a] < 2) throw new Error("재료가 없습니다");
-          if (w.tools.length >= MAX_TOOLS) throw new Error("연장이 너무 많습니다");
+          if (w.tools.length >= MAX_TOOLS) throw new Error("만든 단서가 너무 많습니다");
           w.mats[a]--; w.mats[b]--;
           w.tools.push({ recipe: r.id, arg: "" });
           save();
@@ -213,22 +213,22 @@ export default async function handler(req, res) {
           return Object.assign(clean(w), { made: r.id });
         }
 
-        /* 연장에 적는 글자·그림 — 돈과는 무관하다 */
+        /* 단서에 적는 글자·그림 — 돈과는 무관하다 */
         case "arg": {
           const i = Number(body.i);
-          if (!w.tools[i]) throw new Error("그런 연장이 없습니다");
+          if (!w.tools[i]) throw new Error("그런 단서가 없습니다");
           w.tools[i].arg = String(body.arg || "").slice(0, 20);
           save();
           return clean(w);
         }
 
-        /* 물건에 붙이기 — 가진 연장만, 붙는 자리에만 */
+        /* 화면에 붙이기 — 가진 단서만, 붙는 자리에만 */
         case "attach": {
           const i = Number(body.i), partId = String(body.part || "");
           const job = jobOf(w.job);
           const tool = w.tools[i];
           if (!job) throw new Error("맡은 의뢰가 없습니다");
-          if (!tool) throw new Error("그런 연장이 없습니다");
+          if (!tool) throw new Error("그런 단서가 없습니다");
           const p = partOf(job, partId), r = recipeById(tool.recipe);
           if (!p || !r) throw new Error("그 자리에는 못 붙입니다");
           if (r.on.indexOf(bucketOf(p.kind)) < 0) throw new Error("그 자리에는 못 붙입니다");
@@ -238,7 +238,7 @@ export default async function handler(req, res) {
           return clean(w);
         }
 
-        /* 떼어 내기 — 도로 연장으로 돌아온다 */
+        /* 떼어 내기 — 도로 만든 단서 목록으로 돌아온다 */
         case "detach": {
           const partId = String(body.part || ""), j = Number(body.j);
           const list = w.attached[partId] || [];
@@ -270,7 +270,7 @@ export default async function handler(req, res) {
           return { appraisal: appraise(job, w.attached), wallet: clean(w) };
         }
 
-        /* 물건 팔기 — 값도 통과 여부도 서버가 다시 센다 */
+        /* 화면 팔기 — 값도 통과 여부도 서버가 다시 센다 */
         case "sell": {
           const job = jobOf(w.job);
           if (!job) throw new Error("맡은 의뢰가 없습니다");
@@ -280,7 +280,7 @@ export default async function handler(req, res) {
           w.point += a.price;
           w.done.push(job.id);
           w.sold.push({ job: job.id, price: a.price, at: Date.now() });
-          w.attached = {};                       // 붙인 것은 물건과 함께 갔다
+          w.attached = {};                       // 붙인 것은 화면과 함께 갔다
           w.job = null;
           save();
           log({ kind: "sell", job: job.id, price: a.price, worn: a.worn });

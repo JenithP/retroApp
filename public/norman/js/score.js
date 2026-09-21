@@ -1,4 +1,4 @@
-// 물건을 훑어 값을 매기는 셈.
+// 화면을 훑어 값을 매기는 셈.
 //
 // 서버(api/deal.js)와 화면이 **같은 파일**을 쓴다. 둘이 따로 세면
 // 「여기서는 1200이라더니 팔 때는 900」 같은 일이 생긴다.
@@ -6,7 +6,7 @@
 
 import { needOf, givesOf } from "./kit.js";
 
-/** 의뢰와 붙인 연장만 있으면 결과가 정해진다 — 돌려 보기와 같은 셈이다. */
+/** 의뢰와 붙인 단서만 있으면 결과가 정해진다 — 돌려 보기와 같은 셈이다. */
 export function judge(job, attached) {
   const at = attached || {};
   let missing = 0, worn = 0, astray = 0;
@@ -36,7 +36,7 @@ export function judge(job, attached) {
   return { gaps, missing, blocked, worn, astray, passed: blocked === 0 };
 }
 
-/** 물건 값. 통과하지 못한 물건은 받지 않는다. */
+/** 화면 값. 통과하지 못한 화면은 받지 않는다. */
 export function appraise(job, attached) {
   const v = judge(job, attached);
   const notes = [];

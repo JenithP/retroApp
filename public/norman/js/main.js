@@ -1,6 +1,6 @@
 // 노만의 공방 — 자리들을 잇는다.
 //
-// 공방(제작·붙이기) · 상점(재료) · 앱시장(출품) · 문제 풀기(품삯).
+// 공방(제작·붙이기) · 상점(재료) · 앱시장(출품) · 문제 풀기(보상).
 // 파이어베이스에 닿는 것은 붙여 둔 것을 담아 두는 일(hci4_drafts)과
 // 어느 조가 앉아 있는지 알리는 일(hci4_presence)뿐이다.
 
@@ -56,7 +56,7 @@ function paintOrder() {
     '<p class="oeyebrow">주문서 · ' + (purse.done.length + 1) + '번째</p>' +
     '<h1>' + job.app + ' <span>' + job.screen + '</span></h1>' +
     '<p class="otask">' + job.task + '</p>' +
-    '<p class="osay">쓴 사람들 말 — 「' + job.say + '」</p>' +
+    '<p class="osay">사용자 말 — 「' + job.say + '」</p>' +
     '<p class="opartstop">이 화면에 있는 것 <small>눌러서 짚어 봅니다</small></p>' +
     '<p class="oparts">' + job.parts.map(function (p) {
       return '<button class="part-chip k-' + p.kind + '" data-point="' + p.id + '">' +
@@ -66,7 +66,7 @@ function paintOrder() {
     '<b>어떤 단서가 부족한지</b>는 「테스트해 보기」로 직접 찾아내세요.</p>';
 }
 
-/** 의뢰를 하나 집어 든다 — 물건도 붙인 것도 새로 시작한다. */
+/** 의뢰를 하나 집어 든다 — 화면도 붙인 것도 새로 시작한다. */
 async function takeJob(j) {
   job = j;
   st = fresh(job);
@@ -86,7 +86,7 @@ function afterAttach(part, r) {
   redraw();
 }
 
-/* ── 하고 난 뒤 — 붙은 연장이 실제로 작동한다 ─────────────── */
+/* ── 하고 난 뒤 — 붙은 단서가 실제로 작동한다 ─────────────── */
 
 let ac = null;
 function blip() {
@@ -126,7 +126,7 @@ function fire(part) {
   }
 }
 
-/* ── 손대기 — 물건은 언제나 진짜로 작동한다 ───────────────── */
+/* ── 손대기 — 화면은 언제나 진짜로 작동한다 ───────────────── */
 
 nodes.screen.addEventListener("click", function (e) {
   if (arrange) return;
@@ -169,7 +169,7 @@ $("arrange").addEventListener("click", function (e) {
   e.currentTarget.classList.toggle("on", arrange);
   nodes.note.innerHTML = arrange
     ? "<b>자리를 옮기는 중입니다.</b> 왼쪽 손잡이를 끌어 순서를 바꾸세요."
-    : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
+    : "이 화면은 <b>이미 다 작동합니다.</b> 무엇을 할 수 있는지 알려 주지 않을 뿐입니다.";
   if (arrange) Talk.cut("norman",
     "어디에 두느냐도 중요한 단서입니다. 가까이 두면 같은 묶음으로 보입니다.");
   redraw({ craft: false });
@@ -203,15 +203,15 @@ addEventListener("pointerup", function () {
   stash();
 });
 
-/* ── 머리 단추 ────────────────────────────────────────────── */
+/* ── 머리 버튼 ────────────────────────────────────────────── */
 
 $("before").addEventListener("click", function (e) {
   bare = !bare;
   e.currentTarget.classList.toggle("on", bare);
-  e.currentTarget.textContent = bare ? "내 물건" : "원래 물건";
+  e.currentTarget.textContent = bare ? "내 화면" : "원래 화면";
   nodes.note.innerHTML = bare
-    ? "<b>손대기 전</b> 물건입니다. 주문이 들어왔을 때 이 모습이었습니다."
-    : "이 물건은 <b>이미 다 작동합니다.</b> 아무것도 알려 주지 않을 뿐입니다.";
+    ? "<b>단서를 붙이기 전</b> 화면입니다. 의뢰가 들어왔을 때 이 모습이었습니다."
+    : "이 화면은 <b>이미 다 작동합니다.</b> 무엇을 할 수 있는지 알려 주지 않을 뿐입니다.";
   redraw({ craft: false });
 });
 
@@ -258,7 +258,7 @@ function unbare() {
   if (!bare) return;
   bare = false;
   const b = $("before");
-  b.classList.remove("on"); b.textContent = "원래 물건";
+  b.classList.remove("on"); b.textContent = "원래 화면";
 }
 
 function stopSim() {
@@ -296,7 +296,7 @@ function showVerdict(v) {
       : "") +
     '<div class="vend">' +
       (v.passed
-        ? '<button class="big" id="tomarket">다 됐다 — 앱시장에 내놓는다</button>'
+        ? '<button class="big" id="tomarket">다 됐습니다 — 앱시장에 내놓기</button>'
         : '<p class="notyet">아직 사용자가 과제를 끝까지 해내지 못합니다. ' +
           '더 고쳐야 내놓을 수 있습니다.</p>') +
     "</div>" +
@@ -352,7 +352,7 @@ function go(to) {
       onDone: function (r) {
         go("bench"); stash();
         Talk.cut("norman", r.n
-          ? r.n + "개 사 왔구먼. " + r.paid + "포인트 나갔네. 제작대에서 둘씩 합쳐 보게."
+          ? r.n + "개를 샀습니다. " + r.paid + "포인트를 썼어요. 제작대에서 재료 두 개씩 조합해 보세요."
           : NORMAN.rule);
         nagged = false; nudgePortrait();
       },
@@ -367,7 +367,7 @@ function go(to) {
         coin();
         await takeJob(pickJob());
         go("bench");
-        Talk.cut("norman", a.price + "포인트 받아 왔습니다. 물건은 시장으로 갔습니다.");
+        Talk.cut("norman", a.price + "포인트를 받았습니다. 이 의뢰는 시장에 넘겼어요.");
         Talk.say("critic", BROKER.next(job), 3400);
       },
     });
@@ -408,9 +408,9 @@ grid.addEventListener("click", function (e) {
   const o = orderOf(picking), use = (o && o.ready) ? o : FALLBACK;
   peek.hidden = false;
   peek.innerHTML =
-    '<p class="pk">' + picking + "조가 맡은 물건</p><h2>" + use.name + "</h2>" +
+    '<p class="pk">' + picking + "조가 맡은 의뢰</p><h2>" + use.name + "</h2>" +
     '<p class="pkline">' + use.line + "</p>" +
-    '<p class="pkmate">같은 물건을 ' + partnerOf(picking) + "조도 맡습니다.</p>" +
+    '<p class="pkmate">같은 의뢰를 ' + partnerOf(picking) + "조도 맡습니다.</p>" +
     (o && !o.ready
       ? '<p class="pkwarn">「' + o.name + "」은 아직 준비 중이라 오늘은 <b>" +
         FALLBACK.name + "</b>으로 들어갑니다.</p>"
@@ -468,14 +468,14 @@ async function enter(n) {
   restoreLayout();
   BROKER.knock(job).forEach(function (t, i) { Talk.say("critic", t, i < 2 ? 2600 : 3200); });
   Talk.say("norman", NORMAN.heard(), 3400);
-  Talk.say("norman", "재료는 「상점」에서 사다 제작대에서 둘씩 합치게. " +
-    "주머니에 1000포인트 있네.", 3600);
+  Talk.say("norman", "재료는 「상점」에서 사고, 제작대에서 두 개씩 조합하세요. " +
+    "처음 주머니에는 1000포인트가 있습니다.", 3600);
   Talk.say("norman", NORMAN.broke);
   go("bench");
   beat();
 }
 
-/** 끌고 있는 연장이 이 부품에 붙을 수 있는가 — 테두리를 띄울 때 쓴다 */
+/** 끌고 있는 단서가 이 부품에 붙을 수 있는가 — 테두리를 띄울 때 쓴다 */
 const BUCKET = { input: "input", button: "button", card: "button", icon: "button",
   pin: "button", thumb: "button", check: "button", toggle: "button", tab: "button",
   list: "list", slider: "list", progress: "list", status: "list", text: "none" };

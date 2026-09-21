@@ -1,4 +1,4 @@
-// 앱시장 — 고친 물건을 내다 파는 곳.
+// 앱시장 — 고친 화면을 내다 파는 곳.
 //
 // 값을 매기는 것도 받아 줄지 말지도 **서버가 정한다.** 이 파일은 물어보고
 // 보여 줄 뿐이다. 그래서 화면의 숫자를 고쳐도 받는 포인트는 달라지지 않는다.
@@ -57,9 +57,9 @@ function paint() {
           : `<p class="opre">출품 반려</p>
              <p class="oprice bad">—</p>
              <p class="odim">아직 ${a.blocked}군데에서 막힙니다.<br>
-               막히는 데가 없어야 받습니다.</p>`}
+               막히는 곳이 없어야 출품할 수 있습니다.</p>`}
         <button class="flag ghost wide2" id="mkback">${
-          a.passed ? "더 고치고 오기" : "공방으로 돌아가 고친다"}</button>
+          a.passed ? "더 고치고 오기" : "공방으로 돌아가 고치기"}</button>
         ${sold ? `<p class="odim">지금까지 완료한 의뢰 ${sold}개</p>` : ""}
       </aside>
     </div>`;

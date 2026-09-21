@@ -95,7 +95,7 @@
   position:relative;overflow:hidden}
 .progfill{position:absolute;left:0;top:0;bottom:0;background:#BDBDBB}
 
-/* ── 붙은 연장이 입히는 것 ────────────────────────────────── */
+/* ── 붙은 단서가 입히는 것 ────────────────────────────────── */
 .sg-caret{caret-color:#2F4A63;box-shadow:inset 0 0 0 1px #9A958C;background:#FFF;opacity:1}
 .sg-caret:focus{box-shadow:inset 0 0 0 2px #2F4A63}
 .sg-hot:hover,.sg-hot:focus{filter:brightness(1.06);box-shadow:inset 0 0 0 2px #7FA0BC;opacity:1}

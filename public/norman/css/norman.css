@@ -1,4 +1,4 @@
-/* ── 노만의 공방. 어두운 작업대 위에 밝은 물건 하나 ─────────── */
+/* ── 노만의 공방. 어두운 작업대 위에 밝은 화면 하나 ─────────── */
 :root{
   --stage:#171310; --stage-2:#221C17;
   --ui:#E8E1D4; --ui-soft:#9C9184; --line:#38302A;
@@ -8,7 +8,7 @@
   /* 무엇으로 알리는가 — 하트슨의 네 갈래 */
   --sense:#D9A441; --cog:#6E9BC5; --phys:#A07BC4; --limit:#8A8078;
 
-  /* 물건의 화면 */
+  /* 의뢰 화면 */
   --paper:#FCFCFB; --paper-2:#EFEFED; --bare:#D8D8D6; --ink:#232323; --ink-soft:#6B6B6B;
 
   --serif:"Gowun Batang",serif;
@@ -52,7 +52,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 h2{font-family:var(--serif);font-size:1rem;margin:0}
 .rackhead p,.scripthead p{margin:2px 0 12px;font-size:.78rem;color:var(--ui-soft)}
 
-/* ── 연장대 ───────────────────────────────────────────────── */
+/* ── 단서대 ───────────────────────────────────────────────── */
 .cats{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:12px;padding-bottom:11px;
   border-bottom:1px solid var(--line)}
 .cat{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--ui-soft)}
@@ -79,7 +79,7 @@ h2{font-family:var(--serif);font-size:1rem;margin:0}
 .part.on{background:var(--lamp);border-color:var(--lamp);color:#1A1409;font-weight:500}
 .onote{margin:7px 0 0;font-size:.76rem;color:var(--ui-soft)}
 
-/* ── 물건 ─────────────────────────────────────────────────── */
+/* ── 화면 ─────────────────────────────────────────────────── */
 .phonewrap{margin:18px 0 0;display:flex;flex-direction:column;align-items:center}
 .phone{position:relative;width:300px;background:#0D0B09;border:1px solid #3B322B;
   border-radius:26px;padding:9px;box-shadow:0 26px 54px -18px #000}
@@ -210,13 +210,13 @@ input.box{cursor:text;justify-content:flex-start}
 .netmsg{font-size:.76rem;color:var(--ui-soft);align-self:center}
 #bar .dot{align-self:center}
 
-/* 연장대에 같이 거는 한 줄 — 이름만으로는 그림이 안 그려진다 */
+/* 단서대에 같이 거는 한 줄 — 이름만으로는 그림이 안 그려진다 */
 .btip{flex-basis:100%;margin-top:3px;font-size:.7rem;font-weight:400;color:#2C2317;
   line-height:1.4}
 .sblock .btip{display:none}
 
 /* ── 공방 ─────────────────────────────────────────────────── */
-/* 작업대는 나무, 연장대는 벽에 걸린 판, 물건 위에는 등이 하나 켜져 있다. */
+/* 작업대는 나무, 단서대는 벽에 걸린 판, 화면 위에는 등이 하나 켜져 있다. */
 .stage{position:relative}
 .stage::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(52% 30% at 50% 16%,rgba(217,164,65,.18) 0%,transparent 72%)}
@@ -253,13 +253,13 @@ input.box{cursor:text;justify-content:flex-start}
 .tnext{align-self:flex-end;color:var(--lamp);font-size:.8rem;animation:bob 1s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(3px)}}
 
-/* 손님이 물건 앞에 서 있다 */
+/* 손님이 화면 앞에 서 있다 */
 .guestbox{position:absolute;right:-64px;bottom:34px;width:58px;text-align:center;z-index:2}
 .guestbox .port{width:52px;height:52px;margin:0 auto;box-shadow:0 8px 18px -6px #000}
 .guestbox p{margin:4px 0 0;font-size:.68rem;color:var(--ui-soft)}
 @media(max-width:1240px){.guestbox{right:-10px;bottom:-72px}}
 
-/* 원래 물건과 견주는 동안 — 지금 무엇을 보고 있는지 분명하게 */
+/* 원래 화면과 견주는 동안 — 지금 무엇을 보고 있는지 분명하게 */
 .flag.ghost.on{background:var(--lamp);border-color:var(--lamp);color:#1A1409;font-weight:500}
 
 /* ── 자리 옮기기 ──────────────────────────────────────────── */
@@ -341,7 +341,7 @@ input.box{cursor:text;justify-content:flex-start}
 .mkempty p{font-size:.92rem}
 .mkempty .dim{color:var(--ui-soft);font-size:.84rem;margin-bottom:18px}
 
-/* 내 연장 — 몇 개 남았는지 */
+/* 내 단서 — 몇 개 남았는지 */
 .bhave{margin-left:auto;font-size:.7rem;font-weight:700;background:rgba(0,0,0,.22);
   border-radius:9px;padding:1px 8px;flex:none}
 .noteol{margin:0;font-size:.8rem;color:var(--ui-soft);line-height:1.7;
@@ -354,7 +354,7 @@ input.box{cursor:text;justify-content:flex-start}
 .oprice.bad::after{content:""}
 
 /* ── 상점 카드의 축소판 — 붙이기 전 → 붙인 뒤 ─────────────── */
-/* 물건에 쓰는 모양을 그대로 줄인 것이다. 그림이 아니라 진짜다. */
+/* 화면에 쓰는 모양을 그대로 줄인 것이다. 그림이 아니라 진짜다. */
 .demo{display:flex;align-items:center;gap:8px;margin:3px 0 5px;padding:9px 9px 10px;
   background:#FAFAF9;border-radius:5px;min-height:56px}
 .dp{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;
@@ -494,7 +494,7 @@ input.box{cursor:text;justify-content:flex-start}
 .mg b{font-size:.56rem;color:#232323;align-self:flex-start;font-weight:500}
 
 
-/* 맡은 일은 메뉴가 아니다 — 자리 단추와 헷갈리지 않게 */
+/* 맡은 일은 메뉴가 아니다 — 자리 버튼과 헷갈리지 않게 */
 .whoami{font-size:.78rem;color:#7E756B;border-left:1px solid var(--line);padding-left:12px}
 
 /* 돌려 본 뒤에 내놓기 */

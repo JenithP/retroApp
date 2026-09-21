@@ -1,4 +1,4 @@
-// 주머니 — 포인트, 사 둔 재료, 만든 연장, 물건에 붙인 것.
+// 주머니 — 포인트, 사 둔 재료, 만든 단서, 화면에 붙인 것.
 //
 // 이 파일은 **아무것도 정하지 않는다.** 서버(api/deal.js)에 「무엇을 하겠다」고
 // 말하고, 돌아온 지갑을 그대로 비춰 놓을 뿐이다. 값도 조합도 정답도 서버가 센다.
@@ -6,7 +6,7 @@
 //
 // 다만 서버가 없을 때도(집에서 python tools/serve.py 로 열어 볼 때) 실습이
 // 돌아야 하므로, 서버에 닿지 못하면 같은 셈을 이 안에서 한다.
-// 그때는 머리에 「연습 모드」라고 적어 둔다 — 점수로 세지 않는다는 뜻이다.
+// 그때는 머리에 「연습 모드」라고 적어 둔다 — 실제 점수로 기록하지 않는다는 뜻이다.
 
 import { MATERIALS, mat, combine, recipeById } from "./parts.js";
 import { bucketOf } from "./kit.js";
@@ -123,7 +123,7 @@ export async function craft(a, b) {
   if (!r) throw new Error("그 둘은 합쳐지지 않습니다");
   if (!(countMat(a) > 0) || !(countMat(b) > 0)) throw new Error("재료가 없습니다");
   if (a === b && countMat(a) < 2) throw new Error("재료가 없습니다");
-  if (purse.tools.length >= MAX_TOOLS) throw new Error("연장이 너무 많습니다");
+  if (purse.tools.length >= MAX_TOOLS) throw new Error("만든 단서가 너무 많습니다");
   purse.mats[a]--; purse.mats[b]--;
   purse.tools.push({ recipe: r.id, arg: "" });
   local.save();
