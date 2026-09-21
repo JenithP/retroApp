@@ -72,7 +72,7 @@ export const RECIPES = [
     line: "오른쪽 끝의 › 로 눌러서 들어가는 곳임을 보여줍니다" },
 
   { a: "notch", b: "frame", id: "grip", name: "드래그 손잡이",
-    when: "idle", on: ["list"], gulf: "실행",
+    when: "idle", on: ["button", "list"], gulf: "실행",
     line: "밀거나 끌 수 있는 부분임을 보여줍니다" },
 
   { a: "blink", b: "tint", id: "hot", name: "터치 강조",
@@ -96,7 +96,7 @@ export const RECIPES = [
     line: "소리와 떨림으로 조작이 받아들여졌음을 알려줍니다" },
 
   { a: "icon", b: "tint", id: "state", name: "상태 표시",
-    when: "idle", on: ["list", "input"], gulf: "평가",
+    when: "idle", on: ["input", "button", "list"], gulf: "평가",
     line: "현재 상태를 그림과 글자로 계속 보여줍니다" },
 ];
 

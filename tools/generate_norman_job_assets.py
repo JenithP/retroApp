@@ -3,7 +3,19 @@ from PIL import Image, ImageDraw, ImageFont
 import math
 
 
-W, H = 1080, 675
+# 이 그림들은 폰 화면 안에 348픽셀 폭으로 들어간다. 1080 폭으로 그려 놓으면
+# 세 배 남짓 줄어들어, 20짜리 글자가 6픽셀이 되어 읽히지 않는다.
+#
+# 그래서 **가로만 줄이고 글자는 줄이지 않는다.** 각 장면은 예전처럼 1080
+# 좌표계로 그리되, 가로를 KX만큼 좁혀 626 폭 판에 옮겨 담는다. 글자는
+# 그대로이므로 판에서 차지하는 비중이 1.7배가 되어 폰 안에서 읽힌다.
+#
+# 세로는 건드리지 않는다(KY = 1). 줄 간격은 애초에 글자 크기에 맞춰
+# 잡아 둔 것이라, 세로까지 줄이면 윗줄과 아랫줄이 겹친다.
+# 가로에는 여유가 있다 — 940폭 카드에 짧은 글 한 줄씩이 들어 있을 뿐이다.
+KX, KY = 0.58, 1.0
+LW, LH = 1080, 700                       # 장면을 그리는 좌표계
+W, H = int(round(LW * KX)), int(round(LH * KY))
 S = 2
 
 BG = (247, 248, 250)
@@ -39,12 +51,28 @@ FONT_REGULAR = pick_font(FONT_REGULAR_CANDIDATES)
 FONT_BOLD = pick_font(FONT_BOLD_CANDIDATES)
 
 
-def s(value):
-    return int(round(value * S))
+def sx(value):
+    """가로 — 판이 좁아진 만큼 줄인다."""
+    return int(round(value * KX * S))
+
+
+def sy(value):
+    """세로 — 줄 간격이라 건드리지 않는다."""
+    return int(round(value * KY * S))
+
+
+# 굵기·반지름처럼 방향이 없는 값은 가로를 따른다
+s = sx
+
+
+def sf(size):
+    """글자 — 줄이지 않는다. 이것이 이 판의 요점이다."""
+    return int(round(size * S))
 
 
 def scale_box(box):
-    return tuple(s(v) for v in box)
+    x0, y0, x1, y1 = box
+    return (sx(x0), sy(y0), sx(x1), sy(y1))
 
 
 def blend(a, b, t):
@@ -57,41 +85,67 @@ class Canvas:
         self.draw = ImageDraw.Draw(self.image)
 
     def font(self, size, bold=False):
-        return ImageFont.truetype(FONT_BOLD if bold else FONT_REGULAR, s(size))
+        return ImageFont.truetype(FONT_BOLD if bold else FONT_REGULAR, sf(size))
 
     def text(self, xy, text, size=28, fill=INK, bold=False, anchor=None, align="left"):
         kwargs = {"font": self.font(size, bold), "fill": fill, "align": align}
         if anchor:
             kwargs["anchor"] = anchor
-        self.draw.text((s(xy[0]), s(xy[1])), text, **kwargs)
+        self.draw.text((sx(xy[0]), sy(xy[1])), text, **kwargs)
 
     def rr(self, box, radius=24, fill=SURFACE, outline=None, width=1):
         self.draw.rounded_rectangle(
             scale_box(box),
-            radius=s(radius),
+            radius=sx(radius),
             fill=fill,
             outline=outline,
-            width=s(width),
+            width=max(1, sx(width)),
         )
 
     def rect(self, box, fill=None, outline=None, width=1):
-        self.draw.rectangle(scale_box(box), fill=fill, outline=outline, width=s(width))
+        self.draw.rectangle(scale_box(box), fill=fill, outline=outline,
+                            width=max(1, sx(width)))
 
     def line(self, points, fill=LINE, width=2):
-        self.draw.line([(s(x), s(y)) for x, y in points], fill=fill, width=s(width))
+        self.draw.line([(sx(x), sy(y)) for x, y in points], fill=fill,
+                       width=max(1, sx(width)))
 
     def ellipse(self, box, fill=None, outline=None, width=1):
-        self.draw.ellipse(scale_box(box), fill=fill, outline=outline, width=s(width))
+        # 동그라미는 동그래야 한다 — 가로만 좁히면 달걀이 된다.
+        # 가운데를 그대로 두고 가로 반지름으로 다시 그린다.
+        x0, y0, x1, y1 = box
+        cx, cy = sx((x0 + x1) / 2), sy((y0 + y1) / 2)
+        rx = sx(abs(x1 - x0) / 2)
+        ry = rx if abs((x1 - x0) - (y1 - y0)) < 2 else sy(abs(y1 - y0) / 2)
+        self.draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry),
+                          fill=fill, outline=outline, width=max(1, sx(width)))
 
     def polygon(self, points, fill=None, outline=None):
-        self.draw.polygon([(s(x), s(y)) for x, y in points], fill=fill, outline=outline)
+        self.draw.polygon([(sx(x), sy(y)) for x, y in points],
+                          fill=fill, outline=outline)
 
     def arc(self, box, start, end, fill=LINE, width=2):
         self.draw.arc(scale_box(box), start=start, end=end, fill=fill, width=s(width))
 
     def save(self, path):
         final = self.image.resize((W, H), Image.Resampling.LANCZOS)
+        final = trim_bottom(final)
         final.save(path, "WEBP", quality=90, method=6)
+
+
+def trim_bottom(im, pad=14):
+    """바닥에 남은 빈 자리를 걷어 낸다. 장면마다 끝나는 높이가 다르다."""
+    px = im.load()
+    w, h = im.size
+    last = 0
+    for y in range(h):
+        for x in range(0, w, 3):
+            r, g, b = px[x, y][:3]
+            if abs(r - BG[0]) + abs(g - BG[1]) + abs(b - BG[2]) > 12:
+                last = y
+                break
+    bottom = min(h, last + pad)
+    return im.crop((0, 0, w, bottom)) if bottom < h - 2 else im
 
 
 def header(c, title, subtitle=None):
@@ -243,7 +297,6 @@ def bank_next(c):
     c.text((104, 443), "국민 123-45-6789", 24, MUTED)
     c.line([(104, 482), (976, 482)], SOFT, 2)
     small_label(c, (104, 506), "보낼 금액")
-    money(c, (800, 494), "45,000원", 30)
 
 
 def bank_account(c):
@@ -358,22 +411,25 @@ def video_play(c):
 
 
 def book_page(c):
-    c.rect((0, 0, W, H), fill=(238, 235, 226))
+    c.rect((0, 0, LW, LH), fill=(238, 235, 226))
     c.rr((98, 56, 982, 622), 16, fill=PAPER, outline=(225, 219, 207))
     c.text((156, 112), "마지막 등불", 34, INK, True)
     paragraphs = [
-        "오래된 공방의 문이 닫히자 거리의 소리는 천천히 멀어졌다.",
-        "노인은 손바닥 위의 작은 물건을 한참 바라보다가 고개를 끄덕였다.",
-        "빛은 크지 않았지만, 나무 상판 위의 흠집마다 조용한 그림자를 남겼다.",
-        "처음 보는 사람에게는 낯선 물건이었고, 오래 쓴 사람에게는 익숙한 약속이었다.",
-        "그는 말없이 창가 쪽 의자를 당겨 놓고, 다시 등불의 심지를 낮추었다.",
-        "어둠은 방을 채웠지만, 필요한 곳만은 충분히 밝았다.",
-        "그리고 그 작은 차이가 모든 사용법의 시작이었다.",
+        "오래된 공방의 문이 닫히자",
+        "거리의 소리는 천천히 멀어졌다.",
+        "노인은 손바닥 위의 작은 물건을",
+        "한참 바라보다가 고개를 끄덕였다.",
+        "빛은 크지 않았지만, 나무 상판 위의",
+        "흠집마다 조용한 그림자를 남겼다.",
+        "그는 말없이 창가 쪽 의자를 당겨 놓고,",
+        "다시 등불의 심지를 낮추었다.",
+        "어둠은 방을 채웠지만,",
+        "필요한 곳만은 충분히 밝았다.",
     ]
     y = 178
     for line in paragraphs:
         c.text((156, y), line, 22, (72, 75, 78))
-        y += 54
+        y += 44
 
 
 def photo_slider(c):
@@ -382,8 +438,8 @@ def photo_slider(c):
 
 
 def camera_lock(c):
-    c.rect((0, 0, W, H), fill=(218, 218, 214))
-    cafe_view(c, (0, 0, W, H))
+    c.rect((0, 0, LW, LH), fill=(218, 218, 214))
+    cafe_view(c, (0, 0, LW, LH))
     c.text((70, 54), "카메라", 32, (255, 255, 255), True)
     c.text((70, 98), "카페 테이블", 21, (245, 245, 245))
 
@@ -483,9 +539,9 @@ def health_dot(c):
 
 
 def calm_play(c):
-    c.rect((0, 0, W, H), fill=(230, 235, 236))
-    c.rect((0, 0, W, 675), fill=(222, 231, 232))
-    c.rect((0, 386, W, 675), fill=(204, 217, 219))
+    c.rect((0, 0, LW, LH), fill=(230, 235, 236))
+    c.rect((0, 0, LW, 675), fill=(222, 231, 232))
+    c.rect((0, 386, LW, 675), fill=(204, 217, 219))
     for i in range(7):
         y = 420 + i * 32
         c.arc((120 - i * 20, y, 960 + i * 20, y + 68), 0, 180, blend(ACCENT, SURFACE, 0.45), 3)
@@ -515,13 +571,14 @@ def lang_record(c):
 
 
 def news_tag(c):
+    # 사진 옆에 글을 두면 좁은 판에서 제목이 잘린다. 사진을 위로 올린다.
     header(c, "오늘의 기사", "서울일보")
-    mountain_photo(c, (70, 160, 420, 270), False)
-    c.text((540, 182), "오래된 시장에 새 조명이 켜졌다", 34, INK, True)
-    c.text((540, 246), "서울일보 · 사회", 23, MUTED)
-    c.text((540, 300), "퇴근길 시민들이 밝아진 골목을 지나며\n상점가의 변화를 체감하고 있다.", 23, (77, 84, 90))
-    c.line([(70, 486), (1010, 486)], SOFT, 2)
-    c.text((70, 524), "편집국 주요 기사", 23, MUTED)
+    mountain_photo(c, (70, 160, 940, 250), False)
+    c.text((70, 452), "오래된 시장에", 34, INK, True)
+    c.text((70, 500), "새 조명이 켜졌다", 34, INK, True)
+    c.text((70, 566), "서울일보 · 사회", 23, MUTED)
+    c.text((70, 616), "퇴근길 시민들이 밝아진 골목을", 23, (77, 84, 90))
+    c.text((70, 654), "지나며 변화를 체감하고 있다.", 23, (77, 84, 90))
 
 
 def comm_like(c):
@@ -536,7 +593,7 @@ def sns_profile(c):
     header(c, "소연", "피드")
     mountain_photo(c, (160, 156, 760, 390), True)
     c.text((160, 584), "ssoyeon.day", 24, INK, True)
-    c.text((320, 584), "늦은 오후의 산책", 24, MUTED)
+    c.text((160, 628), "늦은 오후의 산책", 24, MUTED)
 
 
 def sns_comment(c):
@@ -556,12 +613,10 @@ def sns_comment(c):
 
 
 def story_tap(c):
-    mountain_photo(c, (0, 0, W, H), True)
-    c.rect((0, 0, W, 160), fill=(0, 0, 0))
-    c.rect((0, 160, W, H), fill=None)
+    mountain_photo(c, (0, 0, LW, LH), True)
     overlay = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
     od = ImageDraw.Draw(overlay)
-    od.rectangle((0, 0, W * S, s(180)), fill=(0, 0, 0, 70))
+    od.rectangle((0, 0, W * S, sy(180)), fill=(0, 0, 0, 92))
     c.image = Image.alpha_composite(c.image.convert("RGBA"), overlay).convert("RGB")
     c.draw = ImageDraw.Draw(c.image)
     c.text((70, 54), "여행 기록", 34, (255, 255, 255), True)
@@ -589,15 +644,18 @@ def perm_allow(c):
 def sub_trial(c):
     header(c, "구독 안내", "요금제와 혜택")
     c.rr((70, 160, 1010, 520), 30)
-    c.text((110, 204), "스탠더드", 28, INK, True)
-    c.text((430, 204), "프로", 28, INK, True)
-    c.text((720, 204), "팀", 28, INK, True)
+    c.text((350, 204), "스탠더드", 26, INK, True)
+    c.text((620, 204), "프로", 26, INK, True)
+    c.text((830, 204), "팀", 26, INK, True)
     c.line([(110, 252), (970, 252)], SOFT, 2)
-    rows = [("월 요금", "7,900원", "12,900원", "24,000원"), ("저장 공간", "10GB", "50GB", "200GB"), ("공유 인원", "1명", "3명", "8명")]
+    rows = [("월 요금", "7,900원", "12,900원", "24,000원"),
+            ("저장 공간", "10GB", "50GB", "200GB"),
+            ("공유 인원", "1명", "3명", "8명")]
+    xs = [110, 350, 620, 830]
     y = 294
     for row in rows:
         for i, txt in enumerate(row):
-            c.text((110 + i * 300, y), txt, 23, MUTED if i == 0 else INK, bold=i > 0)
+            c.text((xs[i], y), txt, 23, MUTED if i == 0 else INK, bold=i > 0)
         y += 64
 
 
@@ -654,13 +712,13 @@ def file_upload(c):
 
 def cloud_sync(c):
     header(c, "클라우드 저장공간", "용량 현황")
-    c.rr((70, 176, 1010, 406), 30)
+    c.rr((70, 176, 1010, 444), 30)
     c.text((110, 222), "사용 중", 24, MUTED)
     c.text((110, 268), "38.4GB", 42, INK, True)
-    c.text((290, 282), "/ 100GB", 26, MUTED)
-    c.rr((110, 342, 930, 374), 16, fill=(235, 239, 241))
-    c.rr((110, 342, 426, 374), 16, fill=blend(ACCENT, SURFACE, 0.1))
-    c.text((110, 470), "남은 용량 61.6GB", 28, ACCENT_DARK, True)
+    c.text((110, 326), "/ 100GB", 26, MUTED)
+    c.rr((110, 380, 930, 412), 16, fill=(235, 239, 241))
+    c.rr((110, 380, 426, 412), 16, fill=blend(ACCENT, SURFACE, 0.1))
+    c.text((110, 486), "남은 용량 61.6GB", 28, ACCENT_DARK, True)
 
 
 def coupon_apply(c):

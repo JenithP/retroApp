@@ -154,9 +154,10 @@
    무슨 앱인지는 그림이 말해 준다. 조작 단서는 아니다 —
    만지는 것은 그 아래 부품들이고, 거기에는 아무 단서도 없다. */
 .appbg{width:100%;border-radius:2px;overflow:hidden;background:#EFEFED;
-  max-height:170px;display:none}
+  max-height:340px;display:none}
 .appbg.got{display:block}
-.appbg img{width:100%;display:block;object-fit:cover;max-height:170px}
+.appbg img{width:100%;display:block;object-fit:cover;object-position:top;
+  max-height:340px}
 
 
 /* ── 주문서의 부품 목록 ───────────────────────────────────────
