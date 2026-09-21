@@ -29,7 +29,7 @@ export function judge(job, attached) {
     const p = job.parts.find(x => x.id === id);
     for (const x of (at[id] || [])) {
       worn++;
-      // 눌리지도 않는 것을 누를 수 있게 꾸며 두면 그것이 거짓 단서다
+      // 터치되지도 않는 것을 터치할 수 있게 꾸며 두면 그것이 거짓 단서다
       if (p && p.decoy && givesOf(x.recipe).indexOf("push") >= 0) astray++;
     }
   }
@@ -59,7 +59,7 @@ export function appraise(job, attached) {
 
   if (v.astray) {
     price -= v.astray * 30;
-    notes.push(["bad", `눌리지 않는 곳을 누를 수 있게 보이도록 꾸몄습니다 — 거짓 단서 ${v.astray}개입니다.`]);
+    notes.push(["bad", `터치되지 않는 곳을 터치할 수 있게 보이도록 꾸몄습니다 — 거짓 단서 ${v.astray}개입니다.`]);
   }
   if (v.worn > 12) {
     price -= (v.worn - 12) * 10;

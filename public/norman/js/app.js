@@ -1,6 +1,6 @@
 // 주문으로 들어온 화면 — 의뢰 데이터로 조립해 그린다.
 //
-// 어느 의뢰든 **처음부터 다 작동한다.** 칸에는 글자가 써지고 버튼은 눌리고
+// 어느 의뢰든 **처음부터 다 작동한다.** 칸에는 글자가 써지고 버튼은 터치되고
 // 목록은 밀린다. 다만 그렇다고 알려 주지 않는다.
 // 어포던스는 다 있고, 없는 것은 시그니파이어뿐이다.
 
@@ -9,7 +9,7 @@ import { recipeById } from "./parts.js";
 
 export const fresh = job => ({
   vals: {},                 // 부품마다의 값 — 글자·켜짐·지워짐 따위
-  hits: {},                 // 부품을 몇 번 눌렀나
+  hits: {},                 // 부품을 몇 번 터치했나
   order: (job.parts || []).map(p => p.id),
 });
 
@@ -68,7 +68,7 @@ function stateText(p, st) {
     case "progress": return st.vals[p.id] ? "완료됨" : "진행 중";
     case "status":   return st.hits.__sent ? "읽음" : "보내는 중";
     case "icon":     return p.counts ? (st.hits[p.counts] || 0) + "개 담김" : "";
-    case "button":   return (st.hits[p.id] || 0) + "번 눌림";
+    case "button":   return (st.hits[p.id] || 0) + "번 터치됨";
     default:         return "";
   }
 }
@@ -209,7 +209,7 @@ export const doneSteps = (job, st) =>
 
 export const allDone = (job, st) => doneSteps(job, st) === job.steps.length;
 
-/** 헛눌림 — 과업에 없는 곳이나 decoy 를 누른 횟수, 그리고 연타 */
+/** 잘못 터치함 — 과업에 없는 곳이나 decoy 를 터치한 횟수, 같은 곳을 또 터치한 횟수 */
 export function strayHits(job, st) {
   const wanted = {};
   job.steps.forEach(s => { wanted[s.part] = true; });

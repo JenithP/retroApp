@@ -20,6 +20,14 @@
 .btnstrip.asplain{background:transparent;font-weight:400;color:var(--ink-soft);
   justify-content:flex-start;padding:0 2px}
 
+/* 이름 단서가 없는 자리 — 빈 회색 띠는 앱이 아니라 수수께끼다.
+   실제로 이런 화면에는 무언가가 적혀 있다. 주소든 값이든. 다만 그것이
+   「여기를 터치하면 이렇게 된다」를 알려 주지 않을 뿐이다.
+   그래서 글자는 보이되 버튼처럼 보이지는 않게 그린다. */
+.btnstrip.nameless{background:transparent;font-weight:400;color:var(--ink);
+  justify-content:flex-start;padding:0 2px;height:auto;min-height:38px;
+  border-top:1px solid var(--bare)}
+
 /* 켜고 끄는 것 — 켜짐과 꺼짐의 차이가 거의 없다 */
 .toggle{width:100%;height:40px;border:0;border-radius:2px;background:var(--bare);
   display:flex;align-items:center;justify-content:space-between;padding:0 10px;

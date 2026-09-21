@@ -1,7 +1,7 @@
 // 대화창 — 공방 아래쪽에 한 줄씩 뜨는 말.
 //
 // 3주차 활자의 문과 같은 자리, 같은 조작이다. 말이 한 줄씩 흐르고,
-// 아무 데나 누르면 다음으로 넘어간다.
+// 아무 데나 터치하면 다음으로 넘어간다.
 //
 // 시연 중에는 손님이 사건에 맞춰 말하므로 기다리지 않고 바로 갈아 끼운다.
 // 노만 영감이 설명할 때만 사람이 읽을 틈을 준다.
@@ -73,11 +73,11 @@ function run() {
     typer = 0;
     if (it.hold) resting = setTimeout(run, it.hold);
     else if (queue.length) resting = setTimeout(run, 420);
-    else { busy = false; next.hidden = false; }      // 읽고 눌러서 넘기게 둔다
+    else { busy = false; next.hidden = false; }      // 읽고 터치해서 넘기게 둔다
   }, 18);
 }
 
-/** 눌러서 건너뛰기 — 아직 다 안 쓰였으면 마저 쓰고, 다 쓰였으면 다음으로. */
+/** 터치해서 건너뛰기 — 아직 다 안 쓰였으면 마저 쓰고, 다 쓰였으면 다음으로. */
 function skip() {
   if (!cur) return;
   if (line.textContent.length < cur.text.length) {

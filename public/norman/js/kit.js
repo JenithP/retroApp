@@ -1,13 +1,13 @@
 // 부품 라이브러리 — 의뢰마다 조립해 쓰는 진짜 위젯들.
 //
-// 전부 **처음부터 작동한다.** 칸에는 글자가 써지고, 버튼은 눌리고,
+// 전부 **처음부터 작동한다.** 칸에는 글자가 써지고, 버튼은 터치되고,
 // 목록은 밀리고, 막대는 끌린다. 다만 그렇다고 알려 주지 않을 뿐이다.
 // 무엇이 빠졌는지는 need 가 적어 두고, 테스트 사용자가 그걸로 불평한다.
 
 import { ICONS, svgOf } from "./icons.js";
 
 /* ── 부품 종류마다 무엇을 알려야 쓰이는가 ─────────────────────
-   name  무엇인지 · type 쓸 수 있다는 것 · push 누를 수 있다는 것
+   name  무엇인지 · type 쓸 수 있다는 것 · push 터치할 수 있다는 것
    feed  하고 난 뒤 어찌 됐는지 · state 지금 어떤 상태인지 · move 밀거나 끌 수 있다는 것 */
 
 const NEED = {
@@ -101,8 +101,8 @@ function wrapText(name, sub) {
    카드는 의뢰마다 다르게 생겨야 한다. 쇼핑은 상품 카드, 숙박은 객실 카드,
    SNS 는 게시물 카드… 전부 같은 회색 네모로 그리면 「회색 버튼 퍼즐」이 된다.
 
-   그러면서도 **누를 수 있다는 것은 알리지 않는다.** 사진도 이름도 값도 다
-   보이는데, 이 덩어리 전체가 하나의 누를 거리인지 사진만 눌리는지는 알 수 없다.
+   그러면서도 **터치할 수 있다는 것은 알리지 않는다.** 사진도 이름도 값도 다
+   보이는데, 이 덩어리 전체가 하나의 터치할 거리인지 사진만 터치되는지는 알 수 없다.
    문제는 「조작할 것이 없음」이 아니라 「있는데 그 사실이 애매함」이다. */
 
 function cardOf(p) {
@@ -206,9 +206,14 @@ export function build(p, st) {
       return n;
     }
     case "button": {
+      // 이름 단서가 없는 버튼이라고 해서 **빈 회색 띠**로 그리면, 그것은
+      // 고장 난 앱이 아니라 수수께끼다. 실제 앱에는 무언가가 적혀 있고,
+      // 다만 그것이 「무엇을 하는 곳인지」를 알려 주지 않을 뿐이다.
+      // dim 은 그 자리에 실제로 놓여 있는 글자다 — 이름 단서가 아니다.
       const n = el("button", "box btnstrip" +
-        (p.look === "dead" ? " faded" : p.look === "flat" ? " asplain" : ""),
-        p.look ? (p.label || "") : "");
+        (p.look === "dead" ? " faded" : p.look === "flat" ? " asplain" : "") +
+        (!p.look && p.dim ? " nameless" : ""),
+        p.look ? (p.label || "") : (p.dim || ""));
       n.dataset.act = "press:" + p.id;
       n.setAttribute("aria-label", p.label || "버튼");
       return n;
@@ -226,7 +231,9 @@ export function build(p, st) {
       n.dataset.act = "press:" + p.id;
       n.setAttribute("aria-label", p.label || "그림");
       n.appendChild(svgOf(ICONS[p.icon] || ICONS.list));
-      n.appendChild(el("span", "ibadge", String(st.hits[p.counts] || 0)));
+      // 셀 것이 있을 때만 숫자를 단다. 없는데도 0을 달아 두면
+      // 그 자체가 무슨 뜻인지 모를 표시가 된다.
+      if (p.counts) n.appendChild(el("span", "ibadge", String(st.hits[p.counts] || 0)));
       if (p.decoy) n.classList.add("decoy");
       return n;
     }

@@ -92,7 +92,7 @@ function paintOrder() {
     '<h1>' + job.app + ' <span>' + job.screen + '</span></h1>' +
     '<p class="otask">' + job.task + '</p>' +
     '<p class="osay">사용자 말 — 「' + job.say + '」</p>' +
-    '<p class="opartstop">이 화면에 있는 것 <small>눌러서 짚어 봅니다</small></p>' +
+    '<p class="opartstop">이 화면에 있는 것 <small>터치해서 짚어 봅니다</small></p>' +
     '<p class="oparts">' + job.parts.map(function (p) {
       return '<button class="part-chip k-' + p.kind + '" data-point="' + p.id + '">' +
         (p.label || p.text || p.id) + '</button>';
@@ -188,7 +188,7 @@ nodes.screen.addEventListener("input", function (e) {
   redraw({ craft: false });
 });
 
-/** 부품 이름을 누르면 화면에서 잠깐 짚어 준다 */
+/** 부품 이름을 터치하면 화면에서 잠깐 짚어 준다 */
 nodes.order.addEventListener("click", function (e) {
   const c = e.target.closest("[data-point]");
   if (!c) return;
@@ -509,7 +509,7 @@ function follow() {
 }
 
 /* ── 활동이 끝났을 때 ─────────────────────────────────────────
-   교수가 현황판에서 종료를 누르면 서버가 포인트를 더 움직이지 않는다.
+   교수가 현황판에서 종료를 터치하면 서버가 포인트를 더 움직이지 않는다.
    학생 화면은 여기서 멈추고, 자기 조 기록이 적힌 워크북을 내려 준다. */
 
 let closedAlready = false;

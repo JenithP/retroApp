@@ -51,7 +51,7 @@ function paint() {
              <p class="bill${over ? " over" : ""}">합계 <b>${bill()}</b>${
                over ? " — 포인트가 모자랍니다" : ""}</p>
              <button class="big" id="pay"${over ? " disabled" : ""}>구매하고 공방으로</button>`
-          : `<p class="cartempty">아직 담은 것이 없습니다.<br>재료를 눌러 장바구니에 담으세요.</p>`}
+          : `<p class="cartempty">아직 담은 것이 없습니다.<br>재료를 터치해 장바구니에 담으세요.</p>`}
         <button class="flag ghost wide2" id="leave">그냥 공방으로 돌아가기</button>
       </aside>
     </div>`;

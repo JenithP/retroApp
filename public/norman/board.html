@@ -194,7 +194,7 @@ async function look(quiet) {
   if (!quiet) tell("불러왔습니다. " + new Date().toLocaleTimeString("ko-KR"), true);
 }
 
-/* ── 단추 ─────────────────────────────────────────────────── */
+/* ── 버튼 ─────────────────────────────────────────────────── */
 
 $("look").addEventListener("click", () => look(false));
 $("key").addEventListener("keydown", e => { if (e.key === "Enter") look(false); });

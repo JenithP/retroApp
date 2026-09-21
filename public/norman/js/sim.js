@@ -19,7 +19,7 @@ function sleeper(tok) {
 const STUCK = {
   name:  "무엇을 하는 곳인지 모름",
   type:  "입력할 수 있는 칸인지 모름",
-  push:  "누를 수 있는 곳인지 모름",
+  push:  "터치할 수 있는 곳인지 모름",
   feed:  "조작한 뒤 결과를 알 수 없음",
   state: "현재 상태를 알 수 없음",
   move:  "밀거나 끌 수 있는지 모름",
@@ -59,7 +59,7 @@ export async function cold(ui) {
     await wait(100);
   };
 
-  /** 이 부품 말고 눌러 볼 만한 다른 곳 */
+  /** 이 부품 말고 터치해 볼 만한 다른 곳 */
   const elsewhere = id => job.parts
     .filter(p => p.id !== id && p.kind !== "text")
     .slice(0, 2).map(p => p.id);
@@ -76,14 +76,14 @@ export async function cold(ui) {
       const miss = missingOn(job, at, s.part);
       const lacks = k => miss.indexOf(k) >= 0;
 
-      /* ① 찾기 — 무엇인지 모르면 엉뚱한 데를 눌러 본다 */
+      /* ① 찾기 — 무엇인지 모르면 엉뚱한 데를 터치해 본다 */
       if (lacks("name")) {
         note(s.part, "name");
         say("seek", s.part, "어느 요소를 써야 하는지 모름");
         for (const w of elsewhere(s.part)) {
           await tap(w);
           act(job, st, "press:" + w); redraw();
-          say("miss", w, "다른 곳을 눌러 봄");
+          say("miss", w, "다른 곳을 터치해 봄");
         }
         say("hit", s.part, "여러 번 시도한 뒤 겨우 찾음");
       } else {
@@ -99,7 +99,7 @@ export async function cold(ui) {
       }
       if ((s.do === "press") && lacks("push")) {
         note(s.part, "push");
-        say("blind", s.part, "누를 수 있는 곳인지 알 수 없음");
+        say("blind", s.part, "터치할 수 있는 곳인지 알 수 없음");
         await wait(700);
       }
       if ((s.do === "swipe" || s.do === "drag") && lacks("move")) {
@@ -132,19 +132,19 @@ export async function cold(ui) {
          체크·스위치·탭이 여기에 걸린다. 평가의 간극이다. */
       if (s.do !== "read" && lacks("state")) {
         note(s.part, "state");
-        say("blind", s.part, "눌렀지만 지금 어떤 상태인지 알 수 없음");
+        say("blind", s.part, "터치했지만 지금 어떤 상태인지 알 수 없음");
         await wait(700);
       }
 
-      /* ⑤ 어찌 됐는지 — 아무 말이 없으면 연타한다 */
+      /* ⑤ 어찌 됐는지 — 아무 말이 없으면 같은 곳을 반복 터치한다 */
       if (s.do === "press" && lacks("feed")) {
         note(s.part, "feed");
-        say("repeat", s.part, "눌렀지만 결과가 보이지 않음");
+        say("repeat", s.part, "터치했지만 결과가 보이지 않음");
         const again = 3;
         for (let k = 0; k < again; k++) {
           await tap(s.part); act(job, st, "press:" + s.part); redraw(); await wait(110);
         }
-        say("repeat", s.part, again + "번 더 눌러 봄");
+        say("repeat", s.part, again + "번 더 터치해 봄");
       }
     }
 
@@ -182,7 +182,7 @@ function verdict(job, st, evs, stuck, blocked) {
   const stray = strayHits(job, st);
 
   // 의뢰가 그 부품에 맞는 말을 적어 두었으면 그것을 쓴다.
-  // 「누를 수 있는 곳인지 모름」보다 「카드 전체를 눌러 들어갈 수 있는지
+  // 「터치할 수 있는 곳인지 모름」보다 「카드 전체를 터치해 들어갈 수 있는지
   // 알기 어렵습니다」가 학생에게 훨씬 잘 와닿는다.
   const words = stuck.map(k => {
     const bits = k.split(":");

@@ -40,7 +40,7 @@ export function paint() {
     </div>
 
     <div class="cmats">
-      <h3>내 재료 <small>누르면 조합대에 올라갑니다</small></h3>
+      <h3>내 재료 <small>터치하면 조합대에 올라갑니다</small></h3>
       ${mine.length
         ? `<div class="mgrid">${mine.map(m =>
             `<button class="mchip" data-mat="${m.id}">
@@ -49,7 +49,7 @@ export function paint() {
     </div>
 
     <div class="cworn">
-      <h3>화면에 붙인 단서 <small>×를 누르면 떼어집니다</small></h3>
+      <h3>화면에 붙인 단서 <small>×를 터치하면 떼어집니다</small></h3>
       ${wornList()}
     </div>
 
@@ -104,7 +104,7 @@ function toolChip(t, i) {
     </div>`;
 }
 
-/* ── 누르기 ───────────────────────────────────────────────── */
+/* ── 터치하기 ───────────────────────────────────────────────── */
 
 document.addEventListener("click", async function (e) {
   if (!ctx || ctx.nodes.craft.hidden || ctx.nodes.craft.closest("[hidden]")) return;
