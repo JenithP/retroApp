@@ -70,7 +70,7 @@ function takeJob(j) {
   Object.keys(attached).forEach(function (k) { delete attached[k]; });
   lastRun = null;
   nodes.verdict.hidden = true;
-  nodes.whoami.textContent = job.app + " · " + job.screen;
+  nodes.whoami.textContent = "맡은 일 — " + job.app + " " + job.screen;
 }
 
 /* ── 붙이고 떼기 ──────────────────────────────────────────── */
@@ -218,30 +218,23 @@ $("reset").addEventListener("click", function () {
 $("cold").addEventListener("click", async function () {
   stopSim(); st = fresh(job); unbare();
   redraw();
-  nodes.note.innerHTML = "<b>처음 만져 보는 사람</b>이 테스트하는 중입니다.";
+  nodes.note.innerHTML = "<b>돌려 보는 중입니다.</b> 어디서 멈추는지 보십시오.";
 
   const dot = document.createElement("div");
   dot.className = "cursor"; dot.hidden = true;
   $("phone").appendChild(dot);
 
-  const who = document.createElement("div");
-  who.className = "guestbox";
-  who.innerHTML = '<div class="port p-guest">' + faceSVG("guest") +
-    (hasArt("guest") ? '<img src="img/guest.webp" alt="">' : "") + "</div><p>테스트</p>";
-  $("phone").appendChild(who);
-
   Talk.hush();
-  Talk.say("norman", NORMAN.beforeGuest, 1800);
+  Talk.say("norman", NORMAN.beforeTest, 1600);
 
   nodes.verdict.hidden = false;
-  nodes.verdict.innerHTML = '<h3>테스트 사용자</h3><ol class="tl" id="tl"></ol>';
+  nodes.verdict.innerHTML = '<h3>돌려 보는 중…</h3><ol class="tl" id="tl"></ol>';
   const tl = $("tl");
 
   tok = { dead: false, cancels: [] };
   const v = await Sim.cold({
     job: job, st: st, attached: attached, screen: nodes.screen, dot: dot, tok: tok,
     redraw: function () { redraw({ craft: false }); },
-    speak: function (w, t) { Talk.cut(w, t); },
     log: function (e) {
       const li = document.createElement("li");
       li.className = "ev k-" + e.kind;
@@ -249,7 +242,7 @@ $("cold").addEventListener("click", async function () {
       tl.appendChild(li); tl.scrollTop = tl.scrollHeight;
     },
   });
-  dot.remove(); who.remove();
+  dot.remove();
   if (v) { lastRun = v; showVerdict(v); Talk.say("norman", NORMAN.verdict(v)); stash(); }
 });
 
@@ -280,23 +273,33 @@ function showVerdict(v) {
   ];
 
   nodes.verdict.innerHTML =
-    "<h3>테스트 사용자 " + (v.clean
-      ? "<em class='good'>막힘 없이 해냈습니다</em>"
-      : "<em class='bad'>막혔습니다</em>") + "</h3>" +
+    "<h3>돌려 본 결과 " + (v.clean
+      ? "<em class='good'>막힘이 없었습니다</em>"
+      : "<em class='bad'>막히는 데가 있습니다</em>") + "</h3>" +
     '<div class="scores">' + rows.map(function (r) {
       return '<div class="score' + (r[3] ? " hot" : "") + '"><b>' + r[1] +
         "</b><span>" + r[0] + "</span><small>" + r[2] + "</small></div>";
     }).join("") + "</div>" +
     (v.stuck.length
-      ? '<div class="stuck"><p class="stucktop">사용자가 말한 불편</p><ul>' +
+      ? '<div class="stuck"><p class="stucktop">멈춘 곳</p><ul>' +
         v.stuck.map(function (t) { return "<li>" + t + "</li>"; }).join("") +
         '</ul><p class="stuckdim">어느 연장을 만들어 어디에 붙일지는 여러분이 정합니다.</p></div>'
-      : '<p class="stuck ok">막히는 데가 없었습니다. 앱시장에 내놓아 보십시오.</p>') +
+      : "") +
+    '<div class="vend">' +
+      (v.passed
+        ? '<button class="big" id="tomarket">다 됐다 — 앱시장에 내놓는다</button>'
+        : '<p class="notyet">아직 시킨 일을 끝까지 해내지 못합니다. ' +
+          '더 고쳐야 내놓을 수 있습니다.</p>') +
+    "</div>" +
     '<ol class="tl">' + v.evs.map(function (e) {
       return '<li class="ev k-' + e.kind + '"><b>' + e.t.toFixed(1) +
         "초</b><span>" + e.text + "</span></li>";
     }).join("") + "</ol>";
 }
+
+nodes.verdict.addEventListener("click", function (e) {
+  if (e.target.closest("#tomarket")) go("market");
+});
 
 /* ── 자리 옮기기 — 공방 · 상점 · 앱시장 · 문제 풀기 ───────── */
 

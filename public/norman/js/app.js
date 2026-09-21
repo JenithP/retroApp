@@ -96,6 +96,8 @@ function dress(box, core, at, id, words) {
   return box;
 }
 
+const noBg = {};              // 배경 그림이 없는 의뢰 — 한 번만 찾아본다
+
 export function render(screen, job, st, at, layout, arrange) {
   screen.textContent = "";
   screen.classList.toggle("arranging", !!arrange);
@@ -105,6 +107,19 @@ export function render(screen, job, st, at, layout, arrange) {
   const head = el("div", "appbar");
   head.append(el("span", "appback", "\u2039"), el("span", "apphead", job.screen));
   screen.appendChild(head);
+
+  // 이 앱이 무엇을 하는 앱인지는 배경 그림이 말해 준다.
+  // 그림은 맥락일 뿐 조작 단서가 아니다 — 만지는 것은 아래 부품들이다.
+  // 파일이 없으면 조용히 건너뛴다.
+  if (!noBg[job.id]) {
+    const bg = el("div", "appbg");
+    const img = new Image();
+    img.alt = "";
+    img.onload = function () { bg.appendChild(img); bg.classList.add("got"); };
+    img.onerror = function () { noBg[job.id] = true; bg.remove(); };
+    img.src = "img/jobs/" + job.id + ".webp";
+    screen.appendChild(bg);
+  }
 
   const ids = (layout && layout.length ? layout : st.order)
     .filter(id => partOf(job, id));

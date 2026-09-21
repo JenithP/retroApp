@@ -492,3 +492,12 @@ input.box{cursor:text;justify-content:flex-start}
 .mg{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;
   border:1px solid #BFBBB2;border-radius:4px;padding:4px 5px 5px}
 .mg b{font-size:.56rem;color:#232323;align-self:flex-start;font-weight:500}
+
+
+/* 맡은 일은 메뉴가 아니다 — 자리 단추와 헷갈리지 않게 */
+.whoami{font-size:.78rem;color:#7E756B;border-left:1px solid var(--line);padding-left:12px}
+
+/* 돌려 본 뒤에 내놓기 */
+.vend{margin-top:11px;border-top:1px solid var(--line);padding-top:11px}
+.vend .big{margin-top:0;padding:11px}
+.notyet{margin:0;font-size:.8rem;color:var(--ui-soft);line-height:1.6}
