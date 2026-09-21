@@ -163,7 +163,7 @@ input.box{cursor:text;justify-content:flex-start}
 .verdict h3{font-family:var(--serif);font-size:1rem;margin:0 0 9px}
 .verdict h3 em{font-style:normal;font-size:.8rem;font-family:var(--sans);font-weight:400}
 .verdict h3 em.good{color:var(--ok)} .verdict h3 em.bad{color:var(--bad)}
-.scores{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px}
+.scores{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:11px}
 .score{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:8px}
 .score.hot{border-color:var(--bad)}
 .score b{display:block;font-size:1.2rem;font-weight:700;font-family:var(--sans)}

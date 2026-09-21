@@ -280,6 +280,9 @@ function showVerdict(v) {
     ["잘못 터치함", v.evalGap, "엉뚱한 곳을 터치하거나 같은 곳을 또 터치한 횟수", v.evalGap > 0],
     ["과제 완료", v.right + " / " + v.of,
       v.passed ? "끝까지 성공했습니다" : "중간에 막혔습니다", !v.passed],
+    ["모자란 단서", v.blocked, v.blocked
+      ? "이만큼 채워야 앱시장이 받아 줍니다" : "앱시장에 내놓을 수 있습니다",
+      v.blocked > 0],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],
   ];
 
@@ -297,11 +300,17 @@ function showVerdict(v) {
         '</ul><p class="stuckdim">오른쪽 <b>단서 조합표</b>에서 같은 기준을 찾으세요. ' +
         '그 줄에 적힌 재료를 사 오면 부족한 단서를 만들 수 있습니다.</p></div>'
       : "") +
+    // 앱시장이 받아 줄 화면일 때만 내놓기를 연다. 과제를 끝까지 해냈다는
+    // 것만으로는 모자란다 — 끝까지 가기는 했지만 무엇이 골라졌는지 모르는
+    // 화면이 있다. 여기서 열어 두면 시장에 가서 되돌아온다.
     '<div class="vend">' +
-      (v.passed
+      (v.sellable
         ? '<button class="big" id="tomarket">다 됐습니다 — 앱시장에 내놓기</button>'
-        : '<p class="notyet">아직 사용자가 과제를 끝까지 해내지 못합니다. ' +
-          '더 고쳐야 내놓을 수 있습니다.</p>') +
+        : '<p class="notyet">' + (v.passed
+            ? "끝까지 해내기는 했지만 아직 " + v.blocked +
+              "군데에 단서가 모자랍니다. "
+            : "아직 사용자가 과제를 끝까지 해내지 못합니다. ") +
+          "더 고쳐야 내놓을 수 있습니다.</p>") +
     "</div>" +
     '<ol class="tl">' + v.evs.map(function (e) {
       return '<li class="ev k-' + e.kind + '"><b>' + e.t.toFixed(1) +

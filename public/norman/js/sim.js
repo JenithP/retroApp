@@ -128,7 +128,15 @@ export async function cold(ui) {
         say("done", s.part, "조작을 수행함");
       }
 
-      /* ④ 어찌 됐는지 — 아무 말이 없으면 연타한다 */
+      /* ④ 그래서 지금 어떤 상태인가 — 켜졌는지 골랐는지 모르면 멈춘다.
+         체크·스위치·탭이 여기에 걸린다. 평가의 간극이다. */
+      if (s.do !== "read" && lacks("state")) {
+        note(s.part, "state");
+        say("blind", s.part, "눌렀지만 지금 어떤 상태인지 알 수 없음");
+        await wait(700);
+      }
+
+      /* ⑤ 어찌 됐는지 — 아무 말이 없으면 연타한다 */
       if (s.do === "press" && lacks("feed")) {
         note(s.part, "feed");
         say("repeat", s.part, "눌렀지만 결과가 보이지 않음");
@@ -140,8 +148,22 @@ export async function cold(ui) {
       }
     }
 
+    /* ⑥ 빠뜨린 것이 없는지 마지막으로 훑는다.
+       여기서 잡히는 것은 앱시장이 잡는 것과 같다. 둘이 다른 말을 하면
+       「테스트는 됐다는데 시장은 안 받는다」가 되어, 조는 무엇을 믿어야
+       할지 알 수 없게 된다. */
+    const seen = {};
+    let blocked = 0;
+    for (const s of job.steps) {
+      if (seen[s.part]) continue;          // 한 부품을 두 번 밟아도 한 군데다
+      seen[s.part] = true;
+      const left = missingOn(job, at, s.part);
+      if (left.length) blocked++;
+      for (const k of left) note(s.part, k);
+    }
+
     ui.dot.hidden = true;
-    return verdict(job, st, evs, stuck);
+    return verdict(job, st, evs, stuck, blocked);
   } catch (e) {
     if (e instanceof Stop) { ui.dot.hidden = true; return null; }
     throw e;
@@ -150,7 +172,7 @@ export async function cold(ui) {
 
 /* ── 판정 ─────────────────────────────────────────────────── */
 
-function verdict(job, st, evs, stuck) {
+function verdict(job, st, evs, stuck, blocked) {
   const miss  = evs.filter(e => e.kind === "miss").length;
   const seek  = evs.filter(e => e.kind === "seek").length;
   const blind = evs.filter(e => e.kind === "blind").length;
@@ -177,7 +199,12 @@ function verdict(job, st, evs, stuck) {
     evalGap: stray,
     right: done, of: job.steps.length,
     wrong: 0,
+    blocked: blocked,
     passed: allDone(job, st),
-    clean: seek === 0 && miss === 0 && blind === 0 && stray === 0 && allDone(job, st),
+    // 앱시장이 받아 줄 화면인가. 과제를 끝냈다는 것과는 다른 물음이다 —
+    // 끝까지 가기는 했지만 무엇이 골라졌는지 모르는 화면이 있다.
+    sellable: blocked === 0,
+    clean: seek === 0 && miss === 0 && blind === 0 && stray === 0 &&
+           blocked === 0 && allDone(job, st),
   };
 }
