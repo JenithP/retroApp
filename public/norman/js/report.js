@@ -103,7 +103,7 @@ const blank = n => "&nbsp;".repeat(n || 30);
 
 function runCell(r) {
   if (!r) return "<i>테스트해 보지 않음</i>";
-  return "막힌 횟수 <b>" + r.exec + "</b> · 헛누름 <b>" + r.stray + "</b> · " +
+  return "막힌 횟수 <b>" + r.exec + "</b> · 잘못 터치함 <b>" + r.stray + "</b> · " +
     "과제 완료 <b>" + r.done + " / " + r.of + "</b> · 걸린 시간 " +
     Number(r.secs).toFixed(1) + "초";
 }
@@ -236,14 +236,14 @@ export function workbookHTML(g, opts) {
 
     "<h3>2. <span class=pt>20점</span>막힌 곳이 실행의 간극이었는지 평가의 간극이었는지 " +
     "가르십시오.</h3>" +
-    '<p class="lead">1부의 「사용자 말」과 「헛누름」 숫자를 ' +
+    '<p class="lead">1부의 「사용자 말」과 「잘못 터치함」 숫자를 ' +
     "근거로 드십시오. 두 간극은 해결 방식이 다릅니다(22쪽). " +
     "조가 붙인 단서가 그 방식에 맞았는지 따져 쓰십시오.</p>" +
     "<table class=ask><tr><td>&nbsp;</td></tr></table>" +
 
     "<h3>3. <span class=pt>20점</span>숫자가 줄어든 까닭을 대십시오.</h3>" +
     '<p class="lead">1부의 「처음 테스트 결과」와 「마지막 테스트 ' +
-    "결과」를 견주어, <b>막힌 횟수</b>와 <b>헛누름</b>이 줄어든(또는 줄지 않은) " +
+    "결과」를 견주어, <b>막힌 횟수</b>와 <b>잘못 터치함</b>이 줄어든(또는 줄지 않은) " +
     "까닭을 쓰십시오. 줄지 않았다면 무엇이 모자랐는지 쓰십시오.</p>" +
     "<table class=ask><tr><td>&nbsp;</td></tr></table>" +
 

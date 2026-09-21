@@ -318,7 +318,7 @@ function stopSim() {
 function showVerdict(v) {
   const rows = [
     ["막힌 횟수", v.exec, "무엇을 해야 할지 몰라 멈춘 횟수", v.exec > 0],
-    ["헛누름", v.evalGap, "엉뚱한 곳을 누르거나 같은 곳을 또 누른 횟수", v.evalGap > 0],
+    ["잘못 터치함", v.evalGap, "엉뚱한 곳을 터치하거나 같은 곳을 또 터치한 횟수", v.evalGap > 0],
     ["과제 완료", v.right + " / " + v.of,
       v.passed ? "끝까지 성공했습니다" : "중간에 막혔습니다", !v.passed],
     ["걸린 시간", v.secs.toFixed(1) + "초", "", false],
