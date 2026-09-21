@@ -13,6 +13,11 @@ export function judge(job, attached) {
   const gaps = [];
 
   for (const p of job.parts) {
+    // 미끼는 터치해도 아무 일이 없는 것이다. 알릴 것이 없으므로 모자란
+    // 단서도 없다. 이것을 세면 「미끼를 비워 두면 +60을 못 받고,
+    // 붙이면 −30만 물고 +60을 받는다」가 되어, 거짓 단서를 붙이는 쪽이
+    // 30점을 더 받는다. 수업에서 가르치는 것과 정반대가 된다.
+    if (p.decoy) continue;
     const given = {};
     for (const x of (at[p.id] || []))
       for (const g of givesOf(x.recipe)) given[g] = true;

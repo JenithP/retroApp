@@ -360,7 +360,7 @@ def food_option(c):
 
 
 def map_pin(c):
-    header(c, "주변 지도", "핀 없는 지도 화면")
+    header(c, "주변 지도", "성북동 일대")
     map_scene(c, (70, 160, 940, 450), False)
 
 
@@ -403,7 +403,7 @@ def music_cover(c):
 
 
 def video_play(c):
-    header(c, "요리 영상", "재생 표시 없는 목록")
+    header(c, "요리 영상", "오늘의 추천")
     cooking_thumb(c, (70, 166, 420, 236), 0)
     cooking_thumb(c, (590, 166, 420, 236), 1)
     c.text((70, 430), "집밥 김치볶음밥", 28, INK, True)
@@ -494,7 +494,7 @@ def cal_drag(c):
 
 
 def todo_check(c):
-    header(c, "오늘", "할 일 앱 상단")
+    header(c, "오늘", "9월 21일 월요일")
     c.rr((70, 170, 1010, 352), 30)
     c.text((110, 210), "2026년 9월 21일", 34, INK, True)
     c.text((110, 260), "월요일 · 맑음", 25, MUTED)
@@ -626,7 +626,7 @@ def story_tap(c):
 
 
 def set_toggle(c):
-    header(c, "설정", "구분선만 있는 상단")
+    header(c, "설정", "알림과 계정")
     sections = ["계정", "알림", "화면", "개인정보"]
     y = 180
     for title in sections:
@@ -673,7 +673,7 @@ def sub_cancel(c):
 
 
 def login_error(c):
-    header(c, "환영합니다", "로그인 화면 상단")
+    header(c, "환영합니다", "다시 만나 반가워요")
     c.ellipse((452, 184, 628, 360), fill=blend(ACCENT, SURFACE, 0.1))
     c.ellipse((496, 228, 584, 316), fill=SURFACE)
     c.text((540, 430), "다시 만나 반가워요", 38, INK, True, anchor="mm")
@@ -681,7 +681,7 @@ def login_error(c):
 
 
 def join_rule(c):
-    header(c, "회원가입", "진행 단계")
+    header(c, "회원가입", "2단계 · 기본 정보")
     stages = ["약관", "정보", "확인", "완료"]
     x0, y = 210, 260
     c.line([(x0, y), (870, y)], LINE, 5)
@@ -713,14 +713,12 @@ def file_upload(c):
 
 
 def cloud_sync(c):
-    header(c, "클라우드 저장공간", "용량 현황")
-    c.rr((70, 176, 1010, 444), 30)
-    c.text((110, 222), "사용 중", 24, MUTED)
-    c.text((110, 268), "38.4GB", 42, INK, True)
-    c.text((110, 326), "/ 100GB", 26, MUTED)
-    c.rr((110, 380, 930, 412), 16, fill=(235, 239, 241))
-    c.rr((110, 380, 426, 412), 16, fill=blend(ACCENT, SURFACE, 0.1))
-    c.text((110, 486), "남은 용량 61.6GB", 28, ACCENT_DARK, True)
+    header(c, "클라우드", "파일 동기화")
+    c.rr((70, 176, 1010, 400), 30)
+    c.text((110, 222), "이 기기", 24, MUTED)
+    c.text((110, 266), "노트북 · 성신", 34, INK, True)
+    c.text((110, 330), "마지막 동기화  오전 9:12", 24, MUTED)
+    c.text((110, 452), "올릴 파일 2개", 26, ACCENT_DARK, True)
 
 
 def coupon_apply(c):

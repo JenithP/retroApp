@@ -21,7 +21,7 @@ export const JOBS = [
        unitHint: "원" },
      { id: "next",   kind: "button", label: "다음", look: "dead" }],
     [{ part: "amount", do: "type", val: "45000" }, { part: "next", do: "press" }],
-    "회색이라 못 터치하는 줄 알았는데 터치되더라고요."),
+    "숫자를 적는 칸인 줄도 몰랐고, 회색이라 터치되는 줄도 몰랐어요."),
 
   J("bank-account", "은행", "송금",
     "계좌번호 110-234-567890을 적어 보세요.",
@@ -124,7 +124,7 @@ export const JOBS = [
     [{ id: "v1", kind: "thumb", label: "집밥 김치볶음밥" },
      { id: "v2", kind: "thumb", label: "따뜻한 수프 만들기" }],
     [{ part: "v2", do: "press" }],
-    "재생 버튼이 너무 작고 흐려서 안 보여요."),
+    "그림만 있고 재생 표시가 없어서 영상인지 사진인지 모르겠어요."),
 
   J("book-page", "전자책", "마지막 등불",
     "다음 쪽으로 넘겨 보세요.",
@@ -133,7 +133,7 @@ export const JOBS = [
          "터치해야 하는지 옆으로 밀어야 하는지 알 수 없습니다." } },
      { id: "bar",  kind: "progress", label: "쪽 표시" }],
     [{ part: "page", do: "swipe" }],
-    "탭을 해야 하는지 밀어야 하는지 아무 말이 없네요."),
+    "터치해야 하는지 밀어야 하는지 아무 말이 없네요."),
 
   J("photo-slider", "사진 편집", "사진 보정",
     "필터 세기를 절반쯤으로 맞춰 보세요.",
@@ -211,7 +211,7 @@ export const JOBS = [
        stuck: { push: "요일별 막대는 잘 보입니다. 다만 막대 하나를 터치해 " +
          "그날의 자세한 수치를 볼 수 있다는 표시가 없습니다." } }],
     [{ part: "chart", do: "press" }],
-    "점을 터치하면 자세한 게 나오는 줄 몰랐어요."),
+    "막대를 터치하면 그날 수치가 나오는 줄 몰랐어요."),
 
   J("calm-play", "명상", "호수 명상",
     "명상을 멈춰 보세요.",
@@ -251,7 +251,7 @@ export const JOBS = [
      { id: "like", kind: "icon", label: "좋아요", need: ["name", "push", "state"] },
      { id: "cnt",  kind: "text", text: "12" }],
     [{ part: "like", do: "press" }],
-    "숫자랑 버튼이 따로 떨어져 있어서 어디를 터치해야 할지."),
+    "하트를 터치하긴 했는데 지금 좋아요가 된 건지 아닌지 모르겠어요."),
 
   J("sns-profile", "SNS", "피드",
     "글쓴이의 프로필로 들어가 보세요.",
@@ -330,13 +330,13 @@ export const JOBS = [
     [{ part: "pick", do: "press" }, { part: "bar", do: "read" }],
     "올라가는 중인지 멈춘 건지 알 수가 없어요."),
 
-  J("cloud-sync", "클라우드", "저장공간",
+  J("cloud-sync", "클라우드", "동기화",
     "동기화가 끝났는지 확인해 보세요.",
     [{ id: "f1", kind: "list", visual: "file", label: "보고서.docx", sub: "2.4MB" },
      { id: "f2", kind: "list", visual: "file", label: "사진 모음", sub: "18.1MB" },
      { id: "ic", kind: "status", label: "동기화 상태", need: ["name", "state"] }],
     [{ part: "ic", do: "read" }],
-    "이 아이콘들이 무슨 뜻인지 설명이 없어요."),
+    "저 동그라미가 다 올라갔다는 건지 아직이라는 건지 모르겠어요."),
 
   J("coupon-apply", "예약", "결제",
     "쿠폰을 적용해 보세요.",
@@ -351,7 +351,7 @@ export const JOBS = [
      { id: "memo", kind: "input", visual: "note", label: "요청 사항" },
      { id: "pay",  kind: "button", label: "결제하기", need: ["name", "push", "feed", "state"] }],
     [{ part: "addr", do: "type", val: "성북구" }, { part: "pay", do: "press" }],
-    "결제 버튼이 한참 아래에 있는 줄 몰랐어요."),
+    "이걸 터치하면 바로 결제되는 건지, 다음 화면이 또 있는 건지 모르겠어요."),
 ];
 
 export const TEAMS = 20;
