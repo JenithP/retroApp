@@ -1,0 +1,45 @@
+{"kind":"deck","id":"pr/0w925f","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"","type":"master","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"제목 슬라이드","type":"title","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"subtitle","type":"subtitle","textPreview":"클릭하여 마스터 부제목 스타일 편집"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout2.xml","name":"제목 및 내용","type":"obj","placeholders":[{"name":"title","type":"title","textPreview":"제목"},{"name":"2","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout3.xml","name":"구역 머리글","type":"secHead","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout4.xml","name":"콘텐츠 2개","type":"twoObj","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"2","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"3","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout5.xml","name":"비교","type":"twoTxTwoObj","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭"},{"name":"3","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭"},{"name":"5","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout6.xml","name":"제목만","type":"titleOnly","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout7.xml","name":"빈 화면","type":"blank","placeholders":[{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout8.xml","name":"캡션 있는 콘텐츠","type":"objTx","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"2","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout9.xml","name":"캡션 있는 그림","type":"picTx","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"picture","type":"picture"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout10.xml","name":"제목 및 세로 텍스트","type":"vertTx","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout11.xml","name":"세로 제목 및 텍스트","type":"vertTitleAndTx","placeholders":[{"name":"title","type":"title","textPreview":"마스터 제목 스타일 편집"},{"name":"body","type":"body","textPreview":"마스터 텍스트 스타일을 편집하려면 클릭 | 두 번째 수준 | 세 번째 수준 | 네 번째 수준 | 다섯 번째 수준"},{"name":"dateTime","type":"dateTime","textPreview":"2026-08-31"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"HCI & COMMUNICATION","textShapes":2}
+{"kind":"shape","id":"sh/e94v2hon","slide":1,"name":"Rectangle 22","bbox":[0.32,0,1279.68,720]}
+{"kind":"shape","id":"sh/ozmd8r65","slide":1,"name":"Rectangle 24","bbox":[0,0,1279.68,720]}
+{"kind":"shape","id":"sh/p4bu5s76","slide":1,"name":"Oval 27","bbox":[833.83,263.26,374.16,374.16]}
+{"kind":"shape","id":"sh/432dwn6l","slide":1,"name":"Oval 28","bbox":[1095.54,425.08,145.05,145.05]}
+{"kind":"shape","id":"sh/uxgjq907","slide":1,"name":"Oval 29","bbox":[0,217.89,330.12,330.12]}
+{"kind":"shape","id":"sh/vyp0je1s","slide":1,"name":"Oval 30","bbox":[1065.71,448.38,199.25,199.25]}
+{"kind":"shape","id":"sh/wzy1szid","slide":1,"name":"Oval 31","bbox":[214.89,319.21,270.79,270.79]}
+{"kind":"shape","id":"sh/h072l4jy","slide":1,"name":"Oval 32","bbox":[233.56,335.33,235.51,235.51]}
+{"kind":"shape","id":"sh/j2pkne14","slide":1,"name":"Rectangle 34","bbox":[1095.87,109.46,293.59,74.67]}
+{"kind":"shape","id":"sh/y5wjip0z","slide":1,"name":"Straight Connector 37","bbox":[1182.1,33.34,57.6,0]}
+{"kind":"shape","id":"sh/z650ba1k","slide":1,"name":"Straight Connector 38","bbox":[1182.1,52.55,57.6,0]}
+{"kind":"shape","id":"sh/z2xgf6to","slide":1,"name":"Straight Connector 39","bbox":[1182.1,71.77,57.6,0]}
+{"kind":"shape","id":"sh/e1oz61c3","slide":1,"name":"Straight Connector 40","bbox":[1182.1,90.98,57.6,0]}
+{"kind":"shape","id":"sh/036h8but","slide":1,"name":"Rectangle 42","bbox":[0,644.7,640,74.67]}
+{"kind":"shape","id":"sh/9sfylgbq","slide":1,"name":"Straight Connector 45","bbox":[64.71,623.68,135,0]}
+{"kind":"shape","id":"sh/or6hcvu5","slide":1,"name":"Straight Connector 46","bbox":[64.71,642.89,135,0]}
+{"kind":"shape","id":"sh/buh0nqtg","slide":1,"name":"Straight Connector 47","bbox":[64.71,662.11,135,0]}
+{"kind":"shape","id":"sh/at8zelcb","slide":1,"name":"Straight Connector 48","bbox":[64.71,681.32,135,0]}
+{"kind":"textbox","id":"sh/utg3698n","slide":1,"name":"TextBox 8","text":"            HCI & COMMUNICATION","textPreview":"HCI & COMMUNICATION","textChars":31,"textLines":1,"bbox":[203.67,423.77,768,283.68]}
+{"kind":"textbox","id":"sh/wn6dc7eh","slide":1,"name":"TextBox 9","text":"            박윤정 교수","textPreview":"박윤정 교수","textChars":18,"textLines":1,"bbox":[814.12,518.93,452.35,180.67]}
+{"kind":"image","id":"im/v2tw3ipg","slide":1,"name":"그림 5","bbox":[82.17,3.1,1122.45,631.37]}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"{subtitle}","textShapes":5}
+{"kind":"textbox","id":"sh/9072xkry","slide":2,"name":"제목 1","placeholder":"title","text":"{subtitle}","textPreview":"{subtitle}","textChars":10,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/ozy1ofad","slide":2,"name":"내용 개체 틀 2","text":"{text1}\n{text2\n","textPreview":"{text1} | {text2 |","textChars":15,"textLines":3,"bbox":[88,164.72,1183,527.31]}
+{"kind":"shape","id":"sh/x4r21kru","slide":2,"name":"사각형: 둥근 모서리 5","bbox":[578.06,299.68,332.54,70.16]}
+{"kind":"textbox","id":"sh/w3i1sfa9","slide":2,"name":"TextBox 6","text":"구두 커뮤니케이션","textPreview":"구두 커뮤니케이션","textChars":9,"textLines":1,"bbox":[578.06,315.37,332.54,38.78]}
+{"kind":"shape","id":"sh/r65knqtk","slide":2,"name":"사각형: 둥근 모서리 7","bbox":[578.06,436.75,332.54,70.16]}
+{"kind":"textbox","id":"sh/q5wjelsz","slide":2,"name":"TextBox 8","text":"복수감각형","textPreview":"복수감각형","textChars":5,"textLines":1,"bbox":[578.06,452.45,332.54,38.78]}
+{"kind":"shape","id":"sh/ove9o7yd","slide":2,"name":"사각형: 둥근 모서리 9","bbox":[578.06,576.4,332.54,70.16]}
+{"kind":"textbox","id":"sh/9wnqhczy","slide":2,"name":"TextBox 10","text":"비논리적","textPreview":"비논리적","textChars":4,"textLines":1,"bbox":[578.06,592.09,332.54,38.78]}
+{"kind":"image","id":"im/507e5kja","slide":2,"name":"그림 4","bbox":[168.54,299.68,374.72,369.76]}
