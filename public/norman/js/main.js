@@ -158,6 +158,15 @@ function fire(part) {
     nodes.check.classList.add("pop");
     setTimeout(function () { nodes.check.hidden = true; }, 700);
   }
+  if (wears(at, part, "busy")) {
+    nodes.toast.className = "toast spin";
+    nodes.toast.textContent = "처리 중…";
+    nodes.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      nodes.toast.hidden = true; nodes.toast.className = "toast";
+    }, 1400);
+  }
   if (wears(at, part, "feel")) {
     blip();
     if (navigator.vibrate) navigator.vibrate(40);

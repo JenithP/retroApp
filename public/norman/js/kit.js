@@ -38,6 +38,17 @@ const GIVES = {
   caret: ["type"], hot: ["type", "push"],
   toast: ["feed"], done: ["feed"], feel: ["feed"],
   state: ["state", "feed"], grip: ["move"],
+  solidbtn: ["push"],
+  labelbtn: ["name", "push"],
+  link:     ["push"],
+  tip:      ["name"],
+  must:     ["name"],
+  count:    ["state"],
+  chosen:   ["state"],
+  locked:   ["state"],
+  busy:     ["feed", "state"],
+  swipehint: ["move"],
+  hintword: ["name", "type"],
 };
 export const givesOf = rid => GIVES[rid] || [];
 

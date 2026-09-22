@@ -17,7 +17,7 @@ export const MATERIALS = [
   { id: "blink", name: "깜박임",   price: 40, tip: "눈에 띄도록 반복해서 깜박입니다" },
   { id: "tint",  name: "진한 색",  price: 30, tip: "중요한 부분을 진한 색으로 강조합니다" },
   { id: "grow",  name: "큰 크기",  price: 30, tip: "더 크고 터치하기 쉬워 보이게 만듭니다" },
-  { id: "slip",  name: "쪽지",     price: 50, tip: "잠깐 나타나는 안내 메시지입니다" },
+  { id: "slip",  name: "알림창",   price: 50, tip: "잠깐 떴다 사라지는 알림 창입니다" },
   { id: "tick",  name: "체크 표시", price: 40, tip: "완료나 선택을 ✓로 보여줍니다" },
   { id: "arrow", name: "화살표",   price: 30, tip: "봐야 할 곳을 가리킵니다" },
   { id: "sound", name: "소리",     price: 40, tip: "조작이 받아들여졌음을 소리로 알립니다" },
@@ -25,6 +25,24 @@ export const MATERIALS = [
   { id: "notch", name: "홈",       price: 30, tip: "잡거나 밀 수 있는 느낌을 줍니다" },
   { id: "shade", name: "그늘",     price: 30, tip: "터치된 듯한 깊이를 만듭니다" },
   { id: "line",  name: "밑줄",     price: 20, tip: "글자나 숫자 아래에 기준선을 긋습니다" },
+
+  // ── 여기부터는 나중에 더한 재료다 ──────────────────────────
+  { id: "btnface", name: "버튼 바탕", price: 45,
+    tip: "버튼처럼 색이 채워진 바탕입니다" },
+  { id: "blue",  name: "파란 글씨", price: 35,
+    tip: "링크에 쓰는 파란 글자색입니다" },
+  { id: "star",  name: "별표",     price: 25, arg: { kind: "text", ph: "넣을 글자", max: 12 },
+    tip: "빠뜨리면 안 되는 곳에 붙는 * 표시입니다" },
+  { id: "fade",  name: "흐림",     price: 25,
+    tip: "지금은 할 수 없는 곳을 흐리게 만듭니다" },
+  { id: "spin",  name: "도는 그림", price: 40,
+    tip: "일이 되고 있는 중임을 돌아가며 보여줍니다" },
+  { id: "badge", name: "숫자 딱지", price: 35,
+    tip: "몇 개인지 작은 숫자로 보여줍니다" },
+  { id: "bubble", name: "말풍선",  price: 40, arg: { kind: "text", ph: "넣을 글자", max: 14 },
+    tip: "가리킨 곳 옆에 설명을 띄웁니다" },
+  { id: "fill",  name: "채움",     price: 35,
+    tip: "고른 것에 색이 차오릅니다" },
 ];
 
 export const mat = id => MATERIALS.find(m => m.id === id);
@@ -83,7 +101,7 @@ export const RECIPES = [
     when: "touch", on: ["button"], gulf: "실행",
     line: "터치하는 동안 터치된 느낌을 보여줍니다" },
 
-  { a: "glyph", b: "slip", id: "toast", name: "알림 쪽지",
+  { a: "glyph", b: "slip", id: "toast", name: "알림 팝업",
     when: "after", on: ["input", "button", "list"], gulf: "평가",
     line: "조작 후 결과를 짧은 메시지로 알려줍니다" },
 
@@ -98,6 +116,56 @@ export const RECIPES = [
   { a: "icon", b: "tint", id: "state", name: "상태 표시",
     when: "idle", on: ["input", "button", "list"], gulf: "평가",
     line: "현재 상태를 그림과 글자로 계속 보여줍니다" },
+
+  /* ── 나중에 더한 것 ──────────────────────────────────────
+     글자를 덧붙이는 것만으로는 「여기가 버튼이다」가 되지 않는다.
+     실제 앱은 바탕을 채우고 그림자를 넣어 버튼을 만든다. 파란 밑줄
+     글씨는 배워서 아는 단서고(21쪽), 흐림은 할 수 없는 쪽을 막아
+     알리는 제약이다(20쪽).                                        */
+
+  { a: "btnface", b: "shade", id: "solidbtn", name: "눌리는 버튼",
+    when: "idle", on: ["input", "button", "list"], gulf: "실행",
+    line: "바탕을 채우고 그림자를 넣어 터치하는 버튼으로 만듭니다" },
+
+  { a: "btnface", b: "glyph", id: "labelbtn", name: "글자 버튼",
+    when: "idle", on: ["input", "button", "list"], gulf: "실행",
+    line: "버튼 안에 글자를 넣어 무엇을 하는 버튼인지 알려줍니다" },
+
+  { a: "blue", b: "line", id: "link", name: "파란 밑줄 글씨",
+    when: "idle", on: ["button", "list"], gulf: "실행",
+    line: "파란 글씨에 밑줄은 터치하는 곳이라는 오래된 약속입니다" },
+
+  { a: "bubble", b: "glyph", id: "tip", name: "말풍선 설명",
+    when: "idle", on: ["input", "button", "list"], gulf: "실행",
+    line: "옆에 말풍선을 띄워 무엇을 하는 곳인지 알려줍니다" },
+
+  { a: "star", b: "glyph", id: "must", name: "별표 안내",
+    when: "idle", on: ["input", "button", "list"], gulf: "실행",
+    line: "* 와 글자로 반드시 해야 하는 것임을 알려줍니다" },
+
+  { a: "badge", b: "icon", id: "count", name: "개수 딱지",
+    when: "idle", on: ["button", "list"], gulf: "평가",
+    line: "몇 개가 들어 있는지 작은 숫자로 계속 보여줍니다" },
+
+  { a: "fill", b: "tick", id: "chosen", name: "고른 표시",
+    when: "idle", on: ["button", "list"], gulf: "평가",
+    line: "고른 것에 색이 차고 ✓ 가 붙어 지금 골라졌음을 보여줍니다" },
+
+  { a: "fade", b: "frame", id: "locked", name: "흐린 잠금",
+    when: "idle", on: ["input", "button", "list"], gulf: "평가",
+    line: "지금은 할 수 없는 곳임을 흐리게 보여줍니다" },
+
+  { a: "spin", b: "tint", id: "busy", name: "도는 표시",
+    when: "after", on: ["input", "button", "list"], gulf: "평가",
+    line: "터치한 뒤 일이 되고 있는 중임을 도는 그림으로 보여줍니다" },
+
+  { a: "arrow", b: "grow", id: "swipehint", name: "미는 화살표",
+    when: "idle", on: ["button", "list"], gulf: "실행",
+    line: "가장자리에 화살표를 두어 옆으로 밀 수 있음을 보여줍니다" },
+
+  { a: "glyph", b: "fade", id: "hintword", name: "흐린 안내 글자",
+    when: "idle", on: ["input"], gulf: "실행",
+    line: "칸 안에 흐린 글자를 미리 띄워 무엇을 적는 칸인지 알려줍니다" },
 ];
 
 /** 두 재료로 무엇이 되는가. 순서는 상관없다. */

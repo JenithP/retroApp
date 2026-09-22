@@ -96,6 +96,33 @@ function dress(box, core, at, id, words) {
     box.appendChild(g);
   }
   if (on("state")) box.appendChild(el("p", "sg-state", words));
+
+  /* ── 나중에 더한 단서 ─────────────────────────────────────
+     붙였는데 화면이 그대로면 조는 무엇을 산 것인지 알 수 없다.
+     하나하나 눈에 보이게 그린다. */
+
+  if (on("solidbtn")) core.classList.add("sg-solid");
+  if (on("link"))     core.classList.add("sg-link");
+  if (on("locked"))   core.classList.add("sg-locked");
+  if (on("chosen"))   core.classList.add("sg-chosen");
+
+  if (on("labelbtn")) {
+    core.classList.add("sg-solid");
+    box.prepend(el("p", "sg-label", arg("labelbtn") || "…"));
+  }
+  if (on("must")) box.prepend(el("p", "sg-must", "* " + (arg("must") || "반드시")));
+  if (on("tip"))  box.appendChild(el("p", "sg-tip", arg("tip") || "여기를 터치하세요"));
+  if (on("swipehint")) core.classList.add("sg-swipe");
+  if (on("hintword")) {
+    // 칸 안에 미리 띄워 두는 흐린 글자. 실제 앱의 안내 글자와 같다.
+    if (core.tagName === "INPUT") core.placeholder = arg("hintword") || "여기에 적으세요";
+    else box.prepend(el("p", "sg-hintword", arg("hintword") || "여기에 적으세요"));
+  }
+  if (on("count")) {
+    const n = el("span", "sg-count", "2");
+    core.style.position = core.style.position || "relative";
+    core.appendChild(n);
+  }
   return box;
 }
 

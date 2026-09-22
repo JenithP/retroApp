@@ -49,6 +49,34 @@
     border-radius:6px;border-left:3px solid var(--line);background:var(--panel-2)}
   .said.ok{border-left-color:var(--ok);color:#CFE0C4}
   .said.bad{border-left-color:var(--bad);color:#E6C0B9}
+  #keybox{margin-top:26px}
+  #keybox[hidden]{display:none!important}
+  .keytop{display:flex;align-items:baseline;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:9px}
+  .keytop h2{font-family:var(--serif);font-size:1.15rem;margin:0}
+  .keytop h2 small{font-family:var(--sans);font-size:.74rem;color:var(--bad);
+    font-weight:400;margin-left:8px}
+  #keyfind{background:#12100E;border:1px solid var(--line);color:var(--ui);
+    border-radius:5px;padding:8px 11px;font-family:var(--sans);font-size:.82rem;width:220px}
+  .kjob{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:13px 15px;margin-top:10px}
+  .kjob > h3{font-family:var(--serif);font-size:.98rem;margin:0 0 3px;color:var(--lamp)}
+  .kjob .ktask{margin:0 0 2px;font-size:.82rem;color:var(--ui)}
+  .kjob .ksay{margin:0 0 10px;font-size:.78rem;color:var(--ui-soft)}
+  .kpart{border-left:2px solid var(--line);padding:2px 0 2px 11px;margin:9px 0 0}
+  .kpart.path{border-left-color:var(--ok)}
+  .kpart.decoy{border-left-color:var(--bad)}
+  .kpart > b{font-size:.82rem;color:var(--ui)}
+  .kpart > b em{font-style:normal;font-size:.7rem;color:var(--ui-soft);margin-left:6px}
+  .kgap{margin:5px 0 0;font-size:.76rem;line-height:1.7}
+  .kgap > span{color:var(--lamp)}
+  .kgap i{font-style:normal;color:var(--ui-soft)}
+  .kfree{margin:4px 0 0;font-size:.76rem;color:var(--ui-soft)}
+  .ksum{margin:10px 0 0;font-size:.76rem;color:var(--ui-soft);
+    border-top:1px solid var(--line);padding-top:8px}
+  .ksum b{color:var(--ok)}
+  .kgap b{color:var(--ok);font-weight:500}
+  .kgap b i{color:#8FA98A}
   .ended{background:#3A2418;border:1px solid #6B4A2E;color:#F0C89A;
     border-radius:8px;padding:12px 15px;margin:16px 0 0;font-size:.85rem}
 </style>
@@ -91,11 +119,23 @@
   <div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">
     <button id="end" class="warn" disabled>조별 활동 종료</button>
     <button id="open" class="ghost" disabled>다시 열기</button>
+    <button id="keybtn" class="ghost" disabled>정답표 보기</button>
   </div>
+
+  <!-- 마흔 개 의뢰의 정답. 암호를 넣고 「보기」를 누른 뒤에 열린다. -->
+  <section id="keybox" hidden>
+    <div class="keytop">
+      <h2>정답표 <small>학생에게 힌트를 줄 때만 쓰십시오</small></h2>
+      <input id="keyfind" placeholder="앱·화면 이름으로 찾기" autocomplete="off">
+    </div>
+    <div id="keylist"></div>
+  </section>
 </div>
 
 <script type="module">
 import { JOBS } from "./js/jobs.js";
+import { RECIPES, MATERIALS, mat } from "./js/parts.js";
+import { needOf, givesOf, bucketOf, GAPNAME } from "./js/kit.js";
 const jobName = id => {
   const j = JOBS.find(x => x.id === id);
   return j ? j.app + " " + j.screen : id;
@@ -179,6 +219,7 @@ function paint(j) {
       "</tr>";
   }).join("");
 
+  $("keybtn").disabled = false;
   $("end").disabled = ended;
   $("open").disabled = !ended;
   $("endbox").hidden = !ended;
@@ -195,6 +236,112 @@ async function look(quiet) {
 }
 
 /* ── 버튼 ─────────────────────────────────────────────────── */
+
+/* ── 정답표 ───────────────────────────────────────────────────
+   무엇이 모자라고, 무엇을 합치면 그것이 되는지. 조가 막혔을 때
+   한 걸음만 짚어 주기 위한 것이다. 화면에 띄워 두지 마십시오. */
+
+const cost = r => (mat(r.a).price || 0) + (mat(r.b).price || 0);
+
+/** 이 자리에 이 기준을 채울 수 있는 단서들 — 싼 것부터 */
+function ways(part, gap) {
+  return RECIPES
+    .filter(r => givesOf(r.id).includes(gap) && r.on.includes(bucketOf(part.kind)))
+    .sort((a, b) => cost(a) - cost(b));
+}
+
+/** 이 자리를 가장 싸게 채우는 길.
+ *  기준마다 제일 싼 것을 하나씩 고르면 셈이 커진다 — 「글자 버튼」처럼
+ *  하나로 둘을 채우는 단서가 있기 때문이다. 다 따져 본다.            */
+function cheapest(part) {
+  const gaps = part.decoy ? [] : needOf(part);
+  if (!gaps.length) return { sum: 0, pick: [] };
+  const pool = RECIPES.filter(r => r.on.includes(bucketOf(part.kind)) &&
+    givesOf(r.id).some(g => gaps.includes(g)));
+  let best = null;
+  const walk = (i, left, chosen, sum) => {
+    if (!left.length) {
+      if (!best || sum < best.sum) best = { sum: sum, pick: chosen.slice() };
+      return;
+    }
+    if (i >= pool.length || (best && sum >= best.sum)) return;
+    const r = pool[i];
+    if (givesOf(r.id).some(g => left.includes(g))) {
+      chosen.push(r);
+      walk(i + 1, left.filter(g => !givesOf(r.id).includes(g)), chosen, sum + cost(r));
+      chosen.pop();
+    }
+    walk(i + 1, left, chosen, sum);
+  };
+  walk(0, gaps, [], 0);
+  return best || { sum: 0, pick: [] };
+}
+
+function keyHTML() {
+  return JOBS.map((job, i) => {
+    const onPath = {};
+    job.steps.forEach(s => { onPath[s.part] = true; });
+    let least = 0;
+
+    const parts = job.parts.map(p => {
+      const gaps = p.decoy ? [] : needOf(p);
+      const cls = p.decoy ? "decoy" : (onPath[p.id] ? "path" : "");
+      const tag = p.decoy ? "미끼 — 아무것도 붙이지 마십시오"
+                : onPath[p.id] ? "과제 경로 — 여기가 막히면 못 팝니다"
+                : "곁가지 — 채우면 값이 오릅니다";
+      if (!gaps.length) {
+        return '<div class="kpart ' + cls + '"><b>' + (p.label || p.id) +
+          "<em>" + tag + "</em></b>" +
+          '<p class="kfree">채울 것이 없습니다.</p></div>';
+      }
+      const short = cheapest(p);
+      if (onPath[p.id]) least += short.sum;
+      const shortIds = short.pick.map(r => r.id);
+
+      const lines = gaps.map(g => {
+        const opts = ways(p, g);
+        return '<p class="kgap"><span>' + (GAPNAME[g] || g) + "</span><br>" +
+          opts.map(r => {
+            const two = givesOf(r.id).filter(x => gaps.includes(x));
+            return (shortIds.includes(r.id) ? "<b>· " : "· ") + r.name +
+              " <i>= " + mat(r.a).name + " + " + mat(r.b).name + " · " + cost(r) + "P" +
+              (two.length > 1 ? " · 이 하나로 " + two.length + "가지를 채웁니다" : "") +
+              "</i>" + (shortIds.includes(r.id) ? "</b>" : "");
+          }).join("<br>") + "</p>";
+      }).join("");
+      return '<div class="kpart ' + cls + '"><b>' + (p.label || p.id) +
+        "<em>" + tag + "</em></b>" + lines +
+        (short.pick.length > 1
+          ? '<p class="kfree">가장 싸게 — ' + short.pick.map(r => r.name).join(" + ") +
+            " · " + short.sum + "P</p>"
+          : "") + "</div>";
+    }).join("");
+
+    return '<div class="kjob" data-find="' + (job.app + " " + job.screen + " " + job.id) +
+      '"><h3>' + (i + 1) + ". " + job.app + " " + job.screen + "</h3>" +
+      '<p class="ktask">' + job.task + "</p>" +
+      '<p class="ksay">사용자 말 — 「' + job.say + "」</p>" +
+      parts +
+      '<p class="ksum">과제 경로를 가장 싸게 채우면 재료값 <b>' + least +
+      "P</b> · 팔면 140~200P</p></div>";
+  }).join("");
+}
+
+let keyDrawn = false;
+$("keybtn").addEventListener("click", function () {
+  const box = $("keybox");
+  if (!keyDrawn) { $("keylist").innerHTML = keyHTML(); keyDrawn = true; }
+  box.hidden = !box.hidden;
+  this.textContent = box.hidden ? "정답표 보기" : "정답표 덮기";
+  if (!box.hidden) box.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+$("keyfind").addEventListener("input", function () {
+  const q = this.value.trim();
+  $("keylist").querySelectorAll(".kjob").forEach(function (n) {
+    n.hidden = !!q && n.dataset.find.indexOf(q) < 0;
+  });
+});
 
 $("look").addEventListener("click", () => look(false));
 $("key").addEventListener("keydown", e => { if (e.key === "Enter") look(false); });
