@@ -547,3 +547,8 @@ input.box{cursor:text;justify-content:flex-start}
   .shelf{max-height:none}
   .side{width:100%;max-width:560px}
 }
+
+/* 막힌 이유에 붙는 「모자란 단서의 이름」 — 조합표의 묶음 이름과 같은 말이다.
+   이것이 있어야 읽고 표에서 바로 찾는다. */
+.stuck li b.gap{display:block;font-size:.72rem;font-weight:500;color:var(--lamp);
+  letter-spacing:.02em;margin-bottom:2px}

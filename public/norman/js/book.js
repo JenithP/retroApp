@@ -7,17 +7,11 @@
 // 무엇이 모자란지 읽고 여기서 바로 찾을 수 있다.
 
 import { RECIPES, mat } from "./parts.js";
-import { givesOf } from "./kit.js";
+import { givesOf, GAPNAME } from "./kit.js";
 
-/** 돌려 보기가 쓰는 말과 똑같이 묶는다 */
-const GROUPS = [
-  ["name",  "무엇을 하는 곳인지 알려주기"],
-  ["type",  "입력할 수 있는 칸임을 보여주기"],
-  ["push",  "터치할 수 있는 곳임을 보여주기"],
-  ["feed",  "조작한 뒤 결과 알려주기"],
-  ["state", "현재 상태를 계속 보여주기"],
-  ["move",  "밀거나 끌 수 있음을 보여주기"],
-];
+/** 돌려 보기가 쓰는 말과 똑같이 묶는다 — 이름은 kit.js 에 한 벌만 둔다 */
+const GROUPS = ["name", "type", "push", "feed", "state", "move"]
+  .map(k => [k, GAPNAME[k]]);
 
 const WHEN = { idle: "처음부터 보임", touch: "손댈 때 보임", after: "조작 후 보임" };
 const ON = { input: "입력칸", button: "버튼·선택 항목", list: "목록·막대" };

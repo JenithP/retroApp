@@ -5,6 +5,7 @@
 // 조에게는 「어디서 멈췄는지」만 돌려준다. 고칠 곳은 짚어 주지 않는다.
 
 import { act, partOf, missingOn, doneSteps, allDone, strayHits } from "./app.js";
+import { GAPNAME } from "./kit.js";
 
 export class Stop extends Error {}
 
@@ -184,12 +185,17 @@ function verdict(job, st, evs, stuck, blocked) {
   // 의뢰가 그 부품에 맞는 말을 적어 두었으면 그것을 쓴다.
   // 「터치할 수 있는 곳인지 모름」보다 「카드 전체를 터치해 들어갈 수 있는지
   // 알기 어렵습니다」가 학생에게 훨씬 잘 와닿는다.
+  // 의뢰가 제 화면에 맞는 말을 적어 두었으면 그것을 쓴다. 다만 **어느
+  // 기준이 모자란지는 언제나 함께 적는다** — 그 말이 조합표의 묶음
+  // 이름과 같아서, 조는 그것을 보고 무엇을 만들지 찾는다.
   const words = stuck.map(k => {
     const bits = k.split(":");
     const p = partOf(job, bits[0]);
     const own = p && p.stuck && p.stuck[bits[1]];
-    if (own) return own;
-    return (p && p.label ? p.label + " — " : "") + STUCK[bits[1]];
+    return {
+      gap: GAPNAME[bits[1]] || bits[1],
+      text: own || (p && p.label ? p.label + " — " : "") + STUCK[bits[1]],
+    };
   });
 
   return {

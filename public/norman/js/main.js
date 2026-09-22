@@ -296,9 +296,12 @@ function showVerdict(v) {
     }).join("") + "</div>" +
     (v.stuck.length
       ? '<div class="stuck"><p class="stucktop">사용자가 막힌 이유</p><ul>' +
-        v.stuck.map(function (t) { return "<li>" + t + "</li>"; }).join("") +
-        '</ul><p class="stuckdim">오른쪽 <b>단서 조합표</b>에서 같은 기준을 찾으세요. ' +
-        '그 줄에 적힌 재료를 사 오면 부족한 단서를 만들 수 있습니다.</p></div>'
+        v.stuck.map(function (s) {
+          return '<li><b class="gap">' + s.gap + "</b>" + s.text + "</li>";
+        }).join("") +
+        '</ul><p class="stuckdim">굵은 글씨가 <b>모자란 단서의 이름</b>입니다. ' +
+        '오른쪽 <b>단서 조합표</b>에서 같은 이름의 묶음을 찾아, 그 줄에 적힌 ' +
+        '재료를 상점에서 사 오세요.</p></div>'
       : "") +
     // 앱시장이 받아 줄 화면일 때만 내놓기를 연다. 과제를 끝까지 해냈다는
     // 것만으로는 모자란다 — 끝까지 가기는 했지만 무엇이 골라졌는지 모르는
