@@ -441,6 +441,19 @@ grid.addEventListener("click", function (e) {
 });
 
 enterBtn.addEventListener("click", function () { enter(picking); });
+
+/* 주소에 조 번호를 적어 두면 바로 들어간다 — /norman/?team=5
+   교실 피시마다 제 조로 바로 열리도록 즐겨찾기 해 두면 편하다.
+   ?go=shop 처럼 어디로 갈지도 적을 수 있다. */
+(function () {
+  const q = new URLSearchParams(location.search);
+  const n = Number(q.get("team"));
+  if (!Number.isInteger(n) || n < 1 || n > TEAMS) return;
+  enter(n).then(function () {
+    const to = q.get("go");
+    if (to && PLACES.indexOf(to) >= 0) go(to);
+  });
+})();
 $("swap").addEventListener("click", function () {
   gate.hidden = false; $("bar").hidden = true;
   PLACES.forEach(function (k) { $(k).hidden = true; });

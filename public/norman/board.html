@@ -49,6 +49,14 @@
     border-radius:6px;border-left:3px solid var(--line);background:var(--panel-2)}
   .said.ok{border-left-color:var(--ok);color:#CFE0C4}
   .said.bad{border-left-color:var(--bad);color:#E6C0B9}
+  .wipe{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:11px 14px}
+  .wipe > span{font-size:.84rem;color:var(--ui)}
+  .wipe input{background:#12100E;border:1px solid var(--line);color:var(--ui);
+    border-radius:5px;padding:8px 10px;font-family:var(--sans);font-size:.82rem;width:92px}
+  .wipe em{font-style:normal;font-size:.74rem;color:#6E655C;flex:1;min-width:240px;
+    line-height:1.6}
   #keybox{margin-top:26px}
   #keybox[hidden]{display:none!important}
   .keytop{display:flex;align-items:baseline;justify-content:space-between;
@@ -120,6 +128,17 @@
     <button id="end" class="warn" disabled>조별 활동 종료</button>
     <button id="open" class="ghost" disabled>다시 열기</button>
     <button id="keybtn" class="ghost" disabled>정답표 보기</button>
+  </div>
+
+  <!-- 지갑 되돌리기 — 전에는 /norman/admin.html 에 따로 있었다.
+       암호를 두 번 넣을 까닭이 없어 여기로 옮겼다. -->
+  <div class="wipe">
+    <span>지갑 되돌리기</span>
+    <input id="one" type="number" min="1" max="20" placeholder="조 번호">
+    <button id="onebtn" class="ghost" disabled>이 조만</button>
+    <button id="allbtn" class="warn" disabled>스무 조 전부</button>
+    <em>포인트 · 재료 · 만든 단서 · 붙인 것 · 판 기록이 지워지고 1000P로 다시 시작합니다.
+      장부는 남습니다.</em>
   </div>
 
   <!-- 마흔 개 의뢰의 정답. 암호를 넣고 「보기」를 누른 뒤에 열린다. -->
@@ -220,6 +239,8 @@ function paint(j) {
   }).join("");
 
   $("keybtn").disabled = false;
+  $("onebtn").disabled = false;
+  $("allbtn").disabled = false;
   $("end").disabled = ended;
   $("open").disabled = !ended;
   $("endbox").hidden = !ended;
@@ -334,6 +355,44 @@ $("keybtn").addEventListener("click", function () {
   box.hidden = !box.hidden;
   this.textContent = box.hidden ? "정답표 보기" : "정답표 덮기";
   if (!box.hidden) box.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/** 지갑 되돌리기 — 서버의 reset 을 부른다. 장부는 건드리지 않는다. */
+async function wipe(team, btn) {
+  const key = $("key").value.trim();
+  if (!key) return tell("암호를 먼저 적어 주세요.", false);
+  btn.disabled = true;
+  try {
+    const body = { op: "reset", key: key };
+    if (team) body.team = team;
+    const r = await fetch("/api/deal", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json().catch(() => ({ error: "응답을 읽지 못했습니다" }));
+    if (!r.ok) return tell(j.error || "되돌리지 못했습니다.", false);
+    const n = (j["되돌린조"] || []).length;
+    tell(n === 1 ? j["되돌린조"][0] + "조를 새 지갑으로 되돌렸습니다."
+                 : n + "개 조를 전부 새 지갑으로 되돌렸습니다.", true);
+    look(true);
+  } catch (e) {
+    tell("서버에 닿지 못했습니다. " + (e.message || e), false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("onebtn").addEventListener("click", function () {
+  const n = Number($("one").value);
+  if (!(n >= 1 && n <= 20)) return tell("조 번호를 1에서 20 사이로 적어 주세요.", false);
+  if (!confirm(n + "조의 지갑을 되돌립니다. 되살릴 수 없습니다.")) return;
+  wipe(n, this);
+});
+
+$("allbtn").addEventListener("click", function () {
+  if (!confirm("스무 조의 지갑을 전부 되돌립니다.
+되살릴 수 없습니다. 계속할까요?")) return;
+  wipe(null, this);
 });
 
 $("keyfind").addEventListener("input", function () {
