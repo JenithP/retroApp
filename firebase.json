@@ -8,7 +8,7 @@
     ],
     "rewrites": [
       {
-        "source": "!/@(media|time)/**",
+        "source": "!/@(media|time|appshop)/**",
         "destination": "/index.html"
       }
     ],

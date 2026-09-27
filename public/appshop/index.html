@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>앱 공방</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/appshop.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 5주차 오프라인</p>
+    <h1>앱 공방</h1>
+  </div>
+  <div class="status">
+    <span class="chip" id="teamChip" hidden></span>
+    <span class="chip phase" id="phaseChip">연결 중</span>
+    <span class="timer" id="timer" hidden></span>
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span></span>
+  </div>
+</header>
+
+<!-- 조 고르기 -->
+<section class="view" id="vJoin" hidden>
+  <div class="join">
+    <h2>우리 조를 고르세요</h2>
+    <p class="lead">한 조가 여러 기기로 들어와도 됩니다. 설계서는 조원 모두에게 똑같이 보입니다.</p>
+    <div class="teampick" id="teamPick"></div>
+    <label class="field">내 이름 <input id="myName" maxlength="20" autocomplete="off" placeholder="평가에 적힐 이름"></label>
+    <button class="btn primary big" id="joinBtn" disabled>공방에 들어가기</button>
+  </div>
+</section>
+
+<!-- 준비 -->
+<section class="view" id="vReady" hidden>
+  <div class="wait">
+    <div class="mission" id="readyMission"></div>
+    <p class="note">교수님이 <b>제작 시작</b>을 누르면 설계서가 열립니다.</p>
+  </div>
+</section>
+
+<!-- 제작 -->
+<section class="view" id="vBuild" hidden>
+  <div class="build">
+    <div class="specside">
+      <div class="mission small" id="buildMission"></div>
+      <div class="howto">
+        <b>설계 방법</b> — 장면마다 세 칸을 채웁니다. <b>AI는 적힌 것만 만듭니다.</b>
+        적지 않은 버튼 · 안내 문구 · 되돌리기 · 확인 창은 생기지 않습니다.
+        생성은 조 전체가 <b id="genLimit"></b>번. 30분이 지나 교수님이 출판하면 더는 고칠 수 없습니다.
+      </div>
+      <form class="spec" id="specForm" autocomplete="off">
+        <label class="field">앱 이름 <input name="appName" maxlength="40"></label>
+        <div id="scenes"></div>
+        <label class="field">꾸밈 <small>색 · 글자 크기 · 느낌 (적지 않으면 흰 바탕에 회색 버튼)</small>
+          <textarea name="style" rows="2" maxlength="300"></textarea></label>
+      </form>
+      <p class="saved" id="savedMsg"></p>
+    </div>
+    <div class="phoneside">
+      <div class="gens" id="gens"></div>
+      <button class="btn primary big" id="genBtn">이 설계서로 앱 만들기</button>
+      <p class="genmsg" id="genMsg"></p>
+      <div class="phonewrap"><div class="phone"><iframe id="buildFrame" sandbox="allow-scripts" title="우리 앱"></iframe></div></div>
+      <button class="btn ghost" id="reloadBuild">처음 화면으로 다시 켜기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 평가 -->
+<section class="view" id="vEval" hidden>
+  <div class="evallist" id="evalList"></div>
+  <div class="evalwork" id="evalWork" hidden>
+    <div class="evalphone">
+      <div class="mission small" id="evalMission"></div>
+      <div class="taskbar">
+        <button class="btn primary" id="taskStart">과업 시작</button>
+        <button class="btn" id="taskDone" disabled>과업 끝냄</button>
+        <button class="btn ghost" id="taskGiveup" disabled>포기</button>
+        <span class="tasktime" id="taskTime">0:00</span>
+        <span class="taps" id="taps">탭 0</span>
+      </div>
+      <div class="phonewrap"><div class="phone"><iframe id="evalFrame" sandbox="allow-scripts" title="평가할 앱"></iframe></div></div>
+      <button class="btn ghost" id="reloadEval">처음 화면으로 다시 켜기</button>
+    </div>
+    <div class="evalform">
+      <h3>① 문제를 찾을 때마다 적기</h3>
+      <label class="field">어느 화면에서 <input id="tWhere" maxlength="60" placeholder="예: 첫 화면, 기록 버튼을 누른 뒤"></label>
+      <div class="field">어긴 원칙 <small>닐슨의 10가지 사용성 원칙</small> <div class="hpick" id="hPick"></div></div>
+      <div class="field">심각도 <div class="spick" id="sPick"></div></div>
+      <label class="field">무엇이 문제인가 <input id="tNote" maxlength="120" placeholder="한 줄로"></label>
+      <button class="btn" id="addTag" disabled>문제 추가</button>
+      <ol class="tags" id="tagList"></ol>
+
+      <h3>② 다 써 본 뒤</h3>
+      <div class="likert" data-k="pq"><span>실용적 품질 <small>원하는 일을 잘 수행할 수 있었는가 — 이해하기 쉬움, 유용함, 조작의 편리함</small></span><div></div></div>
+      <div class="likert" data-k="hq"><span>쾌락적 품질 <small>즐거움과 자기표현의 욕구를 충족했는가 — 새로운 자극, 흥미, 개성 표현</small></span><div></div></div>
+      <label class="field">한 줄 소감 <input id="comment" maxlength="150"></label>
+      <div class="formfoot">
+        <button class="btn ghost" id="backList">목록으로</button>
+        <button class="btn primary" id="submitEval" disabled>평가 보내기</button>
+      </div>
+      <p class="genmsg" id="evalMsg"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 피드백 -->
+<section class="view" id="vFeedback" hidden>
+  <div class="feedback">
+    <div class="fbphone">
+      <h3>출판한 우리 앱</h3>
+      <div class="phonewrap"><div class="phone"><iframe id="fbFrame" sandbox="allow-scripts" title="우리 앱"></iframe></div></div>
+    </div>
+    <div class="fbbody">
+      <h3>받은 평가 <small id="fbCount"></small></h3>
+      <div class="fbstats">
+        <div class="hbars" id="fbBars"></div>
+        <div class="quad" id="fbQuad"></div>
+      </div>
+      <div class="fbcols">
+        <div><h4>우리가 적은 설계서</h4><div class="specview" id="fbSpec"></div></div>
+        <div><h4>찾아낸 문제</h4><ol class="tags" id="fbTags"></ol><h4>소감</h4><ul class="comments" id="fbComments"></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 마침 -->
+<section class="view" id="vEnd" hidden>
+  <div class="wait"><p class="note big">수고했습니다. 오늘 공방은 여기까지입니다.</p></div>
+</section>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

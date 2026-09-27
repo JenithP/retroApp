@@ -8,7 +8,7 @@ rules_version = '2';
 //    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
 //    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
 //
-//    HCI와 커뮤니케이션   runs · time · presence · hci4_*
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_*
 //    지능형콘텐츠         icp_teams · icp3_*
 //
 //  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
@@ -80,6 +80,44 @@ service cloud.firestore {
     match /hci4_presence/{uid} {
       allow read:  if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    /* ── 5주차 앱 공방 ────────────────────────────────────────
+       단계 · 조의 앱 · 생성 횟수는 버셀 함수(api/appshop.js)만 쓴다. 학생은 읽기만.
+       설계서 초안은 제작 단계에서만, 평가는 평가 단계에서만 학생이 직접 쓴다. */
+    function hci5Phase() {
+      return get(/databases/$(database)/documents/hci5_state/current).data.phase;
+    }
+    match /hci5_state/{doc} {             // 지금 단계 · 제작 마감 시각
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci5_teams/{id} {              // 조의 앱 · 생성 횟수 · 출판본
+      allow read:  if request.auth != null;
+      allow write: if false;
+      match /versions/{v} {               // 생성할 때마다의 설계서와 앱
+        allow read:  if request.auth != null;
+        allow write: if false;
+      }
+    }
+    match /hci5_specs/{id} {              // 설계서 초안 — 출판 뒤에는 잠긴다
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && hci5Phase() == "build"
+                   && id.matches('T[0-9]{2}')
+                   && request.resource.data.keys().hasOnly(['spec', 'updatedAt', 'by'])
+                   && request.resource.data.by == request.auth.uid;
+    }
+    match /hci5_evals/{id} {              // 평가 — 남기기만 하고 고치거나 지울 수 없다
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null
+                    && hci5Phase() == "eval"
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() < 30
+                    && request.resource.data.tags is list
+                    && request.resource.data.tags.size() <= 40;
+      allow update, delete: if false;
     }
 
     /* ══ 지능형콘텐츠 ════════════════════════════════════════ */

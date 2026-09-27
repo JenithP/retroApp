@@ -1,6 +1,9 @@
 {
   "outputDirectory": "public",
-  "functions": { "api/judge.js": { "maxDuration": 15 } },
+  "functions": {
+    "api/judge.js": { "maxDuration": 15 },
+    "api/appshop.js": { "maxDuration": 300 }
+  },
   "redirects": [
     { "source": "/", "destination": "/time/", "permanent": false }
   ],

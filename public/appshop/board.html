@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>앱 공방 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/appshop.css">
+<link rel="stylesheet" href="css/board.css">
+</head>
+<body class="board">
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 5주차 오프라인</p>
+    <h1>앱 공방 <span class="sub">현황판</span></h1>
+  </div>
+  <div class="status">
+    <span class="chip phase" id="phaseChip">연결 중</span>
+    <span class="timer" id="timer" hidden></span>
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span></span>
+  </div>
+</header>
+
+<section class="control" id="control">
+  <div class="lock" id="lock">
+    <label>교수용 암호 <input id="code" type="password" autocomplete="off"></label>
+    <button class="btn primary" id="unlock">열기</button>
+    <span class="msg" id="lockMsg"></span>
+  </div>
+  <div class="steps" id="steps" hidden>
+    <button class="btn step" data-phase="ready">① 준비</button>
+    <button class="btn step" data-phase="build">② 제작 시작 · 30분</button>
+    <button class="btn step" id="extend" type="button">+5분</button>
+    <button class="btn step publish" data-phase="eval">③ 출판 → 평가</button>
+    <button class="btn step" data-phase="feedback">④ 피드백 공개</button>
+    <button class="btn step" data-phase="end">⑤ 마침</button>
+    <button class="btn ghost danger" id="reset" type="button">전부 비우기</button>
+    <span class="msg" id="stepMsg"></span>
+  </div>
+</section>
+
+<section class="kpis" id="kpis" aria-label="요약"></section>
+
+<main class="bgrid">
+  <section class="panel">
+    <h2>조별 진행 <small>카드를 누르면 앱과 설계서</small></h2>
+    <div class="teamgrid" id="teams"></div>
+  </section>
+  <section class="panel side">
+    <h2>우리 반이 찾은 문제 <small>닐슨의 10가지 사용성 원칙별 · 막대 색은 평균 심각도</small></h2>
+    <div id="classBars"></div>
+    <h2>평가자를 합칠수록 <small>한 앱에서 짚인 원칙 종류 · 평균</small></h2>
+    <div id="curve"></div>
+    <h2>실용적 품질 × 쾌락적 품질 <small>앱마다 평가자 평균 · 숫자는 조</small></h2>
+    <div id="classQuad"></div>
+  </section>
+</main>
+
+<dialog id="detail">
+  <div class="dhead"><h2 id="dTitle"></h2><button class="btn ghost" id="dClose">닫기</button></div>
+  <div class="dbody">
+    <div class="phonewrap"><div class="phone"><iframe id="dFrame" sandbox="allow-scripts" title="조의 앱"></iframe></div></div>
+    <div class="dinfo">
+      <div class="mission small" id="dMission"></div>
+      <h4>설계서 <small id="dVer"></small></h4><div class="specview" id="dSpec"></div>
+      <h4>받은 평가</h4><ol class="tags" id="dTags"></ol>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>
