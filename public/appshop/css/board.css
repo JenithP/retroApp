@@ -38,7 +38,8 @@ h1 .sub{color:var(--faint);font-weight:500}
 .tcard.quiet{opacity:.55}
 
 .curve{display:flex;flex-direction:column;gap:6px}
-.crow{display:grid;grid-template-columns:120px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:.82rem}
+.crow{display:grid;grid-template-columns:190px minmax(0,1fr) 60px;gap:8px;align-items:center;font-size:.82rem}
+.plead{margin:-4px 0 10px;font-size:.82rem;color:var(--soft)}
 .crow .track{height:16px}
 .crow .fill{background:var(--accent)}
 

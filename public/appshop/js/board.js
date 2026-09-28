@@ -112,10 +112,10 @@ function renderClass() {
     [...new Set(es.map(e => e.team))].forEach(tm => team.push(set(es.filter(e => e.team === tm))));
     all.push(set(es));
   });
-  const rows = [["평가자 한 명", avg(one)], ["한 조를 합치면", avg(team)], ["모든 평가자를 합치면", avg(all)]];
+  const rows = [["한 사람이 평가했을 때", avg(one)], ["한 조의 평가를 모았을 때", avg(team)], ["모든 사람의 평가를 모았을 때", avg(all)]];
   const cmax = Math.max(1, ...rows.map(r => r[1] || 0));
   $("curve").innerHTML = targets.length ? `<div class="curve">${rows.map(([l, v]) =>
-    `<div class="crow"><span>${l}</span><span class="track"><span class="fill" style="width:${(v || 0) / cmax * 100}%"></span></span><b>${v ? v.toFixed(1) : "-"}</b></div>`).join("")}</div>`
+    `<div class="crow"><span>${l}</span><span class="track"><span class="fill" style="width:${(v || 0) / cmax * 100}%"></span></span><b>${v ? v.toFixed(1) + "가지" : "-"}</b></div>`).join("")}</div>`
     : `<p class="muted">평가가 들어오면 채워집니다</p>`;
 
   const pts = [], labels = [];
