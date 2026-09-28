@@ -3,6 +3,7 @@
 import { missionOf, targetsOf, HEURISTICS, SEVERITY, PHASES, SCENE_COUNT, FIELDS,
          DEMO_TEAM, isDemo, teamLabel, genLimitOf } from "./data.js";
 import { quad, avg } from "./quad.js";
+import { download as downloadReport } from "./report.js";
 import { me, ready, watchState, watchTeam, watchTeams, watchSpec, saveSpec, watchEvals, addEval, generate, wrapApp } from "./fb.js";
 
 const $ = id => document.getElementById(id);
@@ -74,7 +75,7 @@ async function start() {
   watchTeam(S.team, d => { S.teamDoc = d; renderBuildSide(); renderFeedback(); });
   watchTeams(all => { S.teams = all; if (S.phase === "eval") renderEvalList(); });
   watchSpec(S.team, remoteSpec);
-  watchEvals(list => { S.myEvals = list.filter(e => e.uid === me.uid); if (S.phase === "eval") renderEvalList(); });
+  watchEvals(list => { S.allEvals = list; S.myEvals = list.filter(e => e.uid === me.uid); if (S.phase === "eval") renderEvalList(); });
   watchEvals(list => { S.received = list; renderFeedback(); }, S.team);
   watchState(st => { S.state = st; setPhase(st.phase || "ready"); });
 }
@@ -349,5 +350,12 @@ function renderFeedback(force) {
     `<li><span class="hnum">${t.h}</span><span class="sev s${t.sev}">${t.sev}</span><span>${esc(t.where ? t.where + " — " : "")}${esc(t.note)}</span></li>`).join("") || `<li class="muted">없음</li>`;
   $("fbComments").innerHTML = list.filter(e => e.comment).map(e => `<li>${esc(e.comment)}</li>`).join("") || `<li class="muted">없음</li>`;
 }
+/* ── 실습보고서 ─────────────────────────────────────── */
+document.querySelectorAll(".reportBtn").forEach(b => b.onclick = () => {
+  downloadReport({ team: S.team, name: S.name, uid: me.uid, teamDoc: S.teamDoc || {},
+    received: S.received || [], allEvals: S.allEvals || [] },
+    { practice: new URLSearchParams(location.search).has("demo") });
+});
+
 /* ── 시작 ───────────────────────────────────────────── */
 if (S.team && S.name) start(); else { ready().then(() => { show("join"); renderJoin(); }); }

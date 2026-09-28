@@ -161,6 +161,9 @@ h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
 /* 피드백 */
 .feedback{display:grid;grid-template-columns:350px minmax(0,1fr);gap:24px;align-items:start}
 .fbphone h3,.fbbody h3{font-size:1.15rem;margin-bottom:10px}
+.reportbox{background:#FFF8EC;border:1px solid #EFD9B4;border-radius:10px;padding:12px 14px;margin:0 0 16px}
+.reportbox p{margin:0 0 10px;font-size:.88rem}
+.wait .reportbox{margin-top:24px;text-align:center}
 .fbstats{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
 .fbstats h4,.fbcols h4{font-size:.9rem;margin:0 0 8px}
 .hbar{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 24px;gap:8px;align-items:center;font-size:.8rem;margin:3px 0}
