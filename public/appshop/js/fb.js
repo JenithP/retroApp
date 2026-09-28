@@ -133,12 +133,13 @@ if (DEMO !== null) {
   addEval = async row => { D.evals.push({ ...row, id: "e" + Date.now(), uid: me.uid, atMs: Date.now() }); emit(); };
   generate = async (team, spec) => {
     const id = teamId(team), t = D.teams[id] || { team, gens: 0 };
-    if (D.state.phase !== "build") throw new Error("지금은 만들 수 없는 단계입니다");
-    if ((t.gens || 0) >= 5) throw new Error("생성 횟수 5번을 모두 썼습니다");
+    const demoSeat = Number(team) === 21, limit = demoSeat ? 20 : 5;
+    if (!(D.state.phase === "build" || (demoSeat && D.state.phase === "ready"))) throw new Error("지금은 만들 수 없는 단계입니다");
+    if ((t.gens || 0) >= limit) throw new Error(`생성 횟수 ${limit}번을 모두 썼습니다`);
     D.teams[id] = { ...t, gens: (t.gens || 0) + 1, generating: true, generatingAt: Date.now() }; emit();
     await new Promise(r => setTimeout(r, 1500));
     D.teams[id] = { ...D.teams[id], generating: false, html: fake(spec), spec, version: D.teams[id].gens, genAt: Date.now() }; emit();
-    return { ok: true, ms: 1500, left: 5 - D.teams[id].gens };
+    return { ok: true, ms: 1500, left: limit - D.teams[id].gens };
   };
   adminCall = async (code, op, extra = {}) => {
     if (op === "phase") {

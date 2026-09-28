@@ -87,10 +87,31 @@ export const MISSIONS = [
 // 설계서 칸 이름 — 학생 화면 · 피드백 · 현황판 · AI에 보내는 글이 모두 이 말을 쓴다
 export const FIELDS = { see: "화면에 나타나는 것", do: "사용자 행동", react: "앱 반응", style: "디자인" };
 
-export const missionOf = team => MISSIONS[Math.floor((Number(team) - 1) / 2) % MISSIONS.length];
+// 시연 — 20조 뒤에 붙는 교수용 자리. 설계 방법의 예시(물 마시기 기록 앱)를 그대로 만들어 보인다.
+//   · 준비 단계에서도 만들 수 있다 (학생이 시작하기 전에 설명하며 시연)
+//   · 생성 횟수를 넉넉히, 학생 평가 배정과 반 전체 통계에서는 뺀다
+//   · 평가 · 피드백 화면은 시연 앱 자기 것으로 보여 줄 수 있다
+export const DEMO_TEAM = 21;
+export const DEMO_GEN_LIMIT = 20;
+export const DEMO_MISSION = {
+  id: "시연", name: "물 마시기 기록 앱",
+  who: "물을 자주 잊고 마시지 않는 대학생",
+  when: "수업과 수업 사이 쉬는 시간, 강의실 책상에서",
+  goal: "오늘 물을 몇 잔 마셨는지 기록하고 확인한다",
+  story: "하루 여덟 잔을 마시려고 하지만, 공부하다 보면 몇 잔 마셨는지 잊어버린다. 잘못 누르면 기록이 틀어지는 것도 걱정이다.",
+  facts: ["쉬는 시간이 10분뿐이라 빨리 기록하고 싶다", "잘못 누를 때가 있다", "오늘 목표까지 얼마나 남았는지 알고 싶다"],
+  task: "물 한 잔을 마셨다고 기록하세요. 그다음 한 잔을 잘못 기록했다고 생각하고, 그 기록을 바로잡아 보세요.",
+};
+export const isDemo = team => Number(team) === DEMO_TEAM;
+export const teamLabel = team => isDemo(team) ? "시연" : `${team}조`;
+export const genLimitOf = team => isDemo(team) ? DEMO_GEN_LIMIT : GEN_LIMIT;
+
+export const missionOf = team => isDemo(team) ? DEMO_MISSION : MISSIONS[Math.floor((Number(team) - 1) / 2) % MISSIONS.length];
 
 // 평가 배정 — 조마다 다른 미션의 앱 두 개. 앱마다 정확히 두 조가 평가하게 된다.
+// 시연은 자기 앱만 평가해 보인다 (학생 조의 평가 결과에 섞이지 않게).
 export function targetsOf(team) {
+  if (isDemo(team)) return [DEMO_TEAM];
   const t = Number(team), n = TEAM_COUNT;
   return [((t - 1 + 2) % n) + 1, ((t - 1 + 4) % n) + 1];
 }

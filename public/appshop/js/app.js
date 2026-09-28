@@ -1,6 +1,7 @@
 // 앱 공방 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
 //   준비 → 제작(설계서 · 생성 5번) → 평가(출판된 다른 조 앱 두 개) → 피드백 → 마침
-import { missionOf, targetsOf, HEURISTICS, SEVERITY, PHASES, GEN_LIMIT, SCENE_COUNT, TEAM_COUNT, FIELDS } from "./data.js";
+import { missionOf, targetsOf, HEURISTICS, SEVERITY, PHASES, SCENE_COUNT, FIELDS,
+         DEMO_TEAM, isDemo, teamLabel, genLimitOf } from "./data.js";
 import { quad, avg } from "./quad.js";
 import { me, ready, watchState, watchTeam, watchTeams, watchSpec, saveSpec, watchEvals, addEval, generate, wrapApp } from "./fb.js";
 
@@ -17,11 +18,12 @@ const S = { phase: null, state: {}, team: Number(store.get("team")) || null, nam
 function renderJoin() {
   const pick = $("teamPick");
   pick.innerHTML = "";
-  for (let t = 1; t <= TEAM_COUNT; t++) {
+  for (let t = 1; t <= DEMO_TEAM; t++) {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "tp" + (S.team === t ? " on" : "");
-    b.innerHTML = `<b>${t}조</b><span>${esc(missionOf(t).name)}</span>`;
+    b.className = "tp" + (S.team === t ? " on" : "") + (isDemo(t) ? " demo" : "");
+    b.innerHTML = isDemo(t) ? `<b>시연용 앱</b><span>교수님 시연 · ${esc(missionOf(t).name)}</span>`
+                            : `<b>${t}조</b><span>${esc(missionOf(t).name)}</span>`;
     b.onclick = () => { S.team = t; renderJoin(); };
     pick.appendChild(b);
   }
@@ -37,7 +39,7 @@ $("joinBtn").onclick = () => {
 };
 
 function missionCard(m, withTask = false) {
-  return `<p class="mno">미션 ${m.id}</p><h2>${esc(m.name)}</h2>
+  return `<p class="mno">${m.id === "시연" ? "시연용 미션" : `미션 ${m.id}`}</p><h2>${esc(m.name)}</h2>
     <dl><dt>사용자</dt><dd>${esc(m.who)}</dd><dt>시간 · 장소</dt><dd>${esc(m.when)}</dd><dt>해야 할 일</dt><dd>${esc(m.goal)}</dd>
     <dt>사용 상황</dt><dd>${esc(m.story)}</dd>
     <dt>사용자 특징</dt><dd><ul class="facts">${m.facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul></dd>
@@ -45,6 +47,8 @@ function missionCard(m, withTask = false) {
 }
 
 /* ── 단계 전환 ───────────────────────────────────────── */
+// 지금 설계서를 고치고 만들 수 있는가 — 학생은 제작 단계, 시연은 준비 단계에서도
+const canBuild = () => S.phase === "build" || (isDemo(S.team) && S.phase === "ready");
 const VIEWS = { join: "vJoin", ready: "vReady", build: "vBuild", eval: "vEval", feedback: "vFeedback", end: "vEnd" };
 function show(v) {
   Object.values(VIEWS).forEach(id => $(id).hidden = true);
@@ -58,14 +62,14 @@ async function start() {
   if (started) return;
   started = true;
   $("teamChip").hidden = false;
-  $("teamChip").textContent = `${S.team}조 · ${S.name}`;
+  $("teamChip").textContent = `${teamLabel(S.team)} · ${S.name}`;
   $("teamChip").title = "눌러서 조 바꾸기";
   $("teamChip").onclick = () => { if (confirm("조를 다시 고를까요?")) { store.set("team", ""); location.reload(); } };
 
   const m = missionOf(S.team);
   $("readyMission").innerHTML = missionCard(m);
   $("buildMission").innerHTML = missionCard(m);
-  $("genLimit").textContent = GEN_LIMIT;
+  $("genLimit").textContent = genLimitOf(S.team);
 
   watchTeam(S.team, d => { S.teamDoc = d; renderBuildSide(); renderFeedback(); });
   watchTeams(all => { S.teams = all; if (S.phase === "eval") renderEvalList(); });
@@ -82,7 +86,7 @@ function setPhase(p) {
   $("phaseChip").dataset.p = p;
   renderBuildSide();
   if (!changed) return;
-  show(p);
+  show(canBuild() && p === "ready" ? "build" : p);   // 시연은 준비 단계에서 곧바로 제작 화면
   if (p === "eval") renderEvalList();
   if (p === "feedback") renderFeedback(true);
 }
@@ -152,7 +156,7 @@ function remoteSpec(d) {
 
 let saveT;
 form.addEventListener("input", () => {
-  if (S.phase !== "build") return;
+  if (!canBuild()) return;
   clearTimeout(saveT);
   $("savedMsg").textContent = "저장하는 중…";
   saveT = setTimeout(async () => {
@@ -165,11 +169,11 @@ form.addEventListener("input", () => {
 let shownVersion = -1;
 function renderBuildSide() {
   const d = S.teamDoc;
-  const used = d.gens || 0;
-  $("gens").innerHTML = Array.from({ length: GEN_LIMIT }, (_, i) =>
-    `<span class="pip${i < used ? " used" : ""}">${i + 1}</span>`).join("") + `<em>남은 생성 ${GEN_LIMIT - used}번</em>`;
+  const used = d.gens || 0, limit = genLimitOf(S.team);
+  $("gens").innerHTML = (limit <= 5 ? Array.from({ length: limit }, (_, i) =>
+    `<span class="pip${i < used ? " used" : ""}">${i + 1}</span>`).join("") : "") + `<em>남은 생성 ${limit - used}번</em>`;
   const busy = d.generating && Date.now() - (d.generatingAt || 0) < 6 * 60 * 1000;
-  $("genBtn").disabled = busy || used >= GEN_LIMIT || S.phase !== "build" || d.published;
+  $("genBtn").disabled = busy || used >= limit || !canBuild() || d.published;
   if (busy && !localBusy) $("genMsg").textContent = "조의 다른 기기에서 만드는 중입니다…";
   else if (!localBusy && d.lastError) $("genMsg").textContent = d.lastError;
   else if (!localBusy && d.version) $("genMsg").textContent = `${d.version}번째로 만든 앱입니다. 직접 눌러 보며 확인하세요.`;
@@ -181,7 +185,7 @@ let localBusy = false;
 $("genBtn").onclick = async () => {
   const spec = readSpec();
   if (!spec.scenes.some(s => s.see || s.do || s.react)) { $("genMsg").textContent = "장면을 하나 이상 적어 주세요"; return; }
-  if (!confirm(`생성은 ${GEN_LIMIT}번뿐입니다. 이 설계서로 만들까요?`)) return;
+  if (!confirm(`생성은 ${genLimitOf(S.team)}번뿐입니다. 이 설계서로 만들까요?`)) return;
   localBusy = true;
   $("genBtn").disabled = true;
   const t0 = Date.now();
@@ -216,7 +220,7 @@ function renderEvalList() {
       const m = missionOf(t), d = S.teams["T" + String(t).padStart(2, "0")] || {};
       const done = mine.some(e => e.target === t);
       return `<article class="appcard${done ? " done" : ""}">
-        <p class="mno">${t}조의 앱 · 미션 ${m.id}</p><h3>${esc(d.publishedSpec?.appName || m.name)}</h3>
+        <p class="mno">${isDemo(t) ? "시연용 앱" : `${teamLabel(t)}의 앱 · 미션 ${m.id}`}</p><h3>${esc(d.publishedSpec?.appName || m.name)}</h3>
         <p>${esc(m.goal)}</p>
         ${d.publishedHtml ? `<button class="btn primary" data-t="${t}">${done ? "다시 평가하기" : "내려받아 평가하기"}</button>` : `<p class="muted">출판된 앱이 없습니다</p>`}
         ${done ? `<p class="ok">평가를 보냈습니다</p>` : ""}
@@ -229,7 +233,7 @@ function renderEvalList() {
 function openEval(t) {
   Object.assign(EV, { target: t, tags: [], h: null, sev: null, pq: null, hq: null, t0: 0, ms: 0, taps: 0, done: null, running: false });
   const d = S.teams["T" + String(t).padStart(2, "0")] || {};
-  $("evalMission").innerHTML = `<p class="mno">${t}조의 앱</p>` + missionCard(missionOf(t), true).replace(/^<p class="mno">[^<]*<\/p>/, "");
+  $("evalMission").innerHTML = `<p class="mno">${isDemo(t) ? "시연용 앱" : `${teamLabel(t)}의 앱`}</p>` + missionCard(missionOf(t), true).replace(/^<p class="mno">[^<]*<\/p>/, "");
   $("evalFrame").srcdoc = wrapApp(d.publishedHtml);
   $("evalList").hidden = true;
   $("evalWork").hidden = false;

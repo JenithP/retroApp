@@ -16,7 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { GEN_LIMIT, BUILD_MINUTES, SCENE_COUNT, TEAM_COUNT, FIELDS } from "../public/appshop/js/data.js";
+import { BUILD_MINUTES, SCENE_COUNT, TEAM_COUNT, FIELDS, isDemo, genLimitOf } from "../public/appshop/js/data.js";
 
 const ALLOW = [
   "https://gccrc-crae.web.app",
@@ -111,7 +111,10 @@ function extractHtml(text) {
 
 async function generate({ db }, uid, body) {
   const team = Number(body.team);
-  if (!(team >= 1 && team <= TEAM_COUNT)) return [400, { error: "조 번호가 이상합니다" }];
+  if (!((team >= 1 && team <= TEAM_COUNT) || isDemo(team))) return [400, { error: "조 번호가 이상합니다" }];
+  const limit = genLimitOf(team);
+  // 시연은 학생이 시작하기 전(준비 단계)에도 만들어 보일 수 있다
+  const open = isDemo(team) ? ["ready", "build"] : ["build"];
   const spec = cleanSpec(body.spec);
   if (!spec.scenes.some(s => s.see || s.do || s.react)) return [400, { error: "장면을 하나 이상 적어 주십시오" }];
 
@@ -121,12 +124,12 @@ async function generate({ db }, uid, body) {
   // 자리 잡기 — 단계 · 횟수 · 동시 요청을 한 번에 확인하고 한 번을 먼저 쓴다
   const reserved = await db.runTransaction(async tx => {
     const [st, tm] = await Promise.all([tx.get(stateRef), tx.get(teamRef)]);
-    if ((st.data()?.phase) !== "build") return { err: "지금은 만들 수 없는 단계입니다" };
+    if (!open.includes(st.data()?.phase || "ready")) return { err: "지금은 만들 수 없는 단계입니다" };
     const t = tm.data() || {};
     if (t.published) return { err: "이미 출판된 앱은 고칠 수 없습니다" };
     if (t.generating && Date.now() - (t.generatingAt || 0) < STALE_MS) return { err: "조의 다른 기기에서 만드는 중입니다" };
     const gens = t.gens || 0;
-    if (gens >= GEN_LIMIT) return { err: `생성 횟수 ${GEN_LIMIT}번을 모두 썼습니다` };
+    if (gens >= limit) return { err: `생성 횟수 ${limit}번을 모두 썼습니다` };
     tx.set(teamRef, { team, gens: gens + 1, generating: true, generatingAt: Date.now(), by: uid }, { merge: true });
     return { gens: gens + 1 };
   });
@@ -160,7 +163,7 @@ async function generate({ db }, uid, body) {
       spec, html, ms, at: FieldValue.serverTimestamp(), by: uid, model: msg.model,
       usage: { in: msg.usage?.input_tokens || 0, out: msg.usage?.output_tokens || 0 },
     });
-    return [200, { ok: true, html, version, gens: reserved.gens, left: GEN_LIMIT - reserved.gens, ms }];
+    return [200, { ok: true, html, version, gens: reserved.gens, left: limit - reserved.gens, ms }];
   } catch (e) {
     // 실패한 한 번은 돌려준다
     await teamRef.set({ gens: FieldValue.increment(-1), generating: false, lastError: String(e.message || e).slice(0, 200) }, { merge: true });

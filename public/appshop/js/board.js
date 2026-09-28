@@ -1,5 +1,5 @@
 // 앱 공방 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 조별 진행과 반 전체 결과를 본다.
-import { missionOf, HEURISTICS, PHASES, GEN_LIMIT, TEAM_COUNT, FIELDS } from "./data.js";
+import { missionOf, HEURISTICS, PHASES, FIELDS, DEMO_TEAM, isDemo, teamLabel, genLimitOf } from "./data.js";
 import { ready, watchState, watchTeams, watchSpecs, watchEvals, adminCall, wrapApp, teamId } from "./fb.js";
 import { quad, avg } from "./quad.js";
 
@@ -62,21 +62,26 @@ const ago = ms => { if (!ms) return ""; const m = Math.round((Date.now() - ms) /
 
 function renderAll() { renderKpis(); renderTeams(); renderClass(); }
 
+// 요약 숫자와 반 전체 결과는 학생 조만 센다 — 시연(T21)은 뺀다
+const DEMO_ID = teamId(DEMO_TEAM);
+const studentOnly = obj => Object.entries(obj).filter(([id]) => id !== DEMO_ID).map(([, v]) => v);
+const studentEvals = () => B.evals.filter(e => !isDemo(e.team) && !isDemo(e.target));
+
 function renderKpis() {
-  const T = Object.values(B.teams), specs = Object.values(B.specs);
+  const T = studentOnly(B.teams), specs = studentOnly(B.specs), evals = studentEvals();
   const gens = T.reduce((a, t) => a + (t.gens || 0), 0);
   const pub = T.filter(t => t.publishedHtml).length;
-  const tags = B.evals.reduce((a, e) => a + (e.tags || []).length, 0);
-  const k = [[specs.length, "설계서를 쓴 조"], [gens, "생성한 횟수"], [pub, "출판된 앱"], [B.evals.length, "보낸 평가"], [tags, "찾아낸 문제"]];
+  const tags = evals.reduce((a, e) => a + (e.tags || []).length, 0);
+  const k = [[specs.length, "설계서를 쓴 조"], [gens, "생성한 횟수"], [pub, "출판된 앱"], [evals.length, "보낸 평가"], [tags, "찾아낸 문제"]];
   $("kpis").innerHTML = k.map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
 }
 
 function renderTeams() {
   const box = $("teams");
   box.innerHTML = "";
-  for (let t = 1; t <= TEAM_COUNT; t++) {
+  for (let t = 1; t <= DEMO_TEAM; t++) {
     const d = B.teams[teamId(t)] || {}, sp = B.specs[teamId(t)], m = missionOf(t);
-    const used = d.gens || 0;
+    const used = d.gens || 0, limit = genLimitOf(t);
     const busy = d.generating && Date.now() - (d.generatingAt || 0) < 6 * 60000;
     const recv = B.evals.filter(e => e.target === t);
     let st = `<span class="st none">설계 전</span>`;
@@ -85,28 +90,29 @@ function renderTeams() {
     if (busy) st = `<span class="st busy">만드는 중…</span>`;
     if (d.published) st = d.publishedHtml ? `<span class="st pub">출판 · 평가 ${recv.length}건</span>` : `<span class="st none">출판할 앱 없음</span>`;
     const last = Math.max(sp?.updatedAt || 0, d.genAt || 0);
-    const quiet = B.state.phase === "build" && (!last || Date.now() - last > 5 * 60000);
+    const quiet = !isDemo(t) && B.state.phase === "build" && (!last || Date.now() - last > 5 * 60000);
     const b = document.createElement("button");
-    b.className = "tcard" + (quiet ? " quiet" : "");
-    b.innerHTML = `<div class="tn"><b>${t}조</b><span>미션 ${m.id}</span></div><div class="tm">${esc(sp?.spec?.appName || m.name)}</div>
-      <div class="pips">${Array.from({ length: GEN_LIMIT }, (_, i) => `<i class="${i < used ? "u" : ""}"></i>`).join("")}</div>${st}`;
+    b.className = "tcard" + (quiet ? " quiet" : "") + (isDemo(t) ? " demo" : "");
+    b.innerHTML = `<div class="tn"><b>${isDemo(t) ? "시연용 앱" : teamLabel(t)}</b><span>${isDemo(t) ? "통계 제외" : `미션 ${m.id}`}</span></div><div class="tm">${esc(sp?.spec?.appName || m.name)}</div>
+      <div class="pips">${limit <= 5 ? Array.from({ length: limit }, (_, i) => `<i class="${i < used ? "u" : ""}"></i>`).join("") : `<small>생성 ${used} / ${limit}</small>`}</div>${st}`;
     b.onclick = () => openDetail(t);
     box.appendChild(b);
   }
 }
 
 function renderClass() {
-  const tags = B.evals.flatMap(e => e.tags || []);
+  const EVALS = studentEvals();
+  const tags = EVALS.flatMap(e => e.tags || []);
   const byH = HEURISTICS.map(h => { const ts = tags.filter(t => t.h === h.n); return { h, n: ts.length, sev: ts.length ? avg(ts.map(t => t.sev)) : 0 }; });
   const max = Math.max(1, ...byH.map(x => x.n));
   $("classBars").innerHTML = byH.map(x =>
     `<div class="hbar"><span class="hl"><b>${x.h.n}</b> ${esc(x.h.ko)}</span><span class="track"><span class="fill sv${Math.round(x.sev)}" style="width:${x.n / max * 100}%"></span></span><span class="hn">${x.n || ""}</span></div>`).join("");
 
   // 평가자를 합칠수록 — 앱마다 「짚인 원칙 종류」 를 평가자 1명 / 한 조 / 모든 평가자로 세어 평균
-  const targets = [...new Set(B.evals.map(e => e.target))];
+  const targets = [...new Set(EVALS.map(e => e.target))];
   const one = [], team = [], all = [];
   targets.forEach(tg => {
-    const es = B.evals.filter(e => e.target === tg);
+    const es = EVALS.filter(e => e.target === tg);
     const set = list => new Set(list.flatMap(e => (e.tags || []).map(t => t.h))).size;
     es.forEach(e => one.push(set([e])));
     [...new Set(es.map(e => e.team))].forEach(tm => team.push(set(es.filter(e => e.team === tm))));
@@ -120,7 +126,7 @@ function renderClass() {
 
   const pts = [], labels = [];
   targets.sort((a, b) => a - b).forEach(tg => {
-    const es = B.evals.filter(e => e.target === tg);
+    const es = EVALS.filter(e => e.target === tg);
     const p = avg(es.map(e => e.pq)), h = avg(es.map(e => e.hq));
     if (p && h) { pts.push([p, h]); labels.push(tg); }
   });
@@ -131,7 +137,7 @@ function openDetail(t) {
   const d = B.teams[teamId(t)] || {}, sp = B.specs[teamId(t)];
   const html = d.publishedHtml || d.html;
   const spec = d.publishedSpec || d.spec || sp?.spec;
-  $("dTitle").textContent = `${t}조 — ${spec?.appName || missionOf(t).name}`;
+  $("dTitle").textContent = `${teamLabel(t)} — ${spec?.appName || missionOf(t).name}`;
   $("dFrame").srcdoc = wrapApp(html);
   $("dMission").innerHTML = (() => { const m = missionOf(t); return `<p class="mno">미션 ${m.id}</p><h2>${esc(m.name)}</h2><dl><dt>사용자</dt><dd>${esc(m.who)}</dd><dt>시간 · 장소</dt><dd>${esc(m.when)}</dd><dt>해야 할 일</dt><dd>${esc(m.goal)}</dd><dt>사용 상황</dt><dd>${esc(m.story)}</dd><dt>사용자 특징</dt><dd><ul class="facts">${m.facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul></dd></dl>`; })();
   $("dVer").textContent = d.published ? `출판본 · ${d.publishedVersion || 0}번째` : d.version ? `${d.version}번째로 만든 앱의 설계서` : "아직 만들지 않은 초안";

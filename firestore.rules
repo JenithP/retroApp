@@ -100,10 +100,16 @@ service cloud.firestore {
         allow write: if false;
       }
     }
+    // 시연(T21)은 학생이 시작하기 전 준비 단계에서도 설계서를 쓸 수 있다
+    function hci5Open(id) {
+      return !exists(/databases/$(database)/documents/hci5_state/current)
+               ? id == "T21"
+               : (hci5Phase() == "build" || (id == "T21" && hci5Phase() == "ready"));
+    }
     match /hci5_specs/{id} {              // 설계서 초안 — 출판 뒤에는 잠긴다
       allow read:  if request.auth != null;
       allow write: if request.auth != null
-                   && hci5Phase() == "build"
+                   && hci5Open(id)
                    && id.matches('T[0-9]{2}')
                    && request.resource.data.keys().hasOnly(['spec', 'updatedAt', 'by'])
                    && request.resource.data.by == request.auth.uid;

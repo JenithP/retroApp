@@ -36,6 +36,9 @@ h1 .sub{color:var(--faint);font-weight:500}
 .tcard .st.pub{color:var(--accent)}
 .tcard .st.none{color:var(--faint);font-weight:400}
 .tcard.quiet{opacity:.55}
+.tcard.demo{border-style:dashed;border-color:var(--warm);background:#FFF8EC}
+.tcard.demo .tn b{color:var(--warm)}
+.tcard .pips small{font-size:.75rem;color:var(--soft)}
 
 .curve{display:flex;flex-direction:column;gap:6px}
 .crow{display:grid;grid-template-columns:190px minmax(0,1fr) 60px;gap:8px;align-items:center;font-size:.82rem}
