@@ -1,5 +1,5 @@
 // 앱 공방 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 조별 진행과 반 전체 결과를 본다.
-import { missionOf, HEURISTICS, PHASES, GEN_LIMIT, TEAM_COUNT } from "./data.js";
+import { missionOf, HEURISTICS, PHASES, GEN_LIMIT, TEAM_COUNT, FIELDS } from "./data.js";
 import { ready, watchState, watchTeams, watchSpecs, watchEvals, adminCall, wrapApp, teamId } from "./fb.js";
 import { quad, avg } from "./quad.js";
 
@@ -133,11 +133,11 @@ function openDetail(t) {
   const spec = d.publishedSpec || d.spec || sp?.spec;
   $("dTitle").textContent = `${t}조 — ${spec?.appName || missionOf(t).name}`;
   $("dFrame").srcdoc = wrapApp(html);
-  $("dMission").innerHTML = (() => { const m = missionOf(t); return `<p class="mno">미션 ${m.id}</p><h2>${esc(m.name)}</h2><dl><dt>누가</dt><dd>${esc(m.who)}</dd><dt>언제</dt><dd>${esc(m.when)}</dd><dt>무엇을</dt><dd>${esc(m.goal)}</dd></dl>`; })();
+  $("dMission").innerHTML = (() => { const m = missionOf(t); return `<p class="mno">미션 ${m.id}</p><h2>${esc(m.name)}</h2><dl><dt>사용자</dt><dd>${esc(m.who)}</dd><dt>시간 · 장소</dt><dd>${esc(m.when)}</dd><dt>해야 할 일</dt><dd>${esc(m.goal)}</dd><dt>사용 상황</dt><dd>${esc(m.story)}</dd><dt>사용자 특징</dt><dd><ul class="facts">${m.facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul></dd></dl>`; })();
   $("dVer").textContent = d.published ? `출판본 · ${d.publishedVersion || 0}번째` : d.version ? `${d.version}번째로 만든 앱의 설계서` : "아직 만들지 않은 초안";
   $("dSpec").innerHTML = spec ? (spec.scenes || []).map((s, i) => (s.see || s.do || s.react)
-    ? `<div class="sc"><b>장면 ${i + 1}</b><p>보이는 것 — ${esc(s.see || "(적지 않음)")}</p><p>하는 일 — ${esc(s.do || "(적지 않음)")}</p><p>반응 — ${esc(s.react || "(적지 않음)")}</p></div>` : "").join("")
-    + `<p class="muted">꾸밈 — ${esc(spec.style || "(적지 않음)")}</p>` : `<p class="muted">없음</p>`;
+    ? `<div class="sc"><b>장면 ${i + 1}</b><p>${FIELDS.see} — ${esc(s.see || "(적지 않음)")}</p><p>${FIELDS.do} — ${esc(s.do || "(적지 않음)")}</p><p>${FIELDS.react} — ${esc(s.react || "(적지 않음)")}</p></div>` : "").join("")
+    + `<p class="muted">${FIELDS.style} — ${esc(spec.style || "(적지 않음)")}</p>` : `<p class="muted">없음</p>`;
   const tags = B.evals.filter(e => e.target === t).flatMap(e => (e.tags || []).map(x => ({ ...x, by: `${e.team}조 ${e.name}` })));
   $("dTags").innerHTML = tags.sort((a, b) => b.sev - a.sev).map(x =>
     `<li><span class="hnum">${x.h}</span><span class="sev s${x.sev}">${x.sev}</span><span>${esc(x.where ? x.where + " — " : "")}${esc(x.note)} <small>${esc(x.by)}</small></span></li>`).join("") || `<li class="muted">없음</li>`;

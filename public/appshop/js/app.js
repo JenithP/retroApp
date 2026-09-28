@@ -1,6 +1,6 @@
 // 앱 공방 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
 //   준비 → 제작(설계서 · 생성 5번) → 평가(출판된 다른 조 앱 두 개) → 피드백 → 마침
-import { missionOf, targetsOf, HEURISTICS, SEVERITY, PHASES, GEN_LIMIT, SCENE_COUNT, TEAM_COUNT } from "./data.js";
+import { missionOf, targetsOf, HEURISTICS, SEVERITY, PHASES, GEN_LIMIT, SCENE_COUNT, TEAM_COUNT, FIELDS } from "./data.js";
 import { quad, avg } from "./quad.js";
 import { me, ready, watchState, watchTeam, watchTeams, watchSpec, saveSpec, watchEvals, addEval, generate, wrapApp } from "./fb.js";
 
@@ -38,7 +38,9 @@ $("joinBtn").onclick = () => {
 
 function missionCard(m, withTask = false) {
   return `<p class="mno">미션 ${m.id}</p><h2>${esc(m.name)}</h2>
-    <dl><dt>누가</dt><dd>${esc(m.who)}</dd><dt>언제 · 어디서</dt><dd>${esc(m.when)}</dd><dt>무엇을</dt><dd>${esc(m.goal)}</dd>
+    <dl><dt>사용자</dt><dd>${esc(m.who)}</dd><dt>시간 · 장소</dt><dd>${esc(m.when)}</dd><dt>해야 할 일</dt><dd>${esc(m.goal)}</dd>
+    <dt>사용 상황</dt><dd>${esc(m.story)}</dd>
+    <dt>사용자 특징</dt><dd><ul class="facts">${m.facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul></dd>
     ${withTask ? `<dt class="task">평가 과업</dt><dd class="task">${esc(m.task)}</dd>` : ""}</dl>`;
 }
 
@@ -104,16 +106,17 @@ const form = $("specForm");
   for (let i = 0; i < SCENE_COUNT; i++) {
     const f = document.createElement("fieldset");
     f.className = "scene";
-    f.innerHTML = `<legend>장면 ${i + 1}</legend>
-      <label>화면에 보이는 것<textarea data-i="${i}" data-k="see" rows="2" maxlength="300"></textarea></label>
-      <label>사용자가 하는 일<textarea data-i="${i}" data-k="do" rows="2" maxlength="300"></textarea></label>
-      <label>앱의 반응<textarea data-i="${i}" data-k="react" rows="2" maxlength="300"></textarea></label>`;
+    f.innerHTML = `<legend>장면 ${i + 1} <small>${i === 0 ? "앱을 켜면 처음 나타나는 화면" : `장면 ${i}의 반응 다음에 이어지는 일`}</small></legend>
+      <label>${FIELDS.see}<textarea data-i="${i}" data-k="see" rows="2" maxlength="300"></textarea></label>
+      <label>${FIELDS.do}<textarea data-i="${i}" data-k="do" rows="2" maxlength="300"></textarea></label>
+      <label>${FIELDS.react}<textarea data-i="${i}" data-k="react" rows="2" maxlength="300"></textarea></label>`;
     box.appendChild(f);
   }
+  // 예시는 미션과 겹치지 않게 — 첫 장면만 무엇을 적는 칸인지 알려 준다
   box.querySelectorAll("textarea").forEach(t => t.placeholder = {
-    see: i => i === 0 ? "예: 가운데에 큰 글씨로 「오늘의 약」, 아래에 아침 · 점심 · 저녁 버튼 세 개" : "",
-    do: i => i === 0 ? "예: 점심 버튼을 누른다" : "",
-    react: i => i === 0 ? "예: 점심 버튼이 초록색으로 바뀌고 「먹음」 이라고 표시된다" : "",
+    see: i => i === 0 ? "어떤 글자와 버튼이 어디에 있는지" : "앞 장면의 반응 뒤 화면 (예: 장면 1에서 뜬 창)",
+    do: i => i === 0 ? "무엇을 누르거나 입력하는지" : "",
+    react: i => i === 0 ? "누른 뒤 무엇이 어떻게 바뀌는지" : "",
   }[t.dataset.k](Number(t.dataset.i)));
 })();
 
@@ -206,8 +209,9 @@ function renderEvalList() {
   const box = $("evalList");
   if (!$("evalWork").hidden) return;
   const mine = S.myEvals || [];
-  box.innerHTML = `<h2>다른 조의 앱을 평가합니다</h2>
-    <p class="lead">두 앱을 차례로 내려받아 <b>평가 과업</b>을 직접 해 보세요. 막히거나 이상한 곳마다 닐슨의 원칙으로 적습니다. 각자 따로 평가하고, 결과는 조별로 합쳐집니다.</p>
+  box.innerHTML = `<h2>다른 조의 앱 평가하기</h2>
+    <p class="lead">다른 조가 만든 앱 두 개를 차례로 내려받아 직접 사용해 봅니다. 정해진 <b>평가 과업</b>을 수행하면서, 사용하기 어렵거나 어색한 부분이 있으면 닐슨의 사용성 원칙에 맞춰 기록합니다.</p>
+    <p class="lead">평가는 먼저 각자 따로 진행한 뒤, 조원들의 결과를 모아 하나의 평가 내용으로 정리합니다.</p>
     <div class="cards">${targetsOf(S.team).map(t => {
       const m = missionOf(t), d = S.teams["T" + String(t).padStart(2, "0")] || {};
       const done = mine.some(e => e.target === t);
@@ -232,7 +236,7 @@ function openEval(t) {
   ["tWhere", "tNote", "comment"].forEach(id => $(id).value = "");
   $("evalMsg").textContent = "";
   $("taskStart").disabled = false; $("taskDone").disabled = true; $("taskGiveup").disabled = true;
-  $("taskTime").textContent = "0:00"; $("taps").textContent = "탭 0";
+  $("taskTime").textContent = "0:00"; $("taps").textContent = "누른 횟수 0";
   renderPicks(); renderTags(); renderLikert(); checkSubmit();
   window.scrollTo(0, 0);
 }
@@ -246,7 +250,7 @@ $("reloadEval").onclick = () => { $("evalFrame").srcdoc = wrapApp((S.teams["T" +
 // 과업 시간과 탭 — 앱 안의 탭은 iframe 이 알려 준다
 window.addEventListener("message", e => {
   if (e.data?.appshop !== "tap") return;
-  if (e.source === $("evalFrame").contentWindow && EV.running) { EV.taps++; $("taps").textContent = `탭 ${EV.taps}`; }
+  if (e.source === $("evalFrame").contentWindow && EV.running) { EV.taps++; $("taps").textContent = `누른 횟수 ${EV.taps}`; }
 });
 $("taskStart").onclick = () => {
   Object.assign(EV, { t0: Date.now(), taps: 0, running: true, done: null });
@@ -334,8 +338,8 @@ function renderFeedback(force) {
 
   const spec = d.publishedSpec || d.spec;
   $("fbSpec").innerHTML = spec ? `<p><b>${esc(spec.appName)}</b></p>` + (spec.scenes || []).map((s, i) =>
-    (s.see || s.do || s.react) ? `<div class="sc"><b>장면 ${i + 1}</b><p>보이는 것 — ${esc(s.see || "(적지 않음)")}</p><p>하는 일 — ${esc(s.do || "(적지 않음)")}</p><p>반응 — ${esc(s.react || "(적지 않음)")}</p></div>` : "").join("")
-    + `<p class="muted">꾸밈 — ${esc(spec.style || "(적지 않음)")}</p>` : `<p class="muted">출판된 설계서가 없습니다</p>`;
+    (s.see || s.do || s.react) ? `<div class="sc"><b>장면 ${i + 1}</b><p>${FIELDS.see} — ${esc(s.see || "(적지 않음)")}</p><p>${FIELDS.do} — ${esc(s.do || "(적지 않음)")}</p><p>${FIELDS.react} — ${esc(s.react || "(적지 않음)")}</p></div>` : "").join("")
+    + `<p class="muted">${FIELDS.style} — ${esc(spec.style || "(적지 않음)")}</p>` : `<p class="muted">출판된 설계서가 없습니다</p>`;
 
   $("fbTags").innerHTML = tags.sort((a, b) => b.sev - a.sev).map(t =>
     `<li><span class="hnum">${t.h}</span><span class="sev s${t.sev}">${t.sev}</span><span>${esc(t.where ? t.where + " — " : "")}${esc(t.note)}</span></li>`).join("") || `<li class="muted">없음</li>`;

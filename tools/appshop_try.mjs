@@ -68,4 +68,4 @@ for (const [name, raw] of Object.entries(CASES)) {
   console.log(`${name}: ${((Date.now() - t0) / 1000).toFixed(0)}초 · 출력 ${msg.usage.output_tokens}토큰 · ${msg.stop_reason}`);
   console.log(`  설계서에 없는 말: ${extra.length ? extra.join(", ") : "없음"}`);
 }
-console.log(`\n결과: ${new URL(".", outDir).pathname}appshop_try_out/`);
+console.log(`\n결과: ${decodeURIComponent(outDir.pathname).replace(/^\/([A-Za-z]:)/, "$1")}`);

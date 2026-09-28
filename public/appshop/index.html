@@ -49,14 +49,35 @@
     <div class="specside">
       <div class="mission small" id="buildMission"></div>
       <div class="howto">
-        <b>설계 방법</b> — 장면마다 세 칸을 채웁니다. <b>AI는 적힌 것만 만듭니다.</b>
-        적지 않은 버튼 · 안내 문구 · 되돌리기 · 확인 창은 생기지 않습니다.
-        생성은 조 전체가 <b id="genLimit"></b>번. 30분이 지나 교수님이 출판하면 더는 고칠 수 없습니다.
+        <h3>설계 방법</h3>
+        <p>앱공방에서는 장면마다 세 칸을 채우며 앱을 설계합니다. <b>AI는 여러분이 적은 내용만 바탕으로 화면을 만듭니다.</b>
+          버튼, 안내 문구, 되돌리기 기능, 확인 창처럼 필요한 요소가 있다면 반드시 직접 적어 주세요. 적지 않은 것은 자동으로 만들어지지 않습니다.</p>
+        <p>생성 기회는 조별로 총 <b id="genLimit"></b>번입니다. 30분 뒤 교수님이 앱을 출판하면 그 이후에는 수정할 수 없습니다.</p>
+
+        <h3>장면은 이렇게 이어집니다</h3>
+        <ol class="flow">
+          <li><b>장면 1</b>은 앱을 켜면 처음 나타나는 화면입니다.</li>
+          <li>그 화면에서 사용자가 무언가를 하면(<b>사용자 행동</b>) 앱이 바뀝니다(<b>앱 반응</b>).</li>
+          <li>바뀐 뒤의 화면에서 이어지는 일을 <b>장면 2</b>에 적습니다. 이렇게 장면 1 → 2 → 3 … 순서로 적으면 사용자가 앱을 쓰는 흐름이 됩니다.</li>
+          <li>같은 화면에서 다른 행동을 할 수도 있다면(예: 「예」와 「아니요」), 행동마다 장면을 하나씩 따로 적고 화면 칸에 「장면 2와 같은 화면」처럼 적어 주세요.</li>
+        </ol>
+        <details class="example">
+          <summary>예시 보기 — 물 마시기 기록 앱</summary>
+          <table>
+            <thead><tr><th></th><th>화면에 나타나는 것</th><th>사용자 행동</th><th>앱 반응</th></tr></thead>
+            <tbody>
+              <tr><th>장면 1</th><td>가운데 큰 글씨로 「오늘 마신 물 0잔」, 그 아래 「한 잔 마셨어요」 버튼</td><td>「한 잔 마셨어요」를 누른다</td><td>「한 잔 기록할까요?」라는 글과 「예」 「아니요」 버튼이 있는 창이 뜬다</td></tr>
+              <tr><th>장면 2</th><td>장면 1에서 뜬 확인 창</td><td>「예」를 누른다</td><td>창이 닫히고 「오늘 마신 물 1잔」으로 바뀐다</td></tr>
+              <tr><th>장면 3</th><td>장면 2와 같은 확인 창</td><td>「아니요」를 누른다</td><td>창만 닫히고 숫자는 그대로다</td></tr>
+            </tbody>
+          </table>
+          <p class="muted">장면 2와 3은 같은 창에서 서로 다른 행동을 한 경우입니다. 만약 장면 3을 적지 않았다면, 「아니요」 버튼은 눌러도 아무 일이 일어나지 않습니다.</p>
+        </details>
       </div>
       <form class="spec" id="specForm" autocomplete="off">
         <label class="field">앱 이름 <input name="appName" maxlength="40"></label>
         <div id="scenes"></div>
-        <label class="field">꾸밈 <small>색 · 글자 크기 · 느낌 (적지 않으면 흰 바탕에 회색 버튼)</small>
+        <label class="field">디자인 <small>색, 글자 크기, 분위기를 적어 주세요. 비워 두면 흰 배경과 회색 버튼으로 만들어집니다.</small>
           <textarea name="style" rows="2" maxlength="300"></textarea></label>
       </form>
       <p class="saved" id="savedMsg"></p>
@@ -75,31 +96,56 @@
 <section class="view" id="vEval" hidden>
   <div class="evallist" id="evalList"></div>
   <div class="evalwork" id="evalWork" hidden>
+    <details class="howto evalguide" open>
+      <summary>평가 방법 <small>(눌러서 접기 · 펼치기)</small></summary>
+      <dl class="guide">
+        <dt>① 평가할 앱의 미션 카드</dt>
+        <dd>앱을 만든 조, 앱 이름, 사용자, 시간, 해야 할 일, 사용 상황, 사용자 특징을 확인합니다. 카드 맨 아래에는 초록색 굵은 글씨로 <b>평가 과업</b>이 표시됩니다.</dd>
+        <dt>② 과업 진행 버튼</dt>
+        <dd>「과업 시작」을 누른 뒤, 과업을 마치면 「과업 끝냄」을 누릅니다. 더 이상 진행하기 어렵다면 「포기」를 누를 수 있습니다. 옆에는 걸린 시간과 앱 안에서 누른 횟수가 자동으로 기록됩니다.</dd>
+        <dt>③ 폰 화면</dt>
+        <dd>다른 조가 출판한 앱을 실제로 사용해 보는 공간입니다. 진행하다가 막히면 「처음 화면으로 다시 켜기」를 눌러 처음부터 다시 시작할 수 있습니다.</dd>
+        <dt>④ 문제 기록하기</dt>
+        <dd>사용하다가 불편하거나 이상한 점을 발견할 때마다 기록합니다. 어느 화면에서 생긴 문제인지, 닐슨의 10가지 사용성 원칙 중 어떤 원칙에 해당하는지, 얼마나 심각한지(0점 문제 아님 ~ 4점 출시 전 반드시 고쳐야 할 문제)를 고르고 한 줄로 적습니다.</dd>
+        <dt>⑤ 사용 후 평가하기</dt>
+        <dd>앱을 모두 사용한 뒤 실용적 품질과 쾌락적 품질을 1–7점으로 평가하고, 한 줄 소감을 적습니다.</dd>
+        <dt>⑥ 평가 보내기</dt>
+        <dd>과업을 끝내거나 포기한 뒤, 두 품질 점수를 모두 선택하면 「평가 보내기」를 누를 수 있습니다. 평가를 보내면 앱 목록으로 돌아가며, 해당 앱 카드에 「평가를 보냈습니다」라고 표시됩니다.</dd>
+      </dl>
+    </details>
     <div class="evalphone">
+      <p class="step">① 평가할 앱의 미션 카드</p>
       <div class="mission small" id="evalMission"></div>
+      <p class="step">② 과업 진행 버튼</p>
       <div class="taskbar">
         <button class="btn primary" id="taskStart">과업 시작</button>
         <button class="btn" id="taskDone" disabled>과업 끝냄</button>
         <button class="btn ghost" id="taskGiveup" disabled>포기</button>
         <span class="tasktime" id="taskTime">0:00</span>
-        <span class="taps" id="taps">탭 0</span>
+        <span class="taps" id="taps">누른 횟수 0</span>
       </div>
+      <p class="step">③ 폰 화면</p>
       <div class="phonewrap"><div class="phone"><iframe id="evalFrame" sandbox="allow-scripts" title="평가할 앱"></iframe></div></div>
       <button class="btn ghost" id="reloadEval">처음 화면으로 다시 켜기</button>
     </div>
     <div class="evalform">
-      <h3>① 문제를 찾을 때마다 적기</h3>
-      <label class="field">어느 화면에서 <input id="tWhere" maxlength="60" placeholder="예: 첫 화면, 기록 버튼을 누른 뒤"></label>
-      <div class="field">어긴 원칙 <small>닐슨의 10가지 사용성 원칙</small> <div class="hpick" id="hPick"></div></div>
-      <div class="field">심각도 <div class="spick" id="sPick"></div></div>
-      <label class="field">무엇이 문제인가 <input id="tNote" maxlength="120" placeholder="한 줄로"></label>
+      <h3>④ 문제 기록하기</h3>
+      <p class="formlead">사용하다가 불편하거나 이상한 점을 발견할 때마다 기록합니다.</p>
+      <label class="field">어느 화면에서 <input id="tWhere" maxlength="60" placeholder="예: 점심 버튼을 누른 뒤"></label>
+      <div class="field">어긴 원칙 <small>닐슨의 10가지 사용성 원칙 중 하나를 고릅니다</small> <div class="hpick" id="hPick"></div></div>
+      <div class="field">심각도 <small>0점은 문제가 아님, 4점은 출시 전 반드시 고쳐야 할 문제입니다</small> <div class="spick" id="sPick"></div></div>
+      <label class="field">무엇이 문제인가 <input id="tNote" maxlength="120" placeholder="문제를 한 줄로 적은 뒤 「문제 추가」를 누르세요"></label>
       <button class="btn" id="addTag" disabled>문제 추가</button>
       <ol class="tags" id="tagList"></ol>
 
-      <h3>② 다 써 본 뒤</h3>
-      <div class="likert" data-k="pq"><span>실용적 품질 <small>원하는 일을 잘 수행할 수 있었는가 — 이해하기 쉬움, 유용함, 조작의 편리함</small></span><div></div></div>
-      <div class="likert" data-k="hq"><span>쾌락적 품질 <small>즐거움과 자기표현의 욕구를 충족했는가 — 새로운 자극, 흥미, 개성 표현</small></span><div></div></div>
-      <label class="field">한 줄 소감 <input id="comment" maxlength="150"></label>
+      <h3>⑤ 사용 후 평가하기</h3>
+      <p class="formlead">앱을 모두 사용한 뒤, 아래 항목을 평가합니다.</p>
+      <div class="likert" data-k="pq"><span>실용적 품질 <small>원하는 일을 잘 수행할 수 있었는가?</small></span><div></div></div>
+      <div class="likert" data-k="hq"><span>쾌락적 품질 <small>사용하는 과정이 즐겁고, 나를 표현하는 느낌이 있었는가?</small></span><div></div></div>
+      <label class="field">한 줄 소감 <input id="comment" maxlength="150" placeholder="앱을 사용한 느낌이나 개선하면 좋을 점을 짧게 적습니다"></label>
+
+      <h3>⑥ 평가 보내기</h3>
+      <p class="formlead">과업을 끝내거나 포기한 뒤, 두 품질 점수를 모두 선택하면 「평가 보내기」를 누를 수 있습니다.</p>
       <div class="formfoot">
         <button class="btn ghost" id="backList">목록으로</button>
         <button class="btn primary" id="submitEval" disabled>평가 보내기</button>

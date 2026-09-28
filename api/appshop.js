@@ -16,7 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { GEN_LIMIT, BUILD_MINUTES, SCENE_COUNT, TEAM_COUNT } from "../public/appshop/js/data.js";
+import { GEN_LIMIT, BUILD_MINUTES, SCENE_COUNT, TEAM_COUNT, FIELDS } from "../public/appshop/js/data.js";
 
 const ALLOW = [
   "https://gccrc-crae.web.app",
@@ -94,11 +94,11 @@ function specText(spec) {
   spec.scenes.forEach((sc, i) => {
     if (!sc.see && !sc.do && !sc.react) return;
     lines.push(`장면 ${i + 1}`,
-      `- 화면에 보이는 것: ${sc.see || "(적지 않음)"}`,
-      `- 사용자가 하는 일: ${sc.do || "(적지 않음)"}`,
-      `- 앱의 반응: ${sc.react || "(적지 않음)"}`, "");
+      `- ${FIELDS.see}: ${sc.see || "(적지 않음)"}`,
+      `- ${FIELDS.do}: ${sc.do || "(적지 않음)"}`,
+      `- ${FIELDS.react}: ${sc.react || "(적지 않음)"}`, "");
   });
-  lines.push(`꾸밈: ${spec.style || "(적지 않음)"}`);
+  lines.push(`${FIELDS.style}: ${spec.style || "(적지 않음)"}`);
   return lines.join("\n");
 }
 
