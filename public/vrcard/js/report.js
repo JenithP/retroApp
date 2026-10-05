@@ -47,9 +47,9 @@ export function build({ team, name, boards, designs, sides }) {
   const dcard = d.card ? (my[d.card]?.title || cardOf(d.card).title) : "";
   const design = d.card ? `<table><tr><th>선택 사례</th><td>${esc(dcard)} &rarr; ${esc(d.kind || "")}</td></tr>
       <tr><th>사용자 · 시점 · 장소</th><td>${esc(d.who)}</td></tr><tr><th>현행 방식의 문제</th><td>${esc(d.pain)}</td></tr>
-      <tr><th>적용 후 변화</th><td>${esc(d.change)}</td></tr><tr><th>근거 이론</th><td>${esc(theoryName(d.theory))}</td></tr>
+      <tr><th>적용 화면 설명</th><td>${esc(d.change)}</td></tr><tr><th>근거 이론</th><td>${esc(theoryName(d.theory))}</td></tr>
       ${CHECKS.map(k => `<tr><th>${esc(k.ko)}<br><small>${esc(k.q)}</small></th><td>${esc(d.checks?.[k.id] || "")}</td></tr>`).join("")}</table>
-      ${d.sketch ? `<p>화면 스케치</p><img src="${d.sketch}" width="480">` : ""}` : `<p>제출 설계안 없음</p>`;
+      <p>화면 목업: 웹 화면(재설계 · 부작용 검토 단계)에서 확인</p>` : `<p>제출 설계안 없음</p>`;
 
   const from = sideFromOf(team), target = sideTargetOf(team);
   const got = sides[sideDocId(team, from)], gave = sides[sideDocId(target, team)];

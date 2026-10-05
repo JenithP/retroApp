@@ -2,7 +2,8 @@
   "outputDirectory": "public",
   "functions": {
     "api/judge.js": { "maxDuration": 15 },
-    "api/appshop.js": { "maxDuration": 300 }
+    "api/appshop.js": { "maxDuration": 300 },
+    "api/vrcard.js": { "maxDuration": 300 }
   },
   "redirects": [
     { "source": "/", "destination": "/time/", "permanent": false }

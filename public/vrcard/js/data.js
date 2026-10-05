@@ -10,6 +10,7 @@
 
 export const TEAM_COUNT = 20;
 export const MAX_CUSTOM = 4;
+export const GEN_LIMIT = 2;   // 조당 화면 목업 생성 횟수 (토큰 절약)
 
 export const PHASES = {
   ready:  "안내",

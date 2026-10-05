@@ -1,7 +1,7 @@
 // VR · AR 적용 판단 실습 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 반 전체 비교와 조별 진행을 본다.
 import { CARDS, QUADS, AXES, CHECKS, PHASES, TEAM_COUNT, teamId, teamLabel, cardOf, cardDone, theoryName, sideName,
          sideFromOf, sideTargetOf, sideDocId } from "./data.js";
-import { ready, watchState, watchBoards, watchDesigns, watchSides, adminCall } from "./fb.js";
+import { ready, watchState, watchBoards, watchDesigns, watchSides, watchMockups, adminCall, wrapMock } from "./fb.js";
 import { renderCompare } from "./compare.js";
 
 const $ = id => document.getElementById(id);
@@ -10,7 +10,7 @@ const ss = {
   get() { try { return sessionStorage.getItem("vrcard.code") || ""; } catch { return ""; } },
   set(v) { try { sessionStorage.setItem("vrcard.code", v); } catch { /* 이 탭에서만 */ } },
 };
-const B = { state: {}, boards: {}, designs: {}, sides: {}, code: ss.get(), open: null, order: "split" };
+const B = { state: {}, boards: {}, designs: {}, sides: {}, mockups: {}, code: ss.get(), open: null, order: "split" };
 const live = cards => Object.fromEntries(Object.entries(cards || {}).filter(([, c]) => !c.removed));
 const boardsLive = () => Object.fromEntries(Object.entries(B.boards).map(([k, b]) => [k, { ...b, cards: live(b.cards) }]));
 
@@ -81,7 +81,7 @@ function renderTeams() {
     b.innerHTML = `<div class="tn"><b>${teamLabel(t)}</b><span>${s.design?.card ? esc(s.design.kind || "") : ""}</span></div>
       <div class="tm">배치 ${s.placed} / ${s.total} · 근거 ${s.done}</div>
       <div class="vbar"><span style="width:${s.total ? s.done / s.total * 100 : 0}%"></span></div>
-      <span class="st ${s.design?.card ? "pub" : "none"}">${s.design?.card ? `설계안: ${esc(cardOf(s.design.card, B.boards[teamId(t)]).title)}` : "설계안 미제출"}</span>
+      <span class="st ${s.design?.card ? "pub" : "none"}">${s.design?.card ? `설계안: ${esc(cardOf(s.design.card, B.boards[teamId(t)]).title)}` : "설계안 미제출"}${B.mockups[teamId(t)]?.generating ? " · 목업 생성 중" : B.mockups[teamId(t)]?.version ? ` · 목업 ${B.mockups[teamId(t)].version}` : ""}</span>
       <span class="st ${s.gave?.items?.length ? "" : "none"}">부작용 ${s.gave?.items?.length || 0} · 대응 ${(s.got?.replies || []).filter(x => x).length}</span>
       <span class="st none">${ago(last)}</span>`;
     b.onclick = () => openDetail(t);
@@ -99,8 +99,8 @@ function openDetail(t) {
   const d = B.designs[teamId(t)];
   $("dDesign").innerHTML = d?.card ? `<p class="eno">적용 방향: ${esc(d.kind || "")}</p><h3>${esc(cardOf(d.card, board).title)}</h3>
     <dl class="dl"><dt>사용자 · 시점 · 장소</dt><dd>${esc(d.who || "—")}</dd><dt>현행 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
-    <dt>적용 후 변화</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
-    ${d.sketch ? `<img class="sk" src="${d.sketch}" alt="화면 스케치">` : ""}
+    <dt>적용 화면 설명</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
+    ${B.mockups[teamId(t)]?.html ? `<div class="mockwrap"><iframe sandbox="allow-scripts" title="화면 목업" srcdoc="${String(wrapMock(B.mockups[teamId(t)].html)).replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"></iframe></div>` : `<p class="muted">목업 없음</p>`}
     <dl class="dl ck">${CHECKS.map(k => `<dt>${esc(k.ko)}</dt><dd>${esc(d.checks?.[k.id] || "—")}</dd>`).join("")}</dl>` : `<p class="muted">없음</p>`;
   const got = B.sides[sideDocId(t, sideFromOf(t))];
   $("dSides").innerHTML = got?.items?.length ? `<ol class="sidelist">${got.items.map((x, i) => `<li><span class="kchip">${esc(sideName(x.kind))}</span><span>${esc(x.note)}${got.replies?.[i] ? `<br><small>대응 — ${esc(got.replies[i])}</small>` : ""}</span></li>`).join("")}</ol>`
@@ -121,4 +121,5 @@ watchState(st => {
 watchBoards(all => { B.boards = all; renderAll(); });
 watchDesigns(all => { B.designs = all; renderAll(); });
 watchSides(all => { B.sides = all; renderAll(); });
+watchMockups(all => { B.mockups = all; renderAll(); });
 renderAll();

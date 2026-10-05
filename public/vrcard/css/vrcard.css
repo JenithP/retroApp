@@ -173,3 +173,9 @@
 #pairDetail{margin-top:12px}
 #pairDetail .pdh{display:flex;align-items:center;gap:10px}
 #pairDetail .pdh .btn{padding:3px 10px;font-size:.78rem}
+
+/* 화면 목업 (16:9) */
+.mockside{position:sticky;top:90px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.mockside h3{font-size:1rem;align-self:flex-start}
+.mockwrap{width:100%;aspect-ratio:16/9;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin:8px 0}
+.mockwrap iframe{width:100%;height:100%;border:0;display:block}

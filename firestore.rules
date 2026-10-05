@@ -157,6 +157,14 @@ service cloud.firestore {
                    && request.resource.data.by == request.auth.uid
                    && (!('sketch' in request.resource.data) || request.resource.data.sketch.size() < 700000);
     }
+    match /hci6_mockups/{id} {           // 조의 화면 목업 — 버셀 함수(api/vrcard.js)만 쓴다
+      allow read:  if request.auth != null;
+      allow write: if false;
+      match /versions/{v} {
+        allow read:  if request.auth != null;
+        allow write: if false;
+      }
+    }
     match /hci6_sides/{id} {              // 「받는 조_붙이는 조」 — 부작용과 대응책
       allow read:  if request.auth != null;
       allow create, update: if request.auth != null

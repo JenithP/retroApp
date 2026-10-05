@@ -1,8 +1,8 @@
 // VR · AR 적용 판단 실습 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
 //   안내 → 분류(카드를 네 칸에 · 근거) → 공유(반 전체 비교) → 재설계(스케치) → 부작용 검토 → 대응책 → 종료
 import { CARDS, QUADS, QUAD_KEYS, AXES, WARNS, THEORIES, CHECKS, SIDES, PHASES, TEAM_COUNT, MAX_CUSTOM,
-         teamId, teamLabel, cardOf, cardImg, cardDone, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId, pairOf } from "./data.js";
-import { me, ready, watchState, watchBoards, watchDesigns, watchSides, saveCard, saveDesign, saveSide, saveReply } from "./fb.js";
+         teamId, teamLabel, cardOf, cardImg, cardDone, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId, pairOf, GEN_LIMIT } from "./data.js";
+import { me, ready, watchState, watchBoards, watchDesigns, watchSides, watchMockups, saveCard, saveDesign, saveSide, saveReply, generateMockup, wrapMock } from "./fb.js";
 import { renderCompare } from "./compare.js";
 import { download as downloadReport } from "./report.js";
 
@@ -13,7 +13,7 @@ const store = {
   set(k, v) { try { localStorage.setItem("vrcard." + k, v); } catch { /* 저장 못 해도 진행 */ } },
 };
 const S = { phase: null, team: Number(store.get("team")) || null, name: store.get("name") || "",
-            boards: {}, designs: {}, sides: {}, sel: null, open: null, order: "split", shareView: "pair" };
+            boards: {}, designs: {}, sides: {}, mockups: {}, sel: null, open: null, order: "split", shareView: "pair" };
 // 주소로 조를 열 수 있게 — ?team=3 (이름은 ?name= 으로, 없으면 물어본다)
 const QP = new URLSearchParams(location.search);
 if (Number(QP.get("team")) >= 1 && Number(QP.get("team")) <= TEAM_COUNT) {
@@ -61,6 +61,7 @@ async function start() {
   watchBoards(all => { S.boards = all; renderSort(); renderShare(); });
   watchDesigns(all => { S.designs = all; remoteDesign(); renderSide(); renderReply(); });
   watchSides(all => { S.sides = all; renderSide(); renderReply(); });
+  watchMockups(all => { S.mockups = all; renderMock(); renderSide(); renderReply(); });
   watchState(st => setPhase(st.phase || "ready"));
 }
 function setPhase(p) {
@@ -72,7 +73,7 @@ function setPhase(p) {
   show(p);
   if (p === "sort") renderSort();
   if (p === "share") renderShare();
-  if (p === "design") remoteDesign();
+  if (p === "design") { remoteDesign(); renderMock(); }
   if (p === "side") renderSide(true);
   if (p === "reply") renderReply(true);
 }
@@ -304,7 +305,6 @@ function fillDesign() {
   setv(dForm.card, d.card); setv(dForm.who, d.who); setv(dForm.pain, d.pain); setv(dForm.change, d.change); setv(dForm.theory, d.theory);
   setKind(d.kind);
   dForm.querySelectorAll("textarea[data-ck]").forEach(t => setv(t, d.checks?.[t.dataset.ck]));
-  if (d.sketch) drawSketch(d.sketch);
 }
 function remoteDesign() {
   if (S.phase !== "design") return;
@@ -313,7 +313,7 @@ function remoteDesign() {
   if (!d) return;
   // 처음 한 번은 (내가 아직 아무것도 고치지 않았다면) 저장된 것을 불러오고,
   // 그 뒤로는 조원의 다른 기기가 고친 것만 받는다 — 내가 저장한 것이 되돌아와 쓰던 글을 덮지 않게
-  if (!designFilled) { designFilled = true; if (!designDirty) fillDesign(); else if (d.sketch) drawSketch(d.sketch); return; }
+  if (!designFilled) { designFilled = true; if (!designDirty) fillDesign(); return; }
   if (d.by !== me.uid) { fillDesign(); $("dSaved").textContent = "조원 수정 내용 반영"; }
 }
 let dT;
@@ -335,52 +335,41 @@ $("dCard").addEventListener("change", () => {
   if (c && !$("kindPick").dataset.k) setKind(c.q === "vr" ? "VR" : "AR");
 });
 
-/* ── 스케치 ─────────────────────────────────────────── */
-const cv = $("sketch"), cx = cv.getContext("2d");
-const PEN = { color: "#22211E", size: 3, erase: false };
-function blankSketch() { cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); }
-blankSketch();
-$("sketchTools").innerHTML = [["#22211E", "검정"], ["#0070C0", "파랑"], ["#C0392B", "빨강"], ["#548235", "초록"]].map(([c, n]) =>
-  `<button type="button" class="pen${c === PEN.color ? " on" : ""}" data-c="${c}" title="${n}" style="--pc:${c}"></button>`).join("")
-  + `<button type="button" class="btn ghost" data-size="2">가는 선</button><button type="button" class="btn ghost" data-size="6">굵은 선</button>`
-  + `<button type="button" class="btn ghost" data-erase="1">지우개</button><button type="button" class="btn ghost danger" data-clear="1">전체 삭제</button>`;
-$("sketchTools").onclick = e => {
-  const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.c) { PEN.color = b.dataset.c; PEN.erase = false; }
-  if (b.dataset.size) PEN.size = Number(b.dataset.size);
-  if (b.dataset.erase) PEN.erase = true;
-  if (b.dataset.clear) { if (!confirm("스케치 전체를 삭제하시겠습니까?")) return; blankSketch(); saveSketch(); }
-  $("sketchTools").querySelectorAll(".pen").forEach(p => p.classList.toggle("on", !PEN.erase && p.dataset.c === PEN.color));
-  $("sketchTools").querySelector("[data-erase]").classList.toggle("on", PEN.erase);
-};
-let drawing = false, last = null;
-const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
-cv.onpointerdown = e => { if (S.phase !== "design") return; drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); };
-cv.onpointermove = e => {
-  if (!drawing) return;
-  const p = pos(e);
-  cx.strokeStyle = PEN.erase ? "#fff" : PEN.color; cx.lineWidth = PEN.erase ? 18 : PEN.size; cx.lineCap = "round"; cx.lineJoin = "round";
-  cx.beginPath(); cx.moveTo(...last); cx.lineTo(...p); cx.stroke(); last = p;
-};
-cv.onpointerup = cv.onpointercancel = () => { if (!drawing) return; drawing = false; saveSketch(); };
-let sT;
-function saveSketch() {
-  clearTimeout(sT);
-  $("sSaved").textContent = "저장 중";
-  sT = setTimeout(async () => {
-    const url = cv.toDataURL("image/jpeg", 0.7);
-    try { await saveDesign(S.team, { sketch: url }); $("sSaved").textContent = "스케치 저장 완료"; }
-    catch (e) { console.error(e); $("sSaved").textContent = "저장 실패"; }
-  }, 500);
+/* ── 화면 목업 (AI 생성 · 조당 GEN_LIMIT 번) ────────────── */
+let shownMock = -1, mBusy = false;
+function renderMock() {
+  if (S.phase !== "design") return;
+  const m = S.mockups[teamId(S.team)] || {};
+  const used = m.gens || 0;
+  $("mGens").innerHTML = Array.from({ length: GEN_LIMIT }, (_, i) => `<span class="pip${i < used ? " used" : ""}">${i + 1}</span>`).join("") + `<em>남은 생성 ${GEN_LIMIT - used}회</em>`;
+  const busy = m.generating && Date.now() - (m.generatingAt || 0) < 6 * 60 * 1000;
+  $("mGen").disabled = busy || used >= GEN_LIMIT || mBusy;
+  if (!mBusy) $("mMsg").textContent = busy ? "같은 조의 다른 기기에서 생성 중" : m.lastError ? m.lastError : m.version ? `${m.version}번째 목업` : "설명 · 체크리스트 작성 후 생성";
+  if (m.html && m.version !== shownMock) { shownMock = m.version; $("mFrame").srcdoc = wrapMock(m.html); }
+  if (!m.html && shownMock === -1) { shownMock = 0; $("mFrame").srcdoc = wrapMock(null); }
 }
-let shownSketch = null;
-function drawSketch(url) {
-  if (!url || url === shownSketch || drawing) return;
-  shownSketch = url;
-  const img = new Image();
-  img.onload = () => { blankSketch(); cx.drawImage(img, 0, 0, cv.width, cv.height); };
-  img.src = url;
-}
+$("mGen").onclick = async () => {
+  const d = readDesign();
+  if (!d.card) { $("mMsg").textContent = "선택 사례 미지정"; return; }
+  if (!d.change) { $("mMsg").textContent = "VR · AR 적용 화면 설명 미기재"; return; }
+  if (!confirm(`생성은 조당 ${GEN_LIMIT}회입니다. 지금 설계안으로 생성하시겠습니까?`)) return;
+  mBusy = true; $("mGen").disabled = true;
+  const t0 = Date.now();
+  const tick = setInterval(() => $("mMsg").textContent = `생성 중 ${Math.round((Date.now() - t0) / 1000)}초 (1~2분 소요)`, 500);
+  try {
+    clearTimeout(dT);
+    await saveDesign(S.team, readDesign());   // 서버는 저장된 설계안을 읽는다
+    const r = await generateMockup(S.team);
+    $("mMsg").textContent = `생성 완료 (${Math.round(r.ms / 1000)}초) · 남은 생성 ${r.left}회`;
+  } catch (e) { $("mMsg").textContent = e.message; }
+  finally { clearInterval(tick); mBusy = false; const said = $("mMsg").textContent; renderMock(); $("mMsg").textContent = said; }
+};
+$("mReload").onclick = () => { $("mFrame").srcdoc = wrapMock((S.mockups[teamId(S.team)] || {}).html); };
+const attr = s => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+const mockFrame = team => {
+  const m = S.mockups[teamId(team)];
+  return m?.html ? `<div class="mockwrap"><iframe sandbox="allow-scripts" title="화면 목업" srcdoc="${attr(wrapMock(m.html))}"></iframe></div>` : `<p class="muted">목업 없음</p>`;
+};
 
 /* ── 설계안 보기 (부작용 찾기 · 대응책) ─────────────────── */
 function designView(team) {
@@ -390,8 +379,8 @@ function designView(team) {
   const c = board?.cards?.[d.card] || {};
   return `<p class="eno">${teamLabel(team)} · 적용 방향: ${esc(d.kind || "")}</p><h3>${esc(c.title || cardOf(d.card).title)}</h3>
     <dl class="dl"><dt>사용자 · 시점 · 장소</dt><dd>${esc(d.who || "—")}</dd><dt>현행 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
-    <dt>적용 후 변화</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
-    ${d.sketch ? `<img class="sk" src="${d.sketch}" alt="화면 스케치">` : `<p class="muted">스케치 없음</p>`}
+    <dt>적용 화면 설명</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
+    ${mockFrame(team)}
     <dl class="dl ck">${CHECKS.map(k => `<dt>${esc(k.ko)}</dt><dd>${esc(d.checks?.[k.id] || "—")}</dd>`).join("")}</dl>`;
 }
 

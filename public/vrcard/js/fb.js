@@ -4,7 +4,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, collection, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { CARDS, QUAD_KEYS, THEORIES, SIDES, CHECKS, TEAM_COUNT, teamId, sideTargetOf, sideDocId } from "./data.js";
+import { CARDS, QUAD_KEYS, THEORIES, SIDES, CHECKS, TEAM_COUNT, GEN_LIMIT, teamId, sideTargetOf, sideDocId } from "./data.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyBC3M89Z6YTnpc7x6S5JvKhmB5BUIdIVlE",
@@ -41,6 +41,7 @@ export let watchState = cb => onSnapshot(doc(db, "hci6_state", "current"), s => 
 export let watchBoards = cb => coll("hci6_boards", cb);
 export let watchDesigns = cb => coll("hci6_designs", cb);
 export let watchSides = cb => coll("hci6_sides", cb);
+export let watchMockups = cb => coll("hci6_mockups", cb);
 
 // 카드 한 장만 합쳐 쓴다 — 조원이 서로 다른 카드를 동시에 고쳐도 덮어쓰지 않게
 export let saveCard = (team, key, card) =>
@@ -52,13 +53,24 @@ export let saveSide = (target, from, items) =>
 export let saveReply = (target, from, replies) =>
   setDoc(doc(db, "hci6_sides", sideDocId(target, from)), { replies, replyBy: me.uid, repliedAt: Date.now() }, { merge: true });
 
-export let adminCall = async (code, op, extra = {}) => {
-  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "admin", code, op, ...extra }) });
+async function call(body, withToken) {
+  const headers = { "Content-Type": "application/json" };
+  if (withToken) headers.Authorization = "Bearer " + await auth.currentUser.getIdToken();
+  const r = await fetch(API, { method: "POST", headers, body: JSON.stringify(body) });
   let data = {};
   try { data = await r.json(); } catch { /* 빈 답 */ }
   if (!r.ok) throw new Error(data.error || `서버 응답 ${r.status}`);
   return data;
-};
+}
+export let adminCall = (code, op, extra = {}) => call({ action: "admin", code, op, ...extra }, false);
+export let generateMockup = team => call({ action: "generate", team }, true);
+
+// 생성된 목업은 믿을 수 없는 코드 — 부모 창에 닿지 못하는 샌드박스 iframe 에서만, 바깥 요청은 CSP 로 막는다
+const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:">`;
+export function wrapMock(html) {
+  if (!html) return "<!doctype html><html><body style='margin:0;display:grid;place-items:center;height:100vh;font-family:sans-serif;color:#999;background:#f4f1ea'>목업 없음</body></html>";
+  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + CSP) : CSP + html;
+}
 
 /* ── 미리보기 (?demo=sort 처럼 붙이면) ──────────────────
    파이어베이스와 버셀을 건드리지 않고, 이 브라우저 안의 가짜 자료로 모든 화면을 돌려 본다.
@@ -76,7 +88,7 @@ if (isDemoMode) {
   // 카드마다 그럴듯한 쏠림 — 실제 수업에서 갈릴 만한 카드는 고르게 섞는다
   const LEAN = { 1: "vr", 2: "vr", 3: "guide", 4: "guide", 5: "train", 6: "guide", 7: "guide", 8: null, 9: null, 10: "keep",
                  11: null, 12: "vr", 13: "guide", 14: "vr", 15: "keep", 16: "keep", 17: "guide", 18: "guide" };
-  const D = { state: { phase }, boards: {}, designs: {}, sides: {} };
+  const D = { state: { phase }, boards: {}, designs: {}, sides: {}, mockups: {} };
   const later = ["share", "design", "side", "reply", "end"].includes(phase);
   for (let t = 1; t <= TEAM_COUNT; t++) {
     if (t === 1 && phase === "sort") continue;   // 1조는 빈 채로 — 직접 해 보는 자리
@@ -91,7 +103,8 @@ if (isDemoMode) {
     if (["side", "reply", "end"].includes(phase) || (phase === "design" && t % 2)) {
       D.designs[teamId(t)] = { card: pick(["1", "3", "5", "12", "14"]), kind: rnd() < .5 ? "VR" : "AR",
         who: "미리보기 — 누가 언제 어디서", pain: "지금 방식의 불편", change: "VR · AR로 바꾸면 달라지는 점", theory: pick(THEORIES).id,
-        checks: Object.fromEntries(CHECKS.map(c => [c.id, "미리보기 답"])), sketch: "", updatedAt: Date.now(), by: "demo" };
+        checks: Object.fromEntries(CHECKS.map(c => [c.id, "미리보기 답"])), updatedAt: Date.now(), by: "demo" };
+      D.mockups[teamId(t)] = { team: t, gens: 1, version: 1, html: fakeMock(t), genAt: Date.now() };
     }
     if (["reply", "end"].includes(phase)) {
       const target = sideTargetOf(t);
@@ -100,18 +113,34 @@ if (isDemoMode) {
     }
   }
   me.uid = "demo";
+  function fakeMock(t) {
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;height:100vh;background:linear-gradient(#cfe0f3,#e9e4d8);font-family:sans-serif;position:relative;overflow:hidden}
+      .obj{position:absolute;left:40%;top:45%;width:22%;height:30%;background:#b08a5a;border-radius:8px}.tag{position:absolute;left:3%;top:4%;background:#0070C0;color:#fff;padding:8px 12px;border-radius:8px;font-size:14px}</style></head>
+      <body><div class="obj"></div><div class="tag">미리보기 목업 ${t}조 — 실제 수업에서는 AI가 설계안대로 생성</div></body></html>`;
+  }
   ready = () => Promise.resolve();
   watchState = cb => on(() => cb({ ...D.state }));
   watchBoards = cb => on(() => cb(JSON.parse(JSON.stringify(D.boards))));
   watchDesigns = cb => on(() => cb(JSON.parse(JSON.stringify(D.designs))));
   watchSides = cb => on(() => cb(JSON.parse(JSON.stringify(D.sides))));
+  watchMockups = cb => on(() => cb(JSON.parse(JSON.stringify(D.mockups))));
+  generateMockup = async team => {
+    const id = teamId(team), m = D.mockups[id] || { team, gens: 0 };
+    if (D.state.phase !== "design") throw new Error("재설계 단계가 아님");
+    if (!D.designs[id]?.change) throw new Error("VR · AR 적용 화면 설명 미기재");
+    if ((m.gens || 0) >= GEN_LIMIT) throw new Error(`생성 횟수 ${GEN_LIMIT}회 모두 사용`);
+    D.mockups[id] = { ...m, gens: (m.gens || 0) + 1, generating: true, generatingAt: Date.now() }; emit();
+    await new Promise(r => setTimeout(r, 1200));
+    D.mockups[id] = { ...D.mockups[id], generating: false, html: fakeMock(team), version: D.mockups[id].gens, genAt: Date.now() }; emit();
+    return { ok: true, ms: 1200, left: GEN_LIMIT - D.mockups[id].gens };
+  };
   saveCard = async (team, key, card) => { const b = D.boards[teamId(team)] ||= { cards: {} }; b.cards[key] = card; b.updatedAt = Date.now(); b.by = "demo"; emit(); };
   saveDesign = async (team, patch) => { D.designs[teamId(team)] = { ...(D.designs[teamId(team)] || {}), ...patch, updatedAt: Date.now(), by: "demo" }; emit(); };
   saveSide = async (target, from, items) => { const id = sideDocId(target, from); D.sides[id] = { ...(D.sides[id] || {}), target, from, items, by: "demo", updatedAt: Date.now() }; emit(); };
   saveReply = async (target, from, replies) => { const id = sideDocId(target, from); D.sides[id] = { ...(D.sides[id] || {}), replies, replyBy: "demo", repliedAt: Date.now() }; emit(); };
   adminCall = async (code, op, extra = {}) => {
     if (op === "phase") { D.state = { ...D.state, phase: extra.phase }; emit(); }
-    if (op === "reset") { D.boards = {}; D.designs = {}; D.sides = {}; D.state = { phase: "ready" }; emit(); }
+    if (op === "reset") { D.boards = {}; D.designs = {}; D.sides = {}; D.mockups = {}; D.state = { phase: "ready" }; emit(); }
     return { ok: true };
   };
   document.title = "[미리보기] " + document.title;
