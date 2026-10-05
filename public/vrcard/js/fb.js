@@ -1,4 +1,4 @@
-// VR로 갈까, AR로 갈까 — 파이어베이스 연결과 버셀 함수 호출. 2~5주차와 같은 프로젝트(gccrc-crae)를 쓴다.
+// VR · AR 적용 판단 실습 — 파이어베이스 연결과 버셀 함수 호출. 2~5주차와 같은 프로젝트(gccrc-crae)를 쓴다.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";

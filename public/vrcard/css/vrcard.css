@@ -1,4 +1,4 @@
-/* VR로 갈까, AR로 갈까 — 앱 공방(appshop.css) 위에 얹는다. 교실 노트북(1280px 이상) 기준. */
+/* VR · AR 적용 판단 실습 — 앱 공방(appshop.css) 위에 얹는다. 교실 노트북(1280px 이상) 기준. */
 :root{ --vr:#335593; --train:#548235; --keep:#7A8188; --guide:#0070C0; --red:#C0392B; }
 .small{font-size:.82rem}
 .chip.phase[data-p="sort"],.chip.phase[data-p="design"]{background:var(--accent);border-color:var(--accent)}
@@ -82,7 +82,7 @@
 .cmp-legend i,.cmp-me i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .cmp-row{border:1px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:6px}
 .cmp-row.open{border-color:var(--ink)}
-.cmp-head{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:200px minmax(0,1fr) 90px 150px;gap:10px;align-items:center;padding:8px 12px}
+.cmp-head{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:240px minmax(0,1fr) 90px 150px;gap:10px;align-items:center;padding:8px 12px}
 .cmp-head:focus-visible{outline:3px solid var(--warm)}
 .cmp-t{font-size:.9rem}.cmp-t b{color:var(--accent);margin-right:4px}
 .hot{font-style:normal;background:var(--warm);color:#fff;border-radius:99px;padding:1px 8px;font-size:.72rem;font-weight:700;margin-left:4px}

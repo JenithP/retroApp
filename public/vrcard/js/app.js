@@ -1,5 +1,5 @@
-// VR로 갈까, AR로 갈까 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
-//   안내 → 분류(카드를 네 칸에 · 근거) → 공유(반 전체 비교) → 재설계(스케치) → 부작용 찾기 → 대응책 → 마침
+// VR · AR 적용 판단 실습 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
+//   안내 → 분류(카드를 네 칸에 · 근거) → 공유(반 전체 비교) → 재설계(스케치) → 부작용 검토 → 대응책 → 종료
 import { CARDS, QUADS, QUAD_KEYS, AXES, WARNS, THEORIES, CHECKS, SIDES, PHASES, TEAM_COUNT, MAX_CUSTOM,
          teamId, teamLabel, cardOf, cardImg, cardDone, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId } from "./data.js";
 import { me, ready, watchState, watchBoards, watchDesigns, watchSides, saveCard, saveDesign, saveSide, saveReply } from "./fb.js";
@@ -55,8 +55,8 @@ async function start() {
   started = true;
   $("teamChip").hidden = false;
   $("teamChip").textContent = `${teamLabel(S.team)} · ${S.name}`;
-  $("teamChip").title = "눌러서 조 바꾸기";
-  $("teamChip").onclick = () => { if (confirm("조를 다시 고를까요?")) { store.set("team", ""); location.reload(); } };
+  $("teamChip").title = "조 변경";
+  $("teamChip").onclick = () => { if (confirm("조를 변경하시겠습니까?")) { store.set("team", ""); location.reload(); } };
   renderIntro();
   watchBoards(all => { S.boards = all; renderSort(); renderShare(); });
   watchDesigns(all => { S.designs = all; remoteDesign(); renderSide(); renderReply(); });
@@ -103,8 +103,8 @@ function chipHTML(id, c, { sel = null } = {}) {
 function renderIntro() {
   const sample = { 3: { q: "guide" }, 1: { q: "vr" }, 15: { q: "keep" }, 5: { q: "train" } };
   $("introPlane").innerHTML = planeHTML(sample);
-  $("introWarns").innerHTML = WARNS.map(w => `<div class="warncard"><b>⚠ ${esc(w.ko)}</b><span>${esc(w.hint)}이라면 → ${esc(w.ref)}</span></div>`).join("")
-    + `<p class="muted small">경고 카드에 걸리면 칸을 옮기거나, 그 위험을 줄일 방법을 이유에 함께 적습니다.</p>`;
+  $("introWarns").innerHTML = WARNS.map(w => `<div class="warncard"><b>⚠${w.n === 1 ? "①" : "②"} ${esc(w.ko)}</b><span>${esc(w.hint)} · ${esc(w.ref)}</span></div>`).join("")
+    + `<p class="muted small">해당 시: 배치 칸 변경 또는 이유에 위험 감소 방안 기재</p>`;
   $("introTheories").innerHTML = THEORIES.map(t => `<li><b>${esc(t.ko)}</b> ${esc(t.line)} <small>${esc(t.ref)}</small></li>`).join("");
 }
 
@@ -115,12 +115,12 @@ function renderSort() {
   const all = [...CARDS.map(c => c.id), ...Object.keys(cards).filter(k => k.startsWith("c") && !cards[k].removed)];
   const placed = all.filter(id => cards[id]?.q);
   const done = all.filter(id => cardDone(cards[id]));
-  $("progress").innerHTML = `<span><b>${placed.length}</b> / ${all.length}장 놓음</span><span><b>${done.length}</b>장 근거 완료</span>
+  $("progress").innerHTML = `<span>배치 <b>${placed.length}</b> / ${all.length}</span><span>근거 완료 <b>${done.length}</b></span>
     <span class="bar"><span style="width:${all.length ? done.length / all.length * 100 : 0}%"></span></span>`;
   $("addCustom").disabled = Object.keys(cards).filter(k => k.startsWith("c") && !cards[k].removed).length >= MAX_CUSTOM;
 
   const unplaced = all.filter(id => !cards[id]?.q);
-  $("tray").innerHTML = unplaced.map(id => chipHTML(id, cards[id] || {}, { sel: S.sel })).join("") || `<p class="muted">모든 카드를 놓았습니다</p>`;
+  $("tray").innerHTML = unplaced.map(id => chipHTML(id, cards[id] || {}, { sel: S.sel })).join("") || `<p class="muted">전체 배치 완료</p>`;
   $("plane").innerHTML = planeHTML(cards, { interactive: true, sel: S.sel });
   wireDnD();
   renderEditor();
@@ -154,7 +154,7 @@ function patchCard(id, patch, delay = 0) {
   $("progress").dataset.saving = "1";
   saveTimers[id] = setTimeout(async () => {
     try { await saveCard(S.team, id, clean(next)); delete $("progress").dataset.saving; }
-    catch (e) { console.error(e); alert("저장하지 못했습니다 — 분류 시간이 끝났거나 연결이 끊겼습니다"); }
+    catch (e) { console.error(e); alert("저장 실패 (분류 단계 종료 또는 연결 끊김)"); }
   }, delay);
 }
 const clean = c => ({ q: c.q || null, warn: c.warn || [], theory: c.theory || null, theoryOther: (c.theoryOther || "").slice(0, 40),
@@ -163,8 +163,8 @@ const clean = c => ({ q: c.q || null, warn: c.warn || [], theory: c.theory || nu
 function renderEditor() {
   const box = $("editor");
   const id = S.sel;
-  if (!id) { box.innerHTML = `<div class="ehelp"><h3>카드를 하나 고르세요</h3><p>카드를 칸에 끌어다 놓거나, 카드를 누른 뒤 여기서 칸을 고릅니다.</p>
-      <p>카드마다 <b>칸 · 근거 이론 · 이유</b>를 채우면 ✓ 표시가 붙습니다.</p><p class="muted">조원과 종이 카드로 먼저 토론하고, 정한 것을 여기에 입력해도 됩니다.</p></div>`; return; }
+  if (!id) { box.innerHTML = `<div class="ehelp"><h3>카드 선택</h3><p>배치 방법: 칸으로 끌어 놓기 또는 카드 선택 후 이 영역에서 칸 지정</p>
+      <p>완료 조건: <b>배치 칸 · 근거 이론 · 이유</b> 입력 (✓ 표시)</p><p class="muted">종이 카드 토론 결과 입력 가능</p></div>`; return; }
   const c = myCards()[id] || {};
   const card = cardOf(id, myBoard());
   const custom = id.startsWith("c");
@@ -172,17 +172,17 @@ function renderEditor() {
   if (box.dataset.id === id && box.contains(document.activeElement) && document.activeElement.matches("textarea,input")) { syncEditorChips(c); return; }
   box.dataset.id = id;
   box.innerHTML = `<p class="eno">${custom ? "우리 조 사례" : `카드 ${id}`}</p>
-    ${custom ? `<label class="field">사례 이름 <input id="eTitle" maxlength="30" value="${esc(c.title || "")}"></label>
+    ${custom ? `<label class="field">사례명 <input id="eTitle" maxlength="30" value="${esc(c.title || "")}"></label>
                <label class="field">상황 <input id="eDesc" maxlength="80" value="${esc(c.desc || "")}"></label>`
              : `${cardImg(id) ? `<img class="eimg" src="${cardImg(id)}" alt="${esc(card.title)} 장면" onerror="this.remove()">` : ""}<h3>${esc(card.title)}</h3><p class="edesc">${esc(card.desc)}</p>`}
-    <div class="field">어느 칸인가 <div class="qpick" id="eQ">${QUAD_KEYS.map(k => `<button type="button" data-q="${k}" style="--qc:${QUADS[k].color}">${esc(QUADS[k].ko)}</button>`).join("")}</div></div>
-    <div class="field">경고 카드에 걸리는가 <div class="wpick" id="eW">${WARNS.map(w => `<button type="button" data-w="${w.n}">⚠${w.n === 1 ? "①" : "②"} ${esc(w.ko)}</button>`).join("")}</div></div>
+    <div class="field">배치 칸 <div class="qpick" id="eQ">${QUAD_KEYS.map(k => `<button type="button" data-q="${k}" style="--qc:${QUADS[k].color}">${esc(QUADS[k].ko)}</button>`).join("")}</div></div>
+    <div class="field">경고 기준 해당 <div class="wpick" id="eW">${WARNS.map(w => `<button type="button" data-w="${w.n}">⚠${w.n === 1 ? "①" : "②"} ${esc(w.ko)}</button>`).join("")}</div></div>
     <div class="field">근거 이론 <div class="tpick" id="eT">${THEORIES.map(t => `<button type="button" data-t="${t.id}" title="${esc(t.line)} — ${esc(t.ref)}">${esc(t.ko)}</button>`).join("")}<button type="button" data-t="other">기타</button></div></div>
-    <label class="field" id="eOtherWrap" ${c.theory === "other" ? "" : "hidden"}>기타 이론 이름 <input id="eOther" maxlength="40" value="${esc(c.theoryOther || "")}"></label>
-    <label class="field">이유 <small>이 이론이 이 사례에 왜 들어맞는지 · 경고 카드에 걸리면 위험을 줄일 방법까지</small>
+    <label class="field" id="eOtherWrap" ${c.theory === "other" ? "" : "hidden"}>기타 이론명 <input id="eOther" maxlength="40" value="${esc(c.theoryOther || "")}"></label>
+    <label class="field">이유 <small>이론 적용 이유 · 경고 기준 해당 시 위험 감소 방안</small>
       <textarea id="eWhy" rows="4" maxlength="300">${esc(c.why || "")}</textarea></label>
-    <div class="efoot"><button type="button" class="btn ghost" id="eUnplace">칸에서 빼기</button>
-      ${custom ? `<button type="button" class="btn ghost danger" id="eDel">사례 지우기</button>` : ""}<button type="button" class="btn primary" id="eNext">다음 카드</button></div>`;
+    <div class="efoot"><button type="button" class="btn ghost" id="eUnplace">배치 해제</button>
+      ${custom ? `<button type="button" class="btn ghost danger" id="eDel">사례 삭제</button>` : ""}<button type="button" class="btn primary" id="eNext">다음 미완료 카드</button></div>`;
   syncEditorChips(c);
   box.querySelectorAll("#eQ button").forEach(b => b.onclick = () => patchCard(id, { q: b.dataset.q }));
   box.querySelectorAll("#eW button").forEach(b => b.onclick = () => {
@@ -196,7 +196,7 @@ function renderEditor() {
   if (custom) {
     $("eTitle").oninput = e => patchCard(id, { title: e.target.value }, 600);
     $("eDesc").oninput = e => patchCard(id, { desc: e.target.value }, 600);
-    $("eDel").onclick = () => { if (confirm("이 사례를 지울까요?")) { patchCard(id, { q: null, title: "", desc: "", why: "", theory: null, warn: [], removed: true }); S.sel = null; renderSort(); } };
+    $("eDel").onclick = () => { if (confirm("이 사례를 삭제하시겠습니까?")) { patchCard(id, { q: null, title: "", desc: "", why: "", theory: null, warn: [], removed: true }); S.sel = null; renderSort(); } };
   }
   $("eUnplace").onclick = () => patchCard(id, { q: null });
   $("eNext").onclick = () => {
@@ -237,7 +237,7 @@ const visibleBoards = () => Object.fromEntries(Object.entries(S.boards).map(([k,
 /* ── 재설계 ─────────────────────────────────────────── */
 const dForm = $("dForm");
 (function buildDesignForm() {
-  $("dTheory").innerHTML = `<option value="">— 고르기 —</option>` + THEORIES.map(t => `<option value="${t.id}">${esc(t.ko)} — ${esc(t.line)}</option>`).join("");
+  $("dTheory").innerHTML = `<option value="">— 선택 —</option>` + THEORIES.map(t => `<option value="${t.id}">${esc(t.ko)} — ${esc(t.line)}</option>`).join("");
   $("kindPick").innerHTML = ["VR", "AR"].map(k => `<button type="button" data-k="${k}">${k}</button>`).join("");
   $("checks").innerHTML = CHECKS.map(c => `<label class="field ck"><span><b>${esc(c.ko)}</b> ${esc(c.q)}</span><textarea data-ck="${c.id}" rows="2" maxlength="200"></textarea></label>`).join("");
   $("kindPick").querySelectorAll("button").forEach(b => b.onclick = () => { setKind(b.dataset.k); queueDesign(); });
@@ -247,7 +247,7 @@ function designCardOptions() {
   const cards = liveCards(myCards());
   const ok = Object.entries(cards).filter(([, c]) => ["vr", "train", "guide"].includes(c.q));
   const cur = dForm.card.value;
-  $("dCard").innerHTML = `<option value="">— 우리 조 VR · AR 칸 카드 —</option>` + ok.map(([id, c]) =>
+  $("dCard").innerHTML = `<option value="">— 선택 (우리 조 VR · AR 칸 사례) —</option>` + ok.map(([id, c]) =>
     `<option value="${esc(id)}">${/^\d+$/.test(id) ? id + ". " : ""}${esc(c.title || cardOf(id).title)} (${esc(QUADS[c.q].ko)})</option>`).join("");
   if (cur) dForm.card.value = cur;
 }
@@ -276,17 +276,17 @@ function remoteDesign() {
   // 처음 한 번은 (내가 아직 아무것도 고치지 않았다면) 저장된 것을 불러오고,
   // 그 뒤로는 조원의 다른 기기가 고친 것만 받는다 — 내가 저장한 것이 되돌아와 쓰던 글을 덮지 않게
   if (!designFilled) { designFilled = true; if (!designDirty) fillDesign(); else if (d.sketch) drawSketch(d.sketch); return; }
-  if (d.by !== me.uid) { fillDesign(); $("dSaved").textContent = "조원이 고친 내용을 받았습니다"; }
+  if (d.by !== me.uid) { fillDesign(); $("dSaved").textContent = "조원 수정 내용 반영"; }
 }
 let dT;
 function queueDesign() {
   if (S.phase !== "design") return;
   designDirty = true;
   clearTimeout(dT);
-  $("dSaved").textContent = "저장하는 중…";
+  $("dSaved").textContent = "저장 중";
   dT = setTimeout(async () => {
-    try { await saveDesign(S.team, readDesign()); $("dSaved").textContent = "조 전체에 저장됨"; }
-    catch (e) { console.error(e); $("dSaved").textContent = "저장하지 못했습니다 — 재설계 시간이 끝났거나 연결이 끊겼습니다"; }
+    try { await saveDesign(S.team, readDesign()); $("dSaved").textContent = "저장 완료"; }
+    catch (e) { console.error(e); $("dSaved").textContent = "저장 실패 (재설계 단계 종료 또는 연결 끊김)"; }
   }, 700);
 }
 dForm.addEventListener("input", queueDesign);
@@ -304,14 +304,14 @@ function blankSketch() { cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.h
 blankSketch();
 $("sketchTools").innerHTML = [["#22211E", "검정"], ["#0070C0", "파랑"], ["#C0392B", "빨강"], ["#548235", "초록"]].map(([c, n]) =>
   `<button type="button" class="pen${c === PEN.color ? " on" : ""}" data-c="${c}" title="${n}" style="--pc:${c}"></button>`).join("")
-  + `<button type="button" class="btn ghost" data-size="2">가늘게</button><button type="button" class="btn ghost" data-size="6">굵게</button>`
-  + `<button type="button" class="btn ghost" data-erase="1">지우개</button><button type="button" class="btn ghost danger" data-clear="1">다 지우기</button>`;
+  + `<button type="button" class="btn ghost" data-size="2">가는 선</button><button type="button" class="btn ghost" data-size="6">굵은 선</button>`
+  + `<button type="button" class="btn ghost" data-erase="1">지우개</button><button type="button" class="btn ghost danger" data-clear="1">전체 삭제</button>`;
 $("sketchTools").onclick = e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.c) { PEN.color = b.dataset.c; PEN.erase = false; }
   if (b.dataset.size) PEN.size = Number(b.dataset.size);
   if (b.dataset.erase) PEN.erase = true;
-  if (b.dataset.clear) { if (!confirm("스케치를 모두 지울까요?")) return; blankSketch(); saveSketch(); }
+  if (b.dataset.clear) { if (!confirm("스케치 전체를 삭제하시겠습니까?")) return; blankSketch(); saveSketch(); }
   $("sketchTools").querySelectorAll(".pen").forEach(p => p.classList.toggle("on", !PEN.erase && p.dataset.c === PEN.color));
   $("sketchTools").querySelector("[data-erase]").classList.toggle("on", PEN.erase);
 };
@@ -328,11 +328,11 @@ cv.onpointerup = cv.onpointercancel = () => { if (!drawing) return; drawing = fa
 let sT;
 function saveSketch() {
   clearTimeout(sT);
-  $("sSaved").textContent = "저장하는 중…";
+  $("sSaved").textContent = "저장 중";
   sT = setTimeout(async () => {
     const url = cv.toDataURL("image/jpeg", 0.7);
-    try { await saveDesign(S.team, { sketch: url }); $("sSaved").textContent = "스케치 저장됨"; }
-    catch (e) { console.error(e); $("sSaved").textContent = "저장하지 못했습니다"; }
+    try { await saveDesign(S.team, { sketch: url }); $("sSaved").textContent = "스케치 저장 완료"; }
+    catch (e) { console.error(e); $("sSaved").textContent = "저장 실패"; }
   }, 500);
 }
 let shownSketch = null;
@@ -347,12 +347,12 @@ function drawSketch(url) {
 /* ── 설계안 보기 (부작용 찾기 · 대응책) ─────────────────── */
 function designView(team) {
   const d = S.designs[teamId(team)];
-  if (!d || !d.card) return `<p class="muted">${teamLabel(team)}가 아직 설계안을 내지 않았습니다.</p>`;
+  if (!d || !d.card) return `<p class="muted">${teamLabel(team)} 설계안 미제출</p>`;
   const board = S.boards[teamId(team)];
   const c = board?.cards?.[d.card] || {};
-  return `<p class="eno">${teamLabel(team)} · ${esc(d.kind || "")}로 바꾸기</p><h3>${esc(c.title || cardOf(d.card).title)}</h3>
-    <dl class="dl"><dt>누가 · 언제 · 어디서</dt><dd>${esc(d.who || "—")}</dd><dt>지금 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
-    <dt>바꾸면 달라지는 것</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
+  return `<p class="eno">${teamLabel(team)} · 적용 방향: ${esc(d.kind || "")}</p><h3>${esc(c.title || cardOf(d.card).title)}</h3>
+    <dl class="dl"><dt>사용자 · 시점 · 장소</dt><dd>${esc(d.who || "—")}</dd><dt>현행 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
+    <dt>적용 후 변화</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
     ${d.sketch ? `<img class="sk" src="${d.sketch}" alt="화면 스케치">` : `<p class="muted">스케치 없음</p>`}
     <dl class="dl ck">${CHECKS.map(k => `<dt>${esc(k.ko)}</dt><dd>${esc(d.checks?.[k.id] || "—")}</dd>`).join("")}</dl>`;
 }
@@ -362,7 +362,7 @@ const SD = { kind: null, items: null };
 function renderSide(force) {
   if (S.phase !== "side") return;
   const target = sideTargetOf(S.team);
-  $("sideTitle").textContent = `${teamLabel(target)}의 설계안`;
+  $("sideTitle").textContent = `검토 대상: ${teamLabel(target)} 설계안`;
   $("sideView").innerHTML = designView(target);
   const doc = S.sides[sideDocId(target, S.team)];
   if (SD.items === null || force || (doc && doc.by !== me.uid)) SD.items = (doc?.items || []).map(x => ({ ...x }));
@@ -370,7 +370,7 @@ function renderSide(force) {
   $("sidePick").querySelectorAll("button").forEach(b => b.onclick = () => { SD.kind = b.dataset.k; renderSide(); });
   $("addSide").disabled = !(SD.kind && $("sideNote").value.trim());
   $("sideList").innerHTML = SD.items.map((x, i) => `<li><span class="kchip">${esc(sideName(x.kind))}</span><span>${esc(x.note)}</span><button type="button" data-i="${i}" aria-label="지우기">×</button></li>`).join("")
-    || `<li class="muted">아직 붙인 부작용이 없습니다</li>`;
+    || `<li class="muted">입력된 부작용 없음</li>`;
   $("sideList").querySelectorAll("button").forEach(b => b.onclick = () => { SD.items.splice(Number(b.dataset.i), 1); pushSide(); });
 }
 $("sideNote").oninput = () => $("addSide").disabled = !(SD.kind && $("sideNote").value.trim());
@@ -381,9 +381,9 @@ $("addSide").onclick = () => {
 };
 async function pushSide() {
   renderSide();
-  $("sideSaved").textContent = "저장하는 중…";
-  try { await saveSide(sideTargetOf(S.team), S.team, SD.items.slice(0, 12)); $("sideSaved").textContent = `${teamLabel(sideTargetOf(S.team))}에 보냈습니다`; }
-  catch (e) { console.error(e); $("sideSaved").textContent = "저장하지 못했습니다 — 부작용 찾기 시간이 끝났거나 연결이 끊겼습니다"; }
+  $("sideSaved").textContent = "저장 중";
+  try { await saveSide(sideTargetOf(S.team), S.team, SD.items.slice(0, 12)); $("sideSaved").textContent = `${teamLabel(sideTargetOf(S.team))} 전송 완료`; }
+  catch (e) { console.error(e); $("sideSaved").textContent = "저장 실패 (부작용 검토 단계 종료 또는 연결 끊김)"; }
 }
 
 /* ── 대응책 ─────────────────────────────────────────── */
@@ -393,8 +393,8 @@ function renderReply(force) {
   const from = sideFromOf(S.team);
   $("myDesignView").innerHTML = designView(S.team);
   const doc = S.sides[sideDocId(S.team, from)];
-  $("replyTitle").textContent = `${teamLabel(from)}가 붙인 부작용과 우리 조의 대응책`;
-  if (!doc?.items?.length) { $("replyList").innerHTML = `<p class="muted">${teamLabel(from)}가 붙인 부작용이 아직 없습니다.</p>`; return; }
+  $("replyTitle").textContent = `${teamLabel(from)} 입력 부작용 · 우리 조 대응책`;
+  if (!doc?.items?.length) { $("replyList").innerHTML = `<p class="muted">${teamLabel(from)} 입력 부작용 없음</p>`; return; }
   if (RP === null || force || (doc.replyBy && doc.replyBy !== me.uid)) RP = doc.items.map((_, i) => doc.replies?.[i] || "");
   const box = $("replyList");
   if (box.contains(document.activeElement) && !force) return;
@@ -403,10 +403,10 @@ function renderReply(force) {
   let rT;
   box.querySelectorAll("textarea").forEach(t => t.oninput = () => {
     RP[Number(t.dataset.i)] = t.value;
-    clearTimeout(rT); $("replySaved").textContent = "저장하는 중…";
+    clearTimeout(rT); $("replySaved").textContent = "저장 중";
     rT = setTimeout(async () => {
-      try { await saveReply(S.team, from, RP.map(v => v.trim().slice(0, 200))); $("replySaved").textContent = "저장됨"; }
-      catch (e) { console.error(e); $("replySaved").textContent = "저장하지 못했습니다 — 대응책 시간이 끝났거나 연결이 끊겼습니다"; }
+      try { await saveReply(S.team, from, RP.map(v => v.trim().slice(0, 200))); $("replySaved").textContent = "저장 완료"; }
+      catch (e) { console.error(e); $("replySaved").textContent = "저장 실패 (대응책 단계 종료 또는 연결 끊김)"; }
     }, 700);
   });
 }

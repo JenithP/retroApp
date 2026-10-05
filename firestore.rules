@@ -126,7 +126,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    /* ── 6주차 VR로 갈까, AR로 갈까 (vrcard/) ──────────────────
+    /* ── 6주차 VR · AR 적용 판단 실습 (vrcard/) ──────────────────
        단계는 버셀 함수(api/vrcard.js)만 쓴다. 나머지는 학생이 직접 쓰되 단계마다 한 가지만 열린다.
          분류(sort)        — 조의 분류판
          재설계(design)    — 조의 설계안 (스케치는 jpeg 데이터 주소, 크기 제한)

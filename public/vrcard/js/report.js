@@ -37,25 +37,25 @@ export function build({ team, name, boards, designs, sides }) {
     const x = my[c.id] || {}, r = T.find(t => t.card.id === c.id);
     const same = x.q && r.total && r.n[x.q] === Math.max(...Object.values(r.n));
     return `<tr><td>${c.id}</td><td>${esc(c.title)}</td><td>${qName(x.q)}</td><td>${warnText(x.warn)}</td>
-      <td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>${top(r)}${x.q && !same ? " ◀ 우리와 다름" : ""}</td></tr>`;
+      <td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>${top(r)}${x.q && !same ? " ◀ 불일치" : ""}</td></tr>`;
   }).join("");
   const custom = Object.entries(my).filter(([k, x]) => k.startsWith("c") && !x.removed && x.title).map(([, x]) =>
     `<tr><td>+</td><td>${esc(x.title)}<br><small>${esc(x.desc)}</small></td><td>${qName(x.q)}</td><td>${warnText(x.warn)}</td><td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>우리 조 사례</td></tr>`).join("");
 
   const d = designs[teamId(team)] || {};
   const dcard = d.card ? (my[d.card]?.title || cardOf(d.card).title) : "";
-  const design = d.card ? `<table><tr><th>고른 카드</th><td>${esc(dcard)} &rarr; ${esc(d.kind || "")}</td></tr>
-      <tr><th>누가 · 언제 · 어디서</th><td>${esc(d.who)}</td></tr><tr><th>지금 방식의 문제</th><td>${esc(d.pain)}</td></tr>
-      <tr><th>바꾸면 달라지는 것</th><td>${esc(d.change)}</td></tr><tr><th>근거 이론</th><td>${esc(theoryName(d.theory))}</td></tr>
+  const design = d.card ? `<table><tr><th>선택 사례</th><td>${esc(dcard)} &rarr; ${esc(d.kind || "")}</td></tr>
+      <tr><th>사용자 · 시점 · 장소</th><td>${esc(d.who)}</td></tr><tr><th>현행 방식의 문제</th><td>${esc(d.pain)}</td></tr>
+      <tr><th>적용 후 변화</th><td>${esc(d.change)}</td></tr><tr><th>근거 이론</th><td>${esc(theoryName(d.theory))}</td></tr>
       ${CHECKS.map(k => `<tr><th>${esc(k.ko)}<br><small>${esc(k.q)}</small></th><td>${esc(d.checks?.[k.id] || "")}</td></tr>`).join("")}</table>
-      ${d.sketch ? `<p>화면 스케치</p><img src="${d.sketch}" width="480">` : ""}` : `<p>제출한 설계안이 없습니다.</p>`;
+      ${d.sketch ? `<p>화면 스케치</p><img src="${d.sketch}" width="480">` : ""}` : `<p>제출 설계안 없음</p>`;
 
   const from = sideFromOf(team), target = sideTargetOf(team);
   const got = sides[sideDocId(team, from)], gave = sides[sideDocId(target, team)];
-  const gotT = got?.items?.length ? `<table><tr><th>부작용</th><th>내용</th><th>우리 조의 대응책</th></tr>${got.items.map((x, i) =>
-    `<tr><td>${esc(sideName(x.kind))}</td><td>${esc(x.note)}</td><td>${esc(got.replies?.[i] || "")}</td></tr>`).join("")}</table>` : `<p>받은 부작용이 없습니다.</p>`;
+  const gotT = got?.items?.length ? `<table><tr><th>부작용</th><th>내용</th><th>우리 조 대응책</th></tr>${got.items.map((x, i) =>
+    `<tr><td>${esc(sideName(x.kind))}</td><td>${esc(x.note)}</td><td>${esc(got.replies?.[i] || "")}</td></tr>`).join("")}</table>` : `<p>받은 부작용 없음</p>`;
   const gaveT = gave?.items?.length ? `<table><tr><th>부작용</th><th>내용</th></tr>${gave.items.map(x =>
-    `<tr><td>${esc(sideName(x.kind))}</td><td>${esc(x.note)}</td></tr>`).join("")}</table>` : `<p>붙인 부작용이 없습니다.</p>`;
+    `<tr><td>${esc(sideName(x.kind))}</td><td>${esc(x.note)}</td></tr>`).join("")}</table>` : `<p>입력한 부작용 없음</p>`;
 
   const links = LINKS.map(([t, p]) => `<tr><td>${esc(t)}</td><td style="text-align:center">${p}</td><td>${blank(40)}</td></tr>`).join("");
 
@@ -63,28 +63,28 @@ export function build({ team, name, boards, designs, sides }) {
 <style>body{font-family:'맑은 고딕',sans-serif;font-size:10.5pt;line-height:1.5}h1{font-size:18pt}h2{font-size:13pt;border-bottom:1px solid #999;margin-top:18pt}
 table{border-collapse:collapse;width:100%;margin:6pt 0}td,th{border:1px solid #888;padding:3pt 5pt;vertical-align:top;font-size:9.5pt}th{background:#EEF1F4;text-align:left}
 .q{margin:10pt 0 2pt;font-weight:bold}.box{border:1px solid #888;height:90pt}</style></head><body>
-<h1>6주차 오프라인 실습보고서 — VR로 갈까, AR로 갈까</h1>
+<h1>6주차 오프라인 실습보고서 — VR · AR 적용 판단 실습</h1>
 <p>${teamLabel(team)} · 이름 ${esc(name)} · 학번 ${blank(20)}</p>
-<p>판단 도구 — 세로: 몸이 진짜처럼 반응해야 하는가(실재감 · 체화) / 가로: 정보가 현실의 물건에 붙어야 하는가(분할 주의 · 정합)<br>
-경고 카드 — ⚠① ${esc(WARNS[0].ko)} (${esc(WARNS[0].ref)}) · ⚠② ${esc(WARNS[1].ko)} (${esc(WARNS[1].ref)})</p>
+<p>분류 기준 — 세로: 신체 반응 필요 여부(실재감 · 체화) / 가로: 현실 사물과의 정보 결합 필요 여부(분할 주의 · 정합)<br>
+경고 기준 — ⚠① ${esc(WARNS[0].ko)} (${esc(WARNS[0].ref)}) · ⚠② ${esc(WARNS[1].ko)} (${esc(WARNS[1].ref)})</p>
 
-<h2>1부. 우리 조 분류와 반 전체 비교</h2>
-<table><tr><th>번호</th><th>사례</th><th>우리 칸</th><th>경고</th><th>근거 이론</th><th>이유</th><th>반 전체에서 가장 많은 칸</th></tr>${rows}${custom}</table>
+<h2>1부. 우리 조 분류 · 반 전체 비교</h2>
+<table><tr><th>번호</th><th>사례</th><th>우리 조 배치</th><th>경고 기준</th><th>근거 이론</th><th>이유</th><th>반 전체 최다 배치</th></tr>${rows}${custom}</table>
 
 <h2>2부. 재설계안</h2>${design}
 
-<h2>3부. 부작용과 대응책</h2>
-<p class="q">${teamLabel(from)}가 우리 설계안에 붙인 부작용</p>${gotT}
-<p class="q">우리 조가 ${teamLabel(target)}의 설계안에 붙인 부작용</p>${gaveT}
+<h2>3부. 부작용 · 대응책</h2>
+<p class="q">받은 부작용 (입력: ${teamLabel(from)})</p>${gotT}
+<p class="q">입력한 부작용 (대상: ${teamLabel(target)} 설계안)</p>${gaveT}
 
-<h2>4부. 온라인 강의와 잇기</h2>
-<p>오늘 실습에서 각 개념이 드러난 장면을 한 줄씩 적으세요. 없으면 비워 둡니다.</p>
-<table><tr><th>온라인 강의 개념</th><th>쪽</th><th>오늘 실습에서 드러난 장면</th></tr>${links}</table>
+<h2>4부. 온라인 강의 연결</h2>
+<p>작성 방법: 개념별 해당 실습 장면 1줄 (해당 없음 시 공란)</p>
+<table><tr><th>온라인 강의 개념</th><th>쪽</th><th>해당 실습 장면</th></tr>${links}</table>
 
-<h2>5부. 생각</h2>
-<p class="q">1. 우리 조가 반 전체와 가장 다르게 판단한 카드는 무엇이고, 왜 그렇게 판단했나요? (1부 「우리와 다름」 표시를 근거로)</p><div class="box"></div>
-<p class="q">2. 재설계에서 몰입을 어디까지만 썼나요? 「실재감은 목적이 아니라 수단」(온라인 20쪽)과 연결해 설명하세요.</p><div class="box"></div>
-<p class="q">3. 받은 부작용 하나를 골라, 그 부작용이 우리 설계의 장점과 같은 뿌리에서 나오는지 설명하세요.</p><div class="box"></div>
+<h2>5부. 개인 의견</h2>
+<p class="q">1. 반 전체와 판단이 가장 다른 사례 및 우리 조의 판단 근거 (참고: 1부 「불일치」 표시)</p><div class="box"></div>
+<p class="q">2. 재설계안의 몰입 요소 사용 범위 및 근거 (참고: 온라인 20쪽 학습 효과 연구)</p><div class="box"></div>
+<p class="q">3. 받은 부작용 1개와 우리 설계안 장점의 공통 원인 (해당 지각 · 인지 원리)</p><div class="box"></div>
 </body></html>`;
 }
 

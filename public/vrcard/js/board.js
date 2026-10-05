@@ -1,4 +1,4 @@
-// VR로 갈까, AR로 갈까 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 반 전체 비교와 조별 진행을 본다.
+// VR · AR 적용 판단 실습 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 반 전체 비교와 조별 진행을 본다.
 import { CARDS, QUADS, AXES, CHECKS, PHASES, TEAM_COUNT, teamId, teamLabel, cardOf, cardDone, theoryName, sideName,
          sideFromOf, sideTargetOf, sideDocId } from "./data.js";
 import { ready, watchState, watchBoards, watchDesigns, watchSides, adminCall } from "./fb.js";
@@ -24,24 +24,24 @@ $("code").onkeydown = e => { if (e.key === "Enter") $("unlock").click(); };
 if (B.code) unlock(B.code);
 
 const CONFIRM = {
-  sort: "분류를 시작합니다. 학생 화면에 카드가 열립니다.",
-  share: "분류를 잠그고 반 전체 비교를 공개합니다. 이 뒤로는 분류를 고칠 수 없습니다.",
-  design: "재설계를 시작합니다.",
-  side: "설계안을 잠그고 부작용 찾기를 시작합니다. 조마다 다음 번호 조의 설계안을 받습니다.",
-  reply: "부작용 찾기를 닫고 대응책 쓰기를 시작합니다.",
-  end: "실습을 마칩니다. 학생 화면에 실습보고서 내려받기가 열립니다.",
+  sort: "분류 단계 시작 (학생 화면 카드 공개)",
+  share: "분류 잠금 및 반 전체 결과 공개 (이후 분류 수정 불가)",
+  design: "재설계 단계 시작",
+  side: "설계안 잠금 및 부작용 검토 시작 (검토 대상: 다음 번호 조 설계안)",
+  reply: "부작용 검토 종료 및 대응책 단계 시작",
+  end: "실습 종료 (학생 화면 실습보고서 내려받기 공개)",
 };
 document.querySelectorAll(".step[data-phase]").forEach(b => b.onclick = async () => {
   const p = b.dataset.phase;
   if (CONFIRM[p] && !confirm(CONFIRM[p])) return;
-  $("stepMsg").textContent = "넘기는 중…";
-  try { await adminCall(B.code, "phase", { phase: p }); $("stepMsg").textContent = `${PHASES[p]} 단계로 넘겼습니다`; }
+  $("stepMsg").textContent = "단계 변경 중";
+  try { await adminCall(B.code, "phase", { phase: p }); $("stepMsg").textContent = `현재 단계: ${PHASES[p]}`; }
   catch (e) { $("stepMsg").textContent = e.message; }
 });
 $("reset").onclick = async () => {
-  if (!confirm("모든 조의 분류 · 설계안 · 부작용을 지웁니다. 리허설 뒤에만 쓰세요.")) return;
-  if (prompt("정말 지우려면 「비우기」 라고 적으세요") !== "비우기") return;
-  try { await adminCall(B.code, "reset"); $("stepMsg").textContent = "비웠습니다"; }
+  if (!confirm("전체 조의 분류 · 설계안 · 부작용 삭제 (리허설 후 전용)")) return;
+  if (prompt("확인 문구 입력: 초기화") !== "초기화") return;
+  try { await adminCall(B.code, "reset"); $("stepMsg").textContent = "초기화 완료"; }
   catch (e) { $("stepMsg").textContent = e.message; }
 };
 document.querySelectorAll(".seg2 button").forEach(b => b.onclick = () => {
@@ -65,9 +65,9 @@ function teamStat(t) {
 }
 function renderKpis() {
   const st = Array.from({ length: TEAM_COUNT }, (_, i) => teamStat(i + 1));
-  const k = [[st.filter(s => s.placed).length, "분류를 시작한 조"], [st.reduce((a, s) => a + s.done, 0), "근거를 채운 카드"],
-             [st.filter(s => s.design?.card).length, "설계안을 쓴 조"], [st.reduce((a, s) => a + (s.gave?.items?.length || 0), 0), "붙인 부작용"],
-             [st.reduce((a, s) => a + (s.got?.replies || []).filter(x => x).length, 0), "쓴 대응책"]];
+  const k = [[st.filter(s => s.placed).length, "분류 시작 조"], [st.reduce((a, s) => a + s.done, 0), "근거 완료 카드"],
+             [st.filter(s => s.design?.card).length, "설계안 제출 조"], [st.reduce((a, s) => a + (s.gave?.items?.length || 0), 0), "입력 부작용"],
+             [st.reduce((a, s) => a + (s.got?.replies || []).filter(x => x).length, 0), "입력 대응책"]];
   $("kpis").innerHTML = k.map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
 }
 function renderTeams() {
@@ -79,10 +79,10 @@ function renderTeams() {
     const b = document.createElement("button");
     b.className = "tcard" + (quiet ? " quiet" : "");
     b.innerHTML = `<div class="tn"><b>${teamLabel(t)}</b><span>${s.design?.card ? esc(s.design.kind || "") : ""}</span></div>
-      <div class="tm">놓음 ${s.placed} / ${s.total} · 근거 ${s.done}</div>
+      <div class="tm">배치 ${s.placed} / ${s.total} · 근거 ${s.done}</div>
       <div class="vbar"><span style="width:${s.total ? s.done / s.total * 100 : 0}%"></span></div>
-      <span class="st ${s.design?.card ? "pub" : "none"}">${s.design?.card ? `설계안: ${esc(cardOf(s.design.card, B.boards[teamId(t)]).title)}` : "설계안 없음"}</span>
-      <span class="st ${s.gave?.items?.length ? "" : "none"}">붙인 부작용 ${s.gave?.items?.length || 0} · 대응 ${(s.got?.replies || []).filter(x => x).length}</span>
+      <span class="st ${s.design?.card ? "pub" : "none"}">${s.design?.card ? `설계안: ${esc(cardOf(s.design.card, B.boards[teamId(t)]).title)}` : "설계안 미제출"}</span>
+      <span class="st ${s.gave?.items?.length ? "" : "none"}">부작용 ${s.gave?.items?.length || 0} · 대응 ${(s.got?.replies || []).filter(x => x).length}</span>
       <span class="st none">${ago(last)}</span>`;
     b.onclick = () => openDetail(t);
     box.appendChild(b);
@@ -97,9 +97,9 @@ function openDetail(t) {
   $("dPlane").innerHTML = `<div class="axis-y"><b>${esc(AXES.y.ko)}</b></div><div class="axis-x-top"><span>현실에 붙을 필요 낮음</span><span>높음</span></div>
     <div class="quads">${cell("vr")}${cell("train")}${cell("keep")}${cell("guide")}</div><div class="axis-x"><b>→ ${esc(AXES.x.ko)}</b></div>`;
   const d = B.designs[teamId(t)];
-  $("dDesign").innerHTML = d?.card ? `<p class="eno">${esc(d.kind || "")}로 바꾸기</p><h3>${esc(cardOf(d.card, board).title)}</h3>
-    <dl class="dl"><dt>누가 · 언제 · 어디서</dt><dd>${esc(d.who || "—")}</dd><dt>지금 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
-    <dt>바꾸면 달라지는 것</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
+  $("dDesign").innerHTML = d?.card ? `<p class="eno">적용 방향: ${esc(d.kind || "")}</p><h3>${esc(cardOf(d.card, board).title)}</h3>
+    <dl class="dl"><dt>사용자 · 시점 · 장소</dt><dd>${esc(d.who || "—")}</dd><dt>현행 방식의 문제</dt><dd>${esc(d.pain || "—")}</dd>
+    <dt>적용 후 변화</dt><dd>${esc(d.change || "—")}</dd><dt>근거 이론</dt><dd>${esc(theoryName(d.theory) || "—")}</dd></dl>
     ${d.sketch ? `<img class="sk" src="${d.sketch}" alt="화면 스케치">` : ""}
     <dl class="dl ck">${CHECKS.map(k => `<dt>${esc(k.ko)}</dt><dd>${esc(d.checks?.[k.id] || "—")}</dd>`).join("")}</dl>` : `<p class="muted">없음</p>`;
   const got = B.sides[sideDocId(t, sideFromOf(t))];

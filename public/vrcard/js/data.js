@@ -1,4 +1,4 @@
-// VR로 갈까, AR로 갈까 — 카드 · 칸 · 이론 · 단계. 학생 화면 · 현황판 · 버셀 함수가 같은 파일을 읽는다.
+// VR · AR 적용 판단 실습 — 카드 · 칸 · 이론 · 단계. 학생 화면 · 현황판 · 버셀 함수가 같은 파일을 읽는다.
 //
 // 6주차 온라인 「가상현실 · 증강현실과 뇌」 의 이론을 판단 기준으로 쓰는 실습이다.
 //   분류 — 지금 쓰이는 사례 18장을 두 질문으로 나눈 네 칸에 놓고, 카드마다 근거 이론과 이유를 적는다
@@ -16,41 +16,41 @@ export const PHASES = {
   sort:   "분류",
   share:  "공유",
   design: "재설계",
-  side:   "부작용 찾기",
+  side:   "부작용 검토",
   reply:  "대응책",
-  end:    "마침",
+  end:    "종료",
 };
 export const PHASE_ORDER = ["ready", "sort", "share", "design", "side", "reply", "end"];
 
 // 두 질문으로 나눈 네 칸 — 세로: 몸이 진짜처럼 반응해야 하는가 / 가로: 정보가 현실의 물건에 붙어야 하는가
 // 화면에서는 위 줄이 「몸 반응 필요 높음」, 오른쪽 열이 「현실에 붙을 필요 높음」
 export const QUADS = {
-  vr:    { ko: "VR",             sub: "위험 · 고비용 · 재현 불가",  row: 0, col: 0, color: "#335593" },
-  train: { ko: "AR · MR 훈련",   sub: "실물을 다루며 몸으로 연습", row: 0, col: 1, color: "#548235" },
-  keep:  { ko: "지금 화면 그대로", sub: "개념 이해 · 정보 처리",     row: 1, col: 0, color: "#7A8188" },
-  guide: { ko: "AR 안내",        sub: "설명을 대상 위에 붙임",     row: 1, col: 1, color: "#0070C0" },
+  vr:    { ko: "VR",             sub: "위험 · 고비용 · 재현 불가능 상황",  row: 0, col: 0, color: "#335593" },
+  train: { ko: "AR · MR 훈련",   sub: "실물 조작 연습", row: 0, col: 1, color: "#548235" },
+  keep:  { ko: "현행 유지",       sub: "개념 이해 · 정보 처리",     row: 1, col: 0, color: "#7A8188" },
+  guide: { ko: "AR 안내",        sub: "대상 위 정보 표시",     row: 1, col: 1, color: "#0070C0" },
 };
 export const QUAD_KEYS = ["vr", "train", "keep", "guide"];
 export const AXES = {
-  y: { ko: "몸이 진짜처럼 반응해야 하는가?", why: "실재감 · 체화" },
-  x: { ko: "정보가 현실의 물건에 붙어야 하는가?", why: "분할 주의 · 정합" },
+  y: { ko: "신체 반응 필요 여부", why: "실재감 · 체화" },
+  x: { ko: "현실 사물과의 정보 결합 필요 여부", why: "분할 주의 · 정합" },
 };
 
 export const WARNS = [
-  { n: 1, ko: "주의가 다른 데 필요한 상황인가?", hint: "걷기 · 운전 · 작업 중", ref: "주의 터널링 (Wickens & Alexander, 2009)" },
-  { n: 2, ko: "개념을 이해하는 것이 목적인가?", hint: "원리 · 이론 · 개념 학습", ref: "외재적 인지 부하 (Makransky et al., 2019)" },
+  { n: 1, ko: "주의 분산 위험 상황", hint: "보행 · 운전 · 작업 중 사용", ref: "주의 터널링 (Wickens & Alexander, 2009)" },
+  { n: 2, ko: "개념 이해 목적", hint: "원리 · 이론 · 개념 학습", ref: "외재적 인지 부하 (Makransky et al., 2019)" },
 ];
 
 // 근거로 쓸 수 있는 이론 — 온라인 강의 슬라이드와 같은 이름
 export const THEORIES = [
-  { id: "place",   ko: "장소 · 개연성 착각", line: "예상대로 반응하면 거기 있다고 느낌",       ref: "Slater, 2009 · Meehan et al., 2002" },
-  { id: "body",    ko: "몸의 착각",          line: "보는 것과 느끼는 것이 맞으면 내 몸이 됨", ref: "Botvinick & Cohen, 1998" },
-  { id: "sick",    ko: "감각 갈등",          line: "눈과 전정기관이 어긋나면 멀미",          ref: "Reason & Brand, 1975" },
-  { id: "split",   ko: "분할 주의",          line: "떨어진 정보를 합치느라 작업 기억 소모",   ref: "Chandler & Sweller, 1991 · Tang et al., 2003" },
-  { id: "tunnel",  ko: "주의 터널링",        line: "겹친 정보가 주변을 가림",                ref: "Wickens & Alexander, 2009" },
-  { id: "load",    ko: "외재적 부하",        line: "과제와 무관한 몰입이 학습을 방해",        ref: "Makransky et al., 2019" },
-  { id: "rbi",     ko: "실재 기반 인터랙션",  line: "현실에서 이미 아는 것을 빌려 씀",        ref: "Jacob et al., 2008" },
-  { id: "gap",     ko: "지각의 틈",          line: "알아채지 못하는 범위에서 감각을 조정",    ref: "Steinicke et al., 2010 · Azmandian et al., 2016" },
+  { id: "place",   ko: "장소 · 개연성 착각", line: "예상과 일치하는 반응 시 현장감 발생",       ref: "Slater, 2009 · Meehan et al., 2002" },
+  { id: "body",    ko: "몸의 착각",          line: "시각 · 촉각 일치 시 신체 소유감 발생", ref: "Botvinick & Cohen, 1998" },
+  { id: "sick",    ko: "감각 갈등",          line: "시각 · 전정 감각 불일치에 따른 멀미",          ref: "Reason & Brand, 1975" },
+  { id: "split",   ko: "분할 주의",          line: "분리된 정보 통합에 따른 작업 기억 소모",   ref: "Chandler & Sweller, 1991 · Tang et al., 2003" },
+  { id: "tunnel",  ko: "주의 터널링",        line: "중첩 정보에 따른 주변 인식 저하",                ref: "Wickens & Alexander, 2009" },
+  { id: "load",    ko: "외재적 부하",        line: "과제 무관 몰입 요소에 따른 학습 저하",        ref: "Makransky et al., 2019" },
+  { id: "rbi",     ko: "실재 기반 인터랙션",  line: "현실 세계 지식 · 기술의 활용",        ref: "Jacob et al., 2008" },
+  { id: "gap",     ko: "지각의 틈",          line: "감지 한계 내 감각 조정",    ref: "Steinicke et al., 2010 · Azmandian et al., 2016" },
 ];
 export const theoryName = id => (THEORIES.find(t => t.id === id) || {}).ko || "";
 
@@ -81,22 +81,22 @@ export const cardOf = (id, board) => CARDS.find(c => c.id === id) || (board?.car
 
 // 재설계 체크리스트 — 온라인 15쪽 「뇌의 원리가 곧 설계 지침」 을 질문으로 바꾼 것
 export const CHECKS = [
-  { id: "move",  ko: "예측 · 감각 갈등", q: "움직일 때 멀미가 나지 않게 이동 방식을 어떻게 할 것인가" },
-  { id: "body",  ko: "몸의 착각",       q: "사용자의 손과 몸을 보여줄 것인가, 동작에 바로 반응하는가" },
-  { id: "place", ko: "분할 주의",       q: "정보는 어디에 붙는가 — 화면 구석인가, 대상 위인가" },
-  { id: "show",  ko: "주의 터널링",     q: "언제 띄우고 언제 숨길 것인가" },
-  { id: "load",  ko: "인지 부하",       q: "몰입은 어디까지만 쓸 것인가 — 빼도 되는 장식은 무엇인가" },
-  { id: "magic", ko: "현실과 마법",     q: "현실을 그대로 따를 것인가, 언제 벗어날 것인가" },
+  { id: "move",  ko: "예측 · 감각 갈등", q: "이동 방식 및 멀미 방지 방안" },
+  { id: "body",  ko: "몸의 착각",       q: "사용자 손 · 신체 표시 여부 및 동작 반응" },
+  { id: "place", ko: "분할 주의",       q: "정보 표시 위치 (화면 구석 / 대상 위)" },
+  { id: "show",  ko: "주의 터널링",     q: "정보 표시 · 숨김 시점" },
+  { id: "load",  ko: "인지 부하",       q: "몰입 요소 범위 및 제거 가능한 장식" },
+  { id: "magic", ko: "현실 동작 유지 범위", q: "현실 동작 유지 범위 및 현실 이탈 지점 (예: 고고 기법)" },
 ];
 
 // 부작용 — 온라인에서 다룬 것과 이후 주차(7주차 격차 · 14주차 프라이버시와 다크패턴)에서 다룰 것
 export const SIDES = [
   { id: "sick",    ko: "멀미",       hint: "감각 갈등" },
-  { id: "tunnel",  ko: "주의 터널링", hint: "주변을 놓침" },
-  { id: "load",    ko: "인지 부하",   hint: "몰입이 방해" },
-  { id: "privacy", ko: "프라이버시",  hint: "늘 켜진 카메라 · 시선 데이터" },
-  { id: "gap",     ko: "비용 · 격차", hint: "기기를 못 갖춘 사람" },
-  { id: "manip",   ko: "지각 조작",   hint: "모르게 바뀌는 감각" },
+  { id: "tunnel",  ko: "주의 터널링", hint: "주변 인식 저하" },
+  { id: "load",    ko: "인지 부하",   hint: "몰입 요소에 따른 학습 저하" },
+  { id: "privacy", ko: "프라이버시",  hint: "상시 카메라 · 시선 데이터" },
+  { id: "gap",     ko: "비용 · 격차", hint: "기기 미보유자 배제" },
+  { id: "manip",   ko: "지각 조작",   hint: "사용자 모르게 감각 변경" },
 ];
 export const sideName = id => (SIDES.find(s => s.id === id) || {}).ko || "";
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VR로 갈까, AR로 갈까</title>
+<title>VR · AR 적용 판단 실습</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -15,7 +15,7 @@
 <header class="top">
   <div class="brand">
     <p class="eyebrow">HCI와 커뮤니케이션 · 6주차 오프라인</p>
-    <h1>VR로 갈까, AR로 갈까</h1>
+    <h1>VR · AR 적용 판단 실습</h1>
   </div>
   <div class="status">
     <span class="chip" id="teamChip" hidden></span>
@@ -27,33 +27,32 @@
 <!-- 조 고르기 -->
 <section class="view" id="vJoin" hidden>
   <div class="join">
-    <h2>우리 조를 고르세요</h2>
-    <p class="lead">조원이 각자 노트북으로 들어와도 됩니다. 분류판과 설계안은 조원 모두에게 똑같이 보이고, 누가 고치든 바로 저장됩니다.</p>
+    <h2>조 선택</h2>
+    <p class="lead">조원별 노트북 접속 가능 · 분류판과 설계안은 조원 전체 공유 · 수정 즉시 저장</p>
     <div class="teampick" id="teamPick"></div>
-    <label class="field">내 이름 <input id="myName" maxlength="20" autocomplete="off" placeholder="실습보고서에 적힐 이름"></label>
-    <button class="btn primary big" id="joinBtn" disabled>들어가기</button>
+    <label class="field">이름 <input id="myName" maxlength="20" autocomplete="off" placeholder="실습보고서 기재용"></label>
+    <button class="btn primary big" id="joinBtn" disabled>입장</button>
   </div>
 </section>
 
 <!-- 안내 -->
 <section class="view" id="vReady" hidden>
   <div class="intro">
-    <h2>오늘 할 일</h2>
-    <p class="lead">지금 쓰이는 시스템 · 앱 · 교육 사례를 <b>VR</b>로 바꿀지, <b>AR</b>로 바꿀지, <b>그대로 둘지</b> 판단합니다.
-      판단의 근거는 온라인에서 배운 이론입니다. 「더 실감 나서」 는 근거가 아닙니다.</p>
+    <h2>실습 개요</h2>
+    <p class="lead">사례 18개의 <b>VR</b> · <b>AR</b> · <b>현행 유지</b> 판단 · 판단 근거: 온라인 강의 이론 · 근거 불인정 예: 「더 실감 나서」</p>
     <div class="introgrid">
       <div>
-        <h3>판단 도구 ① 두 개의 질문, 네 개의 칸</h3>
+        <h3>분류 기준</h3>
         <div class="plane mini" id="introPlane"></div>
       </div>
       <div>
-        <h3>판단 도구 ② 경고 카드 두 장</h3>
+        <h3>경고 기준</h3>
         <div id="introWarns"></div>
-        <h3>근거로 쓸 수 있는 이론</h3>
+        <h3>근거 이론 목록</h3>
         <ul class="theorylist" id="introTheories"></ul>
       </div>
     </div>
-    <p class="note">교수님이 <b>분류 시작</b>을 누르면 카드가 열립니다.</p>
+    <p class="note">교수 화면의 <b>분류 시작</b> 이후 카드 공개</p>
   </div>
 </section>
 
@@ -65,7 +64,7 @@
   </div>
   <div class="sortgrid">
     <aside class="tray">
-      <h3>아직 놓지 않은 카드 <small>끌어서 칸에 놓거나, 눌러서 오른쪽에서 고르기</small></h3>
+      <h3>미배치 카드 <small>칸으로 끌어 놓기 또는 선택 후 오른쪽에서 지정</small></h3>
       <div class="traylist" id="tray"></div>
     </aside>
     <div class="planewrap">
@@ -78,15 +77,15 @@
 <section class="view" id="vShare" hidden>
   <div class="sharehead">
     <div>
-      <h2>반 전체는 어디에 놓았을까</h2>
-      <p class="lead">카드마다 20개 조가 놓은 칸입니다. <b>갈림</b> 표시가 붙은 카드부터 보세요. 줄을 누르면 조마다 적은 근거가 펼쳐집니다.</p>
+      <h2>반 전체 분류 결과</h2>
+      <p class="lead">카드별 20개 조 배치 현황 · <b>불일치</b> 표시: 조별 판단이 갈린 사례 · 줄 선택 시 조별 근거 표시</p>
     </div>
-    <div class="seg2"><button class="btn on" data-o="split" type="button">갈린 순서</button><button class="btn" data-o="id" type="button">카드 번호 순서</button></div>
+    <div class="seg2"><button class="btn on" data-o="split" type="button">불일치 순</button><button class="btn" data-o="id" type="button">번호 순</button></div>
   </div>
   <div class="sharegrid">
     <div class="compare" id="compare"></div>
     <aside>
-      <h3>우리 조 분류판 <small>공유 단계에서는 고칠 수 없습니다</small></h3>
+      <h3>우리 조 분류판 <small>공유 단계 수정 불가</small></h3>
       <div class="plane mini" id="myPlane"></div>
     </aside>
   </div>
@@ -96,20 +95,20 @@
 <section class="view" id="vDesign" hidden>
   <div class="designgrid">
     <form class="dform" id="dForm" autocomplete="off">
-      <h2>바꿔서 더 좋게</h2>
-      <p class="lead">우리 조가 VR · AR 칸에 놓은 카드 중 하나를 골라 다시 설계합니다. 체크리스트는 온라인 15쪽 「뇌의 원리가 곧 설계 지침」 입니다.</p>
-      <label class="field">고른 카드 <select name="card" id="dCard"></select></label>
-      <div class="field">바꿀 방향 <div class="kindpick" id="kindPick"></div></div>
-      <label class="field">누가, 언제, 어디서 쓰는가 <textarea name="who" rows="2" maxlength="300"></textarea></label>
-      <label class="field">지금 방식에서 불편하거나 위험한 점 <textarea name="pain" rows="2" maxlength="300"></textarea></label>
-      <label class="field">VR · AR로 바꾸면 무엇이 달라지는가 <small>사용자에게 보이는 장면을 적고, 오른쪽에 스케치</small><textarea name="change" rows="3" maxlength="500"></textarea></label>
+      <h2>재설계</h2>
+      <p class="lead">우리 조 VR · AR 칸 사례 1개 선택 · 체크리스트 출처: 온라인 15쪽 설계 지침 표</p>
+      <label class="field">선택 사례 <select name="card" id="dCard"></select></label>
+      <div class="field">적용 방향 <div class="kindpick" id="kindPick"></div></div>
+      <label class="field">사용자 · 사용 시점 · 사용 장소 <textarea name="who" rows="2" maxlength="300"></textarea></label>
+      <label class="field">현행 방식의 불편 · 위험 요소 <textarea name="pain" rows="2" maxlength="300"></textarea></label>
+      <label class="field">VR · AR 적용 후 변화 <small>사용자 화면 기준 서술 · 오른쪽 스케치</small><textarea name="change" rows="3" maxlength="500"></textarea></label>
       <label class="field">근거 이론 <select name="theory" id="dTheory"></select></label>
       <h3 class="ckh">설계 체크리스트</h3>
       <div id="checks"></div>
       <p class="saved" id="dSaved"></p>
     </form>
     <div class="sketchside">
-      <h3>화면 스케치 <small>사용자 눈에 보이는 장면 · 그림 실력은 보지 않습니다</small></h3>
+      <h3>화면 스케치 <small>사용자 시점 장면 · 그림 실력 무관</small></h3>
       <div class="sketchtools" id="sketchTools"></div>
       <canvas id="sketch" width="720" height="480"></canvas>
       <p class="saved" id="sSaved"></p>
@@ -121,13 +120,13 @@
 <section class="view" id="vSide" hidden>
   <div class="sidegrid">
     <div>
-      <h2 id="sideTitle">옆 조의 설계안</h2>
+      <h2 id="sideTitle">검토 대상 설계안</h2>
       <div class="dview" id="sideView"></div>
     </div>
     <div class="sideform">
-      <h3>부작용 붙이기 <small>하나 이상 · 온라인에서 본 「효과와 부작용은 한 뿌리」</small></h3>
+      <h3>부작용 입력 <small>1개 이상</small></h3>
       <div class="sidepick" id="sidePick"></div>
-      <label class="field">무엇이 문제인가 <input id="sideNote" maxlength="150" placeholder="이 설계에서 생길 부작용을 한 줄로"></label>
+      <label class="field">부작용 내용 <input id="sideNote" maxlength="150" placeholder="예상 부작용 1줄"></label>
       <button class="btn primary" id="addSide" disabled type="button">부작용 추가</button>
       <ol class="sidelist" id="sideList"></ol>
       <p class="saved" id="sideSaved"></p>
@@ -143,20 +142,20 @@
       <div class="dview" id="myDesignView"></div>
     </div>
     <div class="sideform">
-      <h3 id="replyTitle">받은 부작용과 대응책</h3>
+      <h3 id="replyTitle">받은 부작용 · 대응책</h3>
       <div id="replyList"></div>
       <p class="saved" id="replySaved"></p>
     </div>
   </div>
 </section>
 
-<!-- 마침 -->
+<!-- 종료 -->
 <section class="view" id="vEnd" hidden>
   <div class="wait">
-    <p class="note big">수고했습니다. 오늘 실습은 여기까지입니다.</p>
+    <p class="note big">실습 종료</p>
     <div class="reportbox">
-      <p><b>실습보고서</b>를 한 사람씩 각자 내려받으세요. 워드(.doc)로 열립니다.<br>
-        우리 조 분류 · 반 전체와의 비교 · 재설계안 · 부작용과 대응책은 이미 적혀 있습니다. 학번과 생각 칸만 채우면 됩니다.</p>
+      <p><b>실습보고서</b>: 개인별 내려받기 (워드 .doc)<br>
+        자동 기재: 분류 · 반 전체 비교 · 재설계안 · 부작용 · 대응책 / 직접 작성: 학번 · 4부 · 5부</p>
       <button class="btn primary big" id="reportBtn">실습보고서 내려받기</button>
     </div>
   </div>

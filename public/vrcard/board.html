@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VR로 갈까, AR로 갈까 현황판</title>
+<title>VR · AR 적용 판단 실습 현황판</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -16,7 +16,7 @@
 <header class="top">
   <div class="brand">
     <p class="eyebrow">HCI와 커뮤니케이션 · 6주차 오프라인</p>
-    <h1>VR로 갈까, AR로 갈까 <span class="sub">현황판</span></h1>
+    <h1>VR · AR 적용 판단 실습 <span class="sub">현황판</span></h1>
   </div>
   <div class="status">
     <span class="chip phase" id="phaseChip">연결 중</span>
@@ -35,10 +35,10 @@
     <button class="btn step" data-phase="sort">② 분류 시작</button>
     <button class="btn step publish" data-phase="share">③ 공유 (분류 잠금)</button>
     <button class="btn step" data-phase="design">④ 재설계</button>
-    <button class="btn step publish" data-phase="side">⑤ 부작용 찾기</button>
+    <button class="btn step publish" data-phase="side">⑤ 부작용 검토</button>
     <button class="btn step" data-phase="reply">⑥ 대응책</button>
-    <button class="btn step" data-phase="end">⑦ 마침</button>
-    <button class="btn ghost danger" id="reset" type="button">전부 비우기</button>
+    <button class="btn step" data-phase="end">⑦ 종료</button>
+    <button class="btn ghost danger" id="reset" type="button">전체 초기화</button>
     <span class="msg" id="stepMsg"></span>
   </div>
 </section>
@@ -47,12 +47,12 @@
 
 <main class="bgrid">
   <section class="panel">
-    <h2>반 전체 비교 <small>카드마다 조들이 놓은 칸 · 줄을 누르면 조마다 적은 근거</small>
-      <span class="seg2"><button class="btn on" data-o="split" type="button">갈린 순서</button><button class="btn" data-o="id" type="button">카드 번호 순서</button></span></h2>
+    <h2>반 전체 분류 결과 <small>카드별 조 배치 현황 · 줄 선택 시 조별 근거</small>
+      <span class="seg2"><button class="btn on" data-o="split" type="button">불일치 순</button><button class="btn" data-o="id" type="button">번호 순</button></span></h2>
     <div class="compare" id="compare"></div>
   </section>
   <section class="panel side">
-    <h2>조별 진행 <small>카드를 누르면 분류판 · 설계안 · 부작용</small></h2>
+    <h2>조별 진행 <small>카드 선택 시 분류판 · 설계안 · 부작용</small></h2>
     <div class="teamgrid" id="teams"></div>
   </section>
 </main>
@@ -61,7 +61,7 @@
   <div class="dhead"><h2 id="dTitle"></h2><button class="btn ghost" id="dClose">닫기</button></div>
   <div class="dbody vdetail">
     <div><h4>분류판</h4><div class="plane mini" id="dPlane"></div></div>
-    <div><h4>설계안</h4><div class="dview" id="dDesign"></div><h4>받은 부작용과 대응책</h4><div id="dSides"></div></div>
+    <div><h4>설계안</h4><div class="dview" id="dDesign"></div><h4>받은 부작용 · 대응책</h4><div id="dSides"></div></div>
   </div>
 </dialog>
 

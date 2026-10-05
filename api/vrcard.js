@@ -1,4 +1,4 @@
-// VR로 갈까, AR로 갈까 (6주차) — 단계 넘기기와 비우기. 버셀 서버리스 함수.
+// VR · AR 적용 판단 실습 (6주차) — 단계 넘기기와 비우기. 버셀 서버리스 함수.
 //
 // 버셀 Environment Variables (4 · 5주차가 이미 넣어 둔 것을 그대로 쓴다)
 //   FIREBASE_SERVICE_ACCOUNT   서비스 계정 JSON 전체

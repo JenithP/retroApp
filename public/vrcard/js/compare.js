@@ -29,8 +29,8 @@ export function renderCompare(box, boards, { myTeam = null, order = "split", ope
     list.map(r => {
       const mine = myTeam ? (boards?.["T" + String(myTeam).padStart(2, "0")]?.cards?.[r.card.id]?.q) : null;
       const segs = r.total ? QUAD_KEYS.filter(k => r.n[k]).map(k =>
-        `<span class="seg" style="flex:${r.n[k]};background:${QUADS[k].color}" title="${esc(QUADS[k].ko)} ${r.n[k]}조">${r.n[k]}</span>`).join("") : `<span class="seg none">아직 없음</span>`;
-      const tag = r.total >= 3 && r.split >= 0.45 ? `<em class="hot">갈림</em>` : "";
+        `<span class="seg" style="flex:${r.n[k]};background:${QUADS[k].color}" title="${esc(QUADS[k].ko)} ${r.n[k]}조">${r.n[k]}</span>`).join("") : `<span class="seg none">배치 없음</span>`;
+      const tag = r.total >= 3 && r.split >= 0.45 ? `<em class="hot">불일치</em>` : "";
       const isOpen = open === r.card.id;
       return `<div class="cmp-row${isOpen ? " open" : ""}" data-id="${r.card.id}">
         <button type="button" class="cmp-head">
@@ -43,7 +43,7 @@ export function renderCompare(box, boards, { myTeam = null, order = "split", ope
             <span class="qchip" style="background:${QUADS[x.q].color}">${esc(QUADS[x.q].ko)}</span>
             ${(x.warn || []).map(w => `<span class="wchip">⚠${w === 1 ? "①" : "②"}</span>`).join("")}
             <span class="th">${esc(theoryName(x.theory) || x.theoryOther || "")}</span>
-            <span>${esc(x.why || "")}</span>${cardDone(x) ? "" : `<small> (근거 미완성)</small>`}</li>`).join("") || `<li class="muted">아직 없음</li>`}</ol>` : ""}
+            <span>${esc(x.why || "")}</span>${cardDone(x) ? "" : `<small> (근거 미완성)</small>`}</li>`).join("") || `<li class="muted">배치 없음</li>`}</ol>` : ""}
       </div>`;
     }).join("");
   box.querySelectorAll(".cmp-head").forEach(b => b.onclick = () => {
