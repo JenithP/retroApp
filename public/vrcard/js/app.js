@@ -235,16 +235,29 @@ function renderPair() {
   $("pairTitle").textContent = `짝 조 비교: ${teamLabel(S.team)} · ${teamLabel(p)}`;
   $("pairMineT").textContent = `우리 조 (${teamLabel(S.team)})`;
   $("pairOtherT").textContent = `짝 조 (${teamLabel(p)})`;
-  $("pairMine").innerHTML = planeHTML(mine);
-  $("pairOther").innerHTML = planeHTML(other);
+  $("pairMine").innerHTML = planeHTML(mine, { sel: S.pairSel });
+  $("pairOther").innerHTML = planeHTML(other, { sel: S.pairSel });
   const side = c => c?.q ? `<span class="qchip" style="background:${QUADS[c.q].color}">${esc(QUADS[c.q].ko)}</span>${(c.warn || []).map(w => `<span class="wchip">⚠${w === 1 ? "①" : "②"}</span>`).join("")}
       <span class="th">${esc(theoryName(c.theory) || c.theoryOther || "")}</span><span>${esc(c.why || "")}</span>` : `<span class="muted">미배치</span>`;
+  const title = id => (mine[id]?.title || other[id]?.title || cardOf(id).title);
+  const row = id => `<div class="pdrow"><div class="pdt">${cardImg(id) ? `<img class="cimg" src="${cardImg(id)}" alt="" onerror="this.remove()">` : ""}<b>${/^\d+$/.test(id) ? id : "+"}</b> ${esc(title(id))}</div>
+      <div class="pdc"><small>우리 조</small>${side(mine[id])}</div><div class="pdc"><small>짝 조</small>${side(other[id])}</div></div>`;
+
+  // 카드를 누르면 그 사례의 두 조 근거 — 같은 칸에 놓은 사례도 볼 수 있게
+  $("pairDetail").innerHTML = S.pairSel ? `<h3 class="pdh">선택 사례 근거 비교 <button type="button" class="btn ghost" id="pairClose">닫기</button></h3>${row(S.pairSel)}`
+    : `<p class="muted small">분류판의 카드 선택 시 해당 사례의 두 조 근거 표시</p>`;
+  if ($("pairClose")) $("pairClose").onclick = () => { S.pairSel = null; renderPair(); };
+  document.querySelectorAll("#pairMine .vchip, #pairOther .vchip").forEach(ch => {
+    ch.draggable = false;
+    ch.onclick = () => { S.pairSel = S.pairSel === ch.dataset.id ? null : ch.dataset.id; renderPair(); };
+  });
+
   const diff = CARDS.filter(c => (mine[c.id]?.q || null) !== (other[c.id]?.q || null));
-  const same = CARDS.length - diff.length;
-  $("pairDiffT").textContent = `배치가 다른 사례 ${diff.length}개 · 일치 ${same}개`;
-  $("pairDiff").innerHTML = diff.map(c => `<div class="pdrow"><div class="pdt">${cardImg(c.id) ? `<img class="cimg" src="${cardImg(c.id)}" alt="" onerror="this.remove()">` : ""}<b>${c.id}</b> ${esc(c.title)}</div>
-      <div class="pdc"><small>우리 조</small>${side(mine[c.id])}</div><div class="pdc"><small>짝 조</small>${side(other[c.id])}</div></div>`).join("")
-    || `<p class="muted">모든 사례 배치 일치</p>`;
+  const theoryDiff = CARDS.filter(c => mine[c.id]?.q && mine[c.id].q === other[c.id]?.q
+    && (mine[c.id].theory || "") !== (other[c.id].theory || ""));
+  $("pairDiffT").textContent = `배치가 다른 사례 ${diff.length}개 · 같은 칸 · 근거 이론이 다른 사례 ${theoryDiff.length}개`;
+  $("pairDiff").innerHTML = (diff.map(c => row(c.id)).join("") || `<p class="muted">모든 사례 배치 일치</p>`)
+    + (theoryDiff.length ? `<h3 class="pdh">같은 칸 · 근거 이론이 다른 사례</h3>` + theoryDiff.map(c => row(c.id)).join("") : "");
 }
 document.querySelectorAll("#shareTabs button").forEach(b => b.onclick = () => {
   S.shareView = b.dataset.v;

@@ -168,3 +168,8 @@
 .pdt{display:flex;align-items:center;gap:6px}.pdt b{color:var(--accent)}
 .pdt .cimg{width:36px;height:27px;object-fit:cover;border-radius:4px}
 .pdc small{display:block;color:var(--faint);font-size:.72rem}
+
+#pairMine .vchip,#pairOther .vchip{cursor:pointer}
+#pairDetail{margin-top:12px}
+#pairDetail .pdh{display:flex;align-items:center;gap:10px}
+#pairDetail .pdh .btn{padding:3px 10px;font-size:.78rem}
