@@ -1,25 +1,59 @@
 {
   "outputDirectory": "public",
   "functions": {
-    "api/judge.js": { "maxDuration": 15 },
-    "api/appshop.js": { "maxDuration": 300 },
-    "api/vrcard.js": { "maxDuration": 300 }
+    "api/judge.js": {
+      "maxDuration": 15
+    },
+    "api/appshop.js": {
+      "maxDuration": 300
+    },
+    "api/vrcard.js": {
+      "maxDuration": 300
+    }
   },
   "redirects": [
-    { "source": "/", "destination": "/time/", "permanent": false }
+    {
+      "source": "/",
+      "destination": "/time/",
+      "permanent": false
+    }
   ],
   "headers": [
     {
+      "source": "/vrcard/kit/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
       "source": "/(.*)\\.(glb|webp|png|jpg|mp3|mp4)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
     },
     {
       "source": "/(.*)\\.(js|css|html)",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     },
     {
       "source": "/time/",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ]
 }

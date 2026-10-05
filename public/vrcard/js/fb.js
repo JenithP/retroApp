@@ -65,11 +65,15 @@ async function call(body, withToken) {
 export let adminCall = (code, op, extra = {}) => call({ action: "admin", code, op, ...extra }, false);
 export let generateMockup = team => call({ action: "generate", team }, true);
 
-// 생성된 목업은 믿을 수 없는 코드 — 부모 창에 닿지 못하는 샌드박스 iframe 에서만, 바깥 요청은 CSP 로 막는다
-const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:">`;
+// 생성된 목업은 믿을 수 없는 코드 — 부모 창에 닿지 못하는 샌드박스 iframe 에서만 돌린다.
+// 스크립트는 고정 버전 three.js(CDN)와 우리 vrkit 만 받을 수 있고, 그 밖의 요청은 CSP 로 막는다.
+const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js";
+const KIT_URL = new URL("kit/vrkit.js", location.href).href;
+const HEAD = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net ${location.origin}; style-src 'unsafe-inline'; img-src data: blob:; font-src data:">`
+  + `<script type="importmap">{"imports":{"three":"${THREE_URL}","vrkit":"${KIT_URL}"}}<\/script>`;
 export function wrapMock(html) {
   if (!html) return "<!doctype html><html><body style='margin:0;display:grid;place-items:center;height:100vh;font-family:sans-serif;color:#999;background:#f4f1ea'>목업 없음</body></html>";
-  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + CSP) : CSP + html;
+  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + HEAD) : HEAD + html;
 }
 
 /* ── 미리보기 (?demo=sort 처럼 붙이면) ──────────────────
@@ -114,9 +118,10 @@ if (isDemoMode) {
   }
   me.uid = "demo";
   function fakeMock(t) {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;height:100vh;background:linear-gradient(#cfe0f3,#e9e4d8);font-family:sans-serif;position:relative;overflow:hidden}
-      .obj{position:absolute;left:40%;top:45%;width:22%;height:30%;background:#b08a5a;border-radius:8px}.tag{position:absolute;left:3%;top:4%;background:#0070C0;color:#fff;padding:8px 12px;border-radius:8px;font-size:14px}</style></head>
-      <body><div class="obj"></div><div class="tag">미리보기 목업 ${t}조 — 실제 수업에서는 AI가 설계안대로 생성</div></body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script type="module">
+      import * as K from "vrkit"; const W = K.start({ mode: "AR", case: "3" });
+      W.panel("미리보기 목업 ${t}조 — 실제 수업에서는 AI가 설계안대로 생성", { corner: "top-left" });
+      <\/script></body></html>`;
   }
   ready = () => Promise.resolve();
   watchState = cb => on(() => cb({ ...D.state }));
