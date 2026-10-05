@@ -8,8 +8,8 @@ rules_version = '2';
 //    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
 //    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
 //
-//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_*
-//    지능형콘텐츠         icp_teams · icp3_*
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_*
+//    지능형콘텐츠         icp_teams · icp3_* · icp5_*
 //
 //  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
 // ══════════════════════════════════════════════════════════════
@@ -126,6 +126,53 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /* ── 6주차 VR로 갈까, AR로 갈까 (vrcard/) ──────────────────
+       단계는 버셀 함수(api/vrcard.js)만 쓴다. 나머지는 학생이 직접 쓰되 단계마다 한 가지만 열린다.
+         분류(sort)        — 조의 분류판
+         재설계(design)    — 조의 설계안 (스케치는 jpeg 데이터 주소, 크기 제한)
+         부작용 찾기(side)  — 다음 번호 조의 설계안에 붙이는 부작용
+         대응책(reply)     — 받은 부작용 문서에 대응책만 덧붙인다 */
+    function hci6Phase() {
+      return get(/databases/$(database)/documents/hci6_state/current).data.phase;
+    }
+    match /hci6_state/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci6_boards/{id} {             // 조의 분류판 — 카드마다 칸 · 경고 · 이론 · 이유
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && hci6Phase() == "sort"
+                   && id.matches('T[0-9]{2}')
+                   && request.resource.data.keys().hasOnly(['cards', 'updatedAt', 'by'])
+                   && request.resource.data.by == request.auth.uid
+                   && request.resource.data.cards.size() <= 30;
+    }
+    match /hci6_designs/{id} {            // 조의 재설계안
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && hci6Phase() == "design"
+                   && id.matches('T[0-9]{2}')
+                   && request.resource.data.keys().hasOnly(['card', 'kind', 'who', 'pain', 'change', 'theory', 'checks', 'sketch', 'updatedAt', 'by'])
+                   && request.resource.data.by == request.auth.uid
+                   && (!('sketch' in request.resource.data) || request.resource.data.sketch.size() < 700000);
+    }
+    match /hci6_sides/{id} {              // 「받는 조_붙이는 조」 — 부작용과 대응책
+      allow read:  if request.auth != null;
+      allow create, update: if request.auth != null
+                    && id.matches('T[0-9]{2}_T[0-9]{2}')
+                    && hci6Phase() == "side"
+                    && request.resource.data.keys().hasOnly(['target', 'from', 'items', 'by', 'updatedAt'])
+                    && request.resource.data.by == request.auth.uid
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() <= 12;
+      allow update: if request.auth != null
+                    && hci6Phase() == "reply"
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replies', 'replyBy', 'repliedAt'])
+                    && request.resource.data.replyBy == request.auth.uid;
+      allow delete: if false;
+    }
+
     /* ══ 지능형콘텐츠 ════════════════════════════════════════ */
 
     // 2주차 · 모듈 조립대
@@ -146,6 +193,14 @@ service cloud.firestore {
     match /icp3_specs/{id}  { allow read, write: if request.auth != null; }  // 플랫폼 조의 명세서
     match /icp3_reqs/{id}   { allow read, write: if request.auth != null; }  // 요청과 답
     match /icp3_wb/{id}     { allow read, write: if request.auth != null; }  // 워크북
+
+    // 5주차 · 뉴스레터 플랫폼 (week05/)
+    //
+    // 독자 화면은 모든 조의 콘텐츠 중에서 고른다. 그래서 조끼리 서로 읽어야 한다.
+    // 변형을 만드는 AI 호출은 버셀 함수(api/enrich.js)가 하고, 키는 거기에만 있다.
+    match /icp5_config/{id} { allow read, write: if request.auth != null; }  // 단계
+    match /icp5_teams/{id}  { allow read, write: if request.auth != null; }  // 조와 프롬프트
+    match /icp5_items/{id}  { allow read, write: if request.auth != null; }  // 콘텐츠와 변형
 
     /* ═══════════════════════════════════════════════════════ */
 
