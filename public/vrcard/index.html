@@ -75,6 +75,18 @@
 </section>
 
 <section class="view" id="vShare" hidden>
+  <div class="sharetabs" id="shareTabs"><button class="btn on" data-v="pair" type="button">① 짝 조 비교</button><button class="btn" data-v="class" type="button">② 반 전체 결과</button></div>
+  <div id="sharePair">
+    <h2 id="pairTitle">짝 조 비교</h2>
+    <p class="lead">두 조 분류판 비교 · 배치가 다른 사례의 근거 교환</p>
+    <div class="pairgrid">
+      <div><h3 id="pairMineT">우리 조</h3><div class="plane mini" id="pairMine"></div></div>
+      <div><h3 id="pairOtherT">짝 조</h3><div class="plane mini" id="pairOther"></div></div>
+    </div>
+    <h3 class="pdh" id="pairDiffT">배치가 다른 사례</h3>
+    <div id="pairDiff"></div>
+  </div>
+  <div id="shareClass" hidden>
   <div class="sharehead">
     <div>
       <h2>반 전체 분류 결과</h2>
@@ -88,6 +100,7 @@
       <h3>우리 조 분류판 <small>공유 단계 수정 불가</small></h3>
       <div class="plane mini" id="myPlane"></div>
     </aside>
+  </div>
   </div>
 </section>
 

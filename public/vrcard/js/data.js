@@ -4,7 +4,7 @@
 //   분류 — 지금 쓰이는 사례 18장을 두 질문으로 나눈 네 칸에 놓고, 카드마다 근거 이론과 이유를 적는다
 //   공유 — 반 전체가 카드마다 어디에 놓았는지 보고, 갈린 카드로 토론한다
 //   재설계 — 우리 조 VR · AR 칸 카드 하나를 골라 다시 설계한다 (스케치 포함)
-//   부작용 찾기 — 다음 번호 조의 설계안에 부작용을 붙인다
+//   부작용 검토 — 짝 조(1·2조, 3·4조 …)끼리 서로의 설계안에 부작용을 입력한다
 //   대응책 — 받은 부작용마다 대응책을 적는다
 // 카드 문구는 인쇄용 카드(6주차자료/6주차_오프라인_사례카드_워크시트)와 같다. 고치면 둘 다 고친다.
 
@@ -102,9 +102,10 @@ export const sideName = id => (SIDES.find(s => s.id === id) || {}).ko || "";
 
 export const teamId = t => "T" + String(t).padStart(2, "0");
 export const teamLabel = t => `${Number(t)}조`;
-// 부작용 찾기 — t조는 다음 번호 조의 설계안을 받는다 (20조 → 1조)
-export const sideTargetOf = t => (Number(t) % TEAM_COUNT) + 1;
-export const sideFromOf = t => ((Number(t) - 2 + TEAM_COUNT) % TEAM_COUNT) + 1;
+// 짝 조 — 1·2조, 3·4조 … 19·20조. 공유 단계의 짝 조 비교와 부작용 검토(서로 교환)에 쓴다.
+export const pairOf = t => Number(t) % 2 ? Number(t) + 1 : Number(t) - 1;
+export const sideTargetOf = t => pairOf(t);   // 우리 조가 부작용을 입력하는 설계안
+export const sideFromOf = t => pairOf(t);     // 우리 설계안에 부작용을 입력하는 조
 export const sideDocId = (target, from) => `${teamId(target)}_${teamId(from)}`;
 
 // 카드 한 장의 근거가 다 찼는가 — 칸 · 이론 · 이유

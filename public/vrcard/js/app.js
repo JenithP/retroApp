@@ -1,7 +1,7 @@
 // VR · AR 적용 판단 실습 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
 //   안내 → 분류(카드를 네 칸에 · 근거) → 공유(반 전체 비교) → 재설계(스케치) → 부작용 검토 → 대응책 → 종료
 import { CARDS, QUADS, QUAD_KEYS, AXES, WARNS, THEORIES, CHECKS, SIDES, PHASES, TEAM_COUNT, MAX_CUSTOM,
-         teamId, teamLabel, cardOf, cardImg, cardDone, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId } from "./data.js";
+         teamId, teamLabel, cardOf, cardImg, cardDone, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId, pairOf } from "./data.js";
 import { me, ready, watchState, watchBoards, watchDesigns, watchSides, saveCard, saveDesign, saveSide, saveReply } from "./fb.js";
 import { renderCompare } from "./compare.js";
 import { download as downloadReport } from "./report.js";
@@ -13,7 +13,7 @@ const store = {
   set(k, v) { try { localStorage.setItem("vrcard." + k, v); } catch { /* 저장 못 해도 진행 */ } },
 };
 const S = { phase: null, team: Number(store.get("team")) || null, name: store.get("name") || "",
-            boards: {}, designs: {}, sides: {}, sel: null, open: null, order: "split" };
+            boards: {}, designs: {}, sides: {}, sel: null, open: null, order: "split", shareView: "pair" };
 // 주소로 조를 열 수 있게 — ?team=3 (이름은 ?name= 으로, 없으면 물어본다)
 const QP = new URLSearchParams(location.search);
 if (Number(QP.get("team")) >= 1 && Number(QP.get("team")) <= TEAM_COUNT) {
@@ -87,8 +87,8 @@ function planeHTML(cards, { interactive = false, sel = null } = {}) {
       <div class="qcards">${here.map(([id, c]) => chipHTML(id, c, { sel })).join("") || (interactive ? `<p class="qempty">여기에 놓기</p>` : "")}</div>
     </div>`;
   };
-  return `<div class="axis-y"><b>${esc(AXES.y.ko)}</b><small>↑ ${esc(AXES.y.why)}</small><span class="hi">높음</span><span class="lo">낮음</span></div>
-    <div class="axis-x-top"><span>현실에 붙을 필요 낮음</span><span>현실에 붙을 필요 높음</span></div>
+  return `<div class="axis-y"><b>${esc(AXES.y.ko)}</b><small>↑ ${esc(AXES.y.why)}</small><span class="hi">필요 높음</span><span class="lo">필요 낮음</span></div>
+    <div class="axis-x-top"><span>정보 결합 필요 낮음</span><span>정보 결합 필요 높음</span></div>
     <div class="quads">${cell("vr")}${cell("train")}${cell("keep")}${cell("guide")}</div>
     <div class="axis-x"><b>→ ${esc(AXES.x.ko)}</b> <small>${esc(AXES.x.why)}</small></div>`;
 }
@@ -223,9 +223,34 @@ $("addCustom").onclick = () => {
 /* ── 공유 ───────────────────────────────────────────── */
 function renderShare() {
   if (S.phase !== "share") return;
+  $("sharePair").hidden = S.shareView !== "pair";
+  $("shareClass").hidden = S.shareView !== "class";
+  renderPair();
   renderCompare($("compare"), visibleBoards(), { myTeam: S.team, order: S.order, open: S.open, onToggle: id => { S.open = id; renderShare(); } });
   $("myPlane").innerHTML = planeHTML(liveCards(myCards()));
 }
+// 짝 조 비교 — 두 분류판과, 배치가 다른 사례의 근거를 나란히
+function renderPair() {
+  const p = pairOf(S.team), mine = liveCards(myCards()), other = liveCards(S.boards[teamId(p)]?.cards);
+  $("pairTitle").textContent = `짝 조 비교: ${teamLabel(S.team)} · ${teamLabel(p)}`;
+  $("pairMineT").textContent = `우리 조 (${teamLabel(S.team)})`;
+  $("pairOtherT").textContent = `짝 조 (${teamLabel(p)})`;
+  $("pairMine").innerHTML = planeHTML(mine);
+  $("pairOther").innerHTML = planeHTML(other);
+  const side = c => c?.q ? `<span class="qchip" style="background:${QUADS[c.q].color}">${esc(QUADS[c.q].ko)}</span>${(c.warn || []).map(w => `<span class="wchip">⚠${w === 1 ? "①" : "②"}</span>`).join("")}
+      <span class="th">${esc(theoryName(c.theory) || c.theoryOther || "")}</span><span>${esc(c.why || "")}</span>` : `<span class="muted">미배치</span>`;
+  const diff = CARDS.filter(c => (mine[c.id]?.q || null) !== (other[c.id]?.q || null));
+  const same = CARDS.length - diff.length;
+  $("pairDiffT").textContent = `배치가 다른 사례 ${diff.length}개 · 일치 ${same}개`;
+  $("pairDiff").innerHTML = diff.map(c => `<div class="pdrow"><div class="pdt">${cardImg(c.id) ? `<img class="cimg" src="${cardImg(c.id)}" alt="" onerror="this.remove()">` : ""}<b>${c.id}</b> ${esc(c.title)}</div>
+      <div class="pdc"><small>우리 조</small>${side(mine[c.id])}</div><div class="pdc"><small>짝 조</small>${side(other[c.id])}</div></div>`).join("")
+    || `<p class="muted">모든 사례 배치 일치</p>`;
+}
+document.querySelectorAll("#shareTabs button").forEach(b => b.onclick = () => {
+  S.shareView = b.dataset.v;
+  document.querySelectorAll("#shareTabs button").forEach(x => x.classList.toggle("on", x === b));
+  renderShare();
+});
 document.querySelectorAll("#vShare .seg2 button").forEach(b => b.onclick = () => {
   S.order = b.dataset.o;
   document.querySelectorAll("#vShare .seg2 button").forEach(x => x.classList.toggle("on", x === b));

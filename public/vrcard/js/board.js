@@ -27,7 +27,7 @@ const CONFIRM = {
   sort: "분류 단계 시작 (학생 화면 카드 공개)",
   share: "분류 잠금 및 반 전체 결과 공개 (이후 분류 수정 불가)",
   design: "재설계 단계 시작",
-  side: "설계안 잠금 및 부작용 검토 시작 (검토 대상: 다음 번호 조 설계안)",
+  side: "설계안 잠금 및 부작용 검토 시작 (검토 대상: 짝 조 설계안 · 1·2조, 3·4조 …)",
   reply: "부작용 검토 종료 및 대응책 단계 시작",
   end: "실습 종료 (학생 화면 실습보고서 내려받기 공개)",
 };
@@ -94,7 +94,7 @@ function openDetail(t) {
   $("dTitle").textContent = teamLabel(t);
   const cell = k => `<div class="quad" style="--qc:${QUADS[k].color}"><div class="qhead"><b>${esc(QUADS[k].ko)}</b></div><div class="qcards">${
     Object.entries(cards).filter(([, c]) => c.q === k).map(([id, c]) => `<span class="vchip${cardDone(c) ? " done" : ""}" title="${esc(theoryName(c.theory))} — ${esc(c.why || "")}"><span class="no">${/^\d+$/.test(id) ? id : "+"}</span><span class="tt">${esc(c.title || cardOf(id).title)}</span>${(c.warn || []).map(w => `<span class="wchip">⚠${w === 1 ? "①" : "②"}</span>`).join("")}</span>`).join("")}</div></div>`;
-  $("dPlane").innerHTML = `<div class="axis-y"><b>${esc(AXES.y.ko)}</b></div><div class="axis-x-top"><span>현실에 붙을 필요 낮음</span><span>높음</span></div>
+  $("dPlane").innerHTML = `<div class="axis-y"><b>${esc(AXES.y.ko)}</b></div><div class="axis-x-top"><span>정보 결합 필요 낮음</span><span>정보 결합 필요 높음</span></div>
     <div class="quads">${cell("vr")}${cell("train")}${cell("keep")}${cell("guide")}</div><div class="axis-x"><b>→ ${esc(AXES.x.ko)}</b></div>`;
   const d = B.designs[teamId(t)];
   $("dDesign").innerHTML = d?.card ? `<p class="eno">적용 방향: ${esc(d.kind || "")}</p><h3>${esc(cardOf(d.card, board).title)}</h3>

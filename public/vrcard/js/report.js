@@ -4,7 +4,7 @@
 //   3부 — 받은 부작용과 대응책 · 우리가 붙인 부작용 (자동)
 //   4부 — 온라인 강의와 잇기 (쪽 번호 옆에 실습 장면을 적는다)
 //   5부 — 생각
-import { CARDS, QUADS, WARNS, CHECKS, teamId, teamLabel, cardOf, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId } from "./data.js";
+import { CARDS, QUADS, WARNS, CHECKS, teamId, teamLabel, cardOf, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId, pairOf } from "./data.js";
 import { tally } from "./compare.js";
 
 /* 쪽 번호는 「6주차_온라인_신규」 (26쪽) 의 슬라이드 번호다. 강의 파일을 고치면 여기도 같이 고친다. */
@@ -30,6 +30,7 @@ const warnText = w => (w || []).map(n => n === 1 ? "⚠①" : "⚠②").join(" "
 
 export function build({ team, name, boards, designs, sides }) {
   const my = boards[teamId(team)]?.cards || {};
+  const pc = boards[teamId(pairOf(team))]?.cards || {};
   const T = tally(boards);
   const top = r => { const k = Object.keys(r.n).sort((a, b) => r.n[b] - r.n[a])[0]; return r.total ? `${QUADS[k].ko} (${r.n[k]}/${r.total}조)` : "&mdash;"; };
 
@@ -37,10 +38,10 @@ export function build({ team, name, boards, designs, sides }) {
     const x = my[c.id] || {}, r = T.find(t => t.card.id === c.id);
     const same = x.q && r.total && r.n[x.q] === Math.max(...Object.values(r.n));
     return `<tr><td>${c.id}</td><td>${esc(c.title)}</td><td>${qName(x.q)}</td><td>${warnText(x.warn)}</td>
-      <td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>${top(r)}${x.q && !same ? " ◀ 불일치" : ""}</td></tr>`;
+      <td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>${qName(pc[c.id]?.q)}${(pc[c.id]?.q || null) !== (x.q || null) ? " ◀" : ""}</td><td>${top(r)}${x.q && !same ? " ◀ 불일치" : ""}</td></tr>`;
   }).join("");
   const custom = Object.entries(my).filter(([k, x]) => k.startsWith("c") && !x.removed && x.title).map(([, x]) =>
-    `<tr><td>+</td><td>${esc(x.title)}<br><small>${esc(x.desc)}</small></td><td>${qName(x.q)}</td><td>${warnText(x.warn)}</td><td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>우리 조 사례</td></tr>`).join("");
+    `<tr><td>+</td><td>${esc(x.title)}<br><small>${esc(x.desc)}</small></td><td>${qName(x.q)}</td><td>${warnText(x.warn)}</td><td>${esc(theoryName(x.theory) || x.theoryOther || "")}</td><td>${esc(x.why || "")}</td><td>&mdash;</td><td>우리 조 사례</td></tr>`).join("");
 
   const d = designs[teamId(team)] || {};
   const dcard = d.card ? (my[d.card]?.title || cardOf(d.card).title) : "";
@@ -69,7 +70,7 @@ table{border-collapse:collapse;width:100%;margin:6pt 0}td,th{border:1px solid #8
 경고 기준 — ⚠① ${esc(WARNS[0].ko)} (${esc(WARNS[0].ref)}) · ⚠② ${esc(WARNS[1].ko)} (${esc(WARNS[1].ref)})</p>
 
 <h2>1부. 우리 조 분류 · 반 전체 비교</h2>
-<table><tr><th>번호</th><th>사례</th><th>우리 조 배치</th><th>경고 기준</th><th>근거 이론</th><th>이유</th><th>반 전체 최다 배치</th></tr>${rows}${custom}</table>
+<table><tr><th>번호</th><th>사례</th><th>우리 조 배치</th><th>경고 기준</th><th>근거 이론</th><th>이유</th><th>짝 조(${teamLabel(pairOf(team))}) 배치</th><th>반 전체 최다 배치</th></tr>${rows}${custom}</table>
 
 <h2>2부. 재설계안</h2>${design}
 
