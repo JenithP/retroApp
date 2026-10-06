@@ -1,12 +1,13 @@
-// 실습보고서 — 조와 내가 한 일을 적어 넣은 워드 문서(.doc)를 만들어 내려 준다.
+// 실습보고서 — 조와 내가 한 일을 적어 넣은 워드 문서(.docx)를 만들어 내려 준다.
 //
 // 4주차 노만의 공방과 같은 틀이다. 숫자와 기록은 이미 적혀 있고, 학생이 쓸 것은 생각뿐이다.
 //   1부 — 우리 조 설계서 · 우리 앱이 받은 평가 · 내가 준 평가 (자동)
 //   2부 — 온라인 강의와 잇기 (쪽 번호 옆에 실습 장면을 적는다)
 //   3부 — 생각 (문항마다 1부의 어느 숫자를 근거로 쓸지 적어 둔다)
-// 만드는 것은 워드와 한글이 여는 문서(.doc) — 별도 라이브러리 없이 브라우저에서 바로 만든다.
+// 문서는 HTML 로 짠 뒤 공용 변환기(../../js/docx.js)로 진짜 워드 문서(.docx)로 옮긴다.
 
 import { HEURISTICS, SEVERITY, FIELDS, missionOf, teamLabel, isDemo } from "./data.js";
+import { htmlToDocx, saveBlob } from "../../js/docx.js";
 
 /* ── 온라인 강의와 잇는 표 ────────────────────────────────────
    쪽 번호는 「5주차_온라인_신규_보완_스크립트_수정버전」 의 슬라이드 번호다.
@@ -204,14 +205,6 @@ export function reportHTML(g, opts = {}) {
 /** 문서를 만들어 내려 준다. */
 export function download(input, opts) {
   const g = gather(input);
-  const html = reportHTML(g, opts);
-  // 워드와 한글이 글자를 제대로 읽도록 BOM 을 앞에 둔다
-  const blob = new Blob(["﻿" + html], { type: "application/msword;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `5주차_실습보고서_${teamLabel(g.team)}_${(g.name || "").replace(/[\\/:*?"<>|]/g, "")}.doc`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+  saveBlob(htmlToDocx(reportHTML(g, opts)), `5주차_실습보고서_${teamLabel(g.team)}_${(g.name || "").replace(/[\\/:*?"<>|]/g, "")}.docx`);
   return g;
 }

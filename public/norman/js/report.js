@@ -5,13 +5,13 @@
 // 그래서 4주차는 **숫자가 이미 적힌 워크북**을 내려 준다. 학생이 쓸 것은
 // 생각뿐이다.
 //
-// 만드는 것은 워드와 한글이 여는 문서(.doc)다. 별도 라이브러리 없이
-// 브라우저에서 바로 만들 수 있는 편집 가능한 형식은 이것뿐이다.
+// 문서는 HTML 로 짠 뒤 공용 변환기(../../js/docx.js)로 진짜 워드 문서(.docx)로 옮긴다.
 
 import { jobById } from "./jobs.js";
 import { recipeById } from "./parts.js";
 import { REWARD, QUESTIONS } from "./quizdata.js";
 import { START } from "./wallet.js";
+import { htmlToDocx, saveBlob } from "../../js/docx.js";
 
 /* ── 온라인 강의와 잇는 표 ────────────────────────────────────
    쪽 번호는 4주차_온라인.pdf 의 실제 쪽이다. 강의 파일을 고치면 여기도
@@ -270,15 +270,6 @@ export function workbookHTML(g, opts) {
 /** 문서를 만들어 내려 준다. */
 export function download(team, purse, opts) {
   const g = gather(team, purse);
-  const html = workbookHTML(g, opts);
-  // 워드와 한글이 글자를 제대로 읽도록 BOM 을 앞에 둔다
-  const blob = new Blob(["﻿" + html],
-    { type: "application/msword;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "4주차_실습보고서_" + team + "조.doc";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+  saveBlob(htmlToDocx(workbookHTML(g, opts)), "4주차_실습보고서_" + team + "조.docx");
   return g;
 }

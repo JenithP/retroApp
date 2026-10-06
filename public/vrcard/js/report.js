@@ -4,15 +4,14 @@
 //   3부 — 받은 부작용과 대응책 · 우리가 붙인 부작용 (자동)
 //   4부 — 온라인 강의 연결 질문 (질문마다 우리 조 입력 내용을 참고로 붙이고, 답은 학생이 쓴다)
 //   5부 — 개인 의견
-// HTML 을 .doc 이름으로 내려 주던 방식은 인터넷에서 받은 파일로 표시되면 워드 제한된 보기에서 열리지 않고,
-// 휴대폰 · 맥 · 한글에서도 못 읽는 경우가 있어 진짜 .docx(OOXML)를 직접 만든다. 외부 라이브러리 없음.
+// 진짜 .docx(OOXML)를 직접 쓴다 — 묶기와 내려받기는 공용 모듈(../../js/docx.js).
 import { CARDS, QUADS, WARNS, CHECKS, teamId, teamLabel, cardOf, theoryName, sideName, sideTargetOf, sideFromOf, sideDocId, pairOf } from "./data.js";
 import { tally } from "./compare.js";
+import { docxBlob as docx, saveBlob, BODY_W as W } from "../../js/docx.js";
 
 /* ── OOXML 조각 ─────────────────────────────────────────── */
 const x = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const GREY = "6B7280", HEAD = "EEF1F4";
-const W = 9906;   // 본문 폭 (twip) — A4 11906 - 여백 1000 × 2
 
 // r("글자", { b, sz, color }) — sz 는 pt
 function r(text, o = {}) {
@@ -44,40 +43,6 @@ function table(widths, rows, o = {}) {
 <w:tblGrid>${widths.map(w => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>${rows.map(tr).join("")}</w:tbl>` + p("", { after: 60 });
 }
 const box = (h = 1800) => table([W], [[""]], { height: h });
-
-/* ── 저장용 zip (무압축) ─────────────────────────────────── */
-const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
-const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
-function zip(files) {
-  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
-  for (const [name, text] of files) {
-    const n = enc.encode(name), d = enc.encode(text), c = crc32(d);
-    const h = new DataView(new ArrayBuffer(30));
-    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
-    h.setUint16(10, 0, true); h.setUint16(12, 0x21, true); h.setUint32(14, c, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true);
-    h.setUint16(26, n.length, true); h.setUint16(28, 0, true);
-    const ch = new DataView(new ArrayBuffer(46));
-    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
-    ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true); ch.setUint32(16, c, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true);
-    ch.setUint16(28, n.length, true); ch.setUint32(42, off, true);
-    parts.push(h, n, d); central.push(ch, n); off += 30 + n.length + d.length;
-  }
-  const size = central.reduce((s, b) => s + b.byteLength, 0);
-  const e = new DataView(new ArrayBuffer(22));
-  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, size, true); e.setUint32(16, off, true);
-  return new Blob([...parts, ...central, e], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-}
-
-function docx(body) {
-  const font = `<w:rFonts w:ascii="맑은 고딕" w:hAnsi="맑은 고딕" w:eastAsia="맑은 고딕" w:cs="맑은 고딕"/>`;
-  return zip([
-    ["[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`],
-    ["_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`],
-    ["word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-    ["word/styles.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>${font}<w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="en-US" w:eastAsia="ko-KR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`],
-    ["word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="1000" w:bottom="1000" w:left="1000" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>`],
-  ]);
-}
 
 /* ── 보고서 내용 ─────────────────────────────────────────── */
 const qName = k => k ? QUADS[k].ko : "—";
@@ -118,17 +83,17 @@ export function build({ team, name, boards, designs, sides }) {
 
   // 4부 — 질문마다 참고할 우리 조 입력 내용을 붙인다 (쪽 번호: 「6주차_온라인_신규」 슬라이드 번호)
   const QS = [
-    ["1. VR 칸 사례 1개 선택: 해당 착각(장소 착각 · 개연성 착각 · 몸의 착각) 및 그 착각이 훈련 · 치료 효과로 이어지는 과정",
+    ["1. 우리 조가 VR 칸에 놓은 사례 하나를 고르십시오. 그 사례에서 사용자가 겪을 착각이 장소 착각 · 개연성 착각 · 몸의 착각 가운데 무엇이라고 생각하는지, 그 착각이 어떻게 훈련이나 치료 효과로 이어지는지 쓰십시오.",
       `온라인 7 · 8 · 9 · 18쪽 | 우리 조 VR 칸: ${list(byQ("vr"))}`],
-    ["2. AR 안내 · AR · MR 훈련 칸 사례 1개 선택: 현행 방식의 분할 주의 장면 및 AR 정합 후 줄어드는 인지 처리",
+    ["2. 우리 조가 AR 안내 또는 AR · MR 훈련 칸에 놓은 사례 하나를 고르십시오. 지금 방식에서 사용자가 정보와 대상을 번갈아 보아야 하는 장면(분할 주의)을 찾고, AR로 정보를 대상 위에 겹쳐 보여 주면 무엇이 줄어든다고 생각하는지 쓰십시오.",
       `온라인 11 · 12쪽 | 우리 조 AR 칸: ${list([...byQ("guide"), ...byQ("train")])}`],
-    ["3. 현행 유지 칸 사례 1개 선택: 해당 경고 기준(⚠① 주의 터널링 · ⚠② 외재적 인지 부하) 및 VR · AR 적용 시 예상 문제",
+    ["3. 우리 조가 현행 유지 칸에 놓은 사례 하나를 고르십시오. 그 사례에 VR이나 AR을 적용하면 어떤 문제가 생길 것이라고 생각하는지, 경고 기준(⚠① 주의 터널링 · ⚠② 외재적 인지 부하) 가운데 어느 쪽에 해당하는지 밝혀 쓰십시오.",
       `온라인 14 · 20 · 21쪽 | 우리 조 현행 유지 칸: ${list(byQ("keep"))}`],
-    ["4. 재설계안의 현실 동작 유지 부분과 현실 이탈 부분 구분 및 근거 (실재 기반 인터랙션 · 자연스러움과 마법 사이)",
+    ["4. 우리 조 재설계안에서 현실의 동작을 그대로 살린 부분과 현실에서 벗어나게 만든 부분은 각각 무엇입니까? 그렇게 나눈 까닭을 실재 기반 인터랙션의 관점에서 쓰십시오.",
       `온라인 16 · 17쪽 | 우리 조 기재: ${d.checks?.magic || "없음"}`],
-    ["5. 재설계안의 몰입 요소 범위 결정 근거 (실재감과 학습 효과의 관계 — 수술 훈련과 과학 수업 결과 차이)",
+    ["5. 우리 조 재설계안에 몰입 요소를 어디까지 넣었는지, 그 범위가 적절하다고 생각하는 까닭을 쓰십시오. 수술 훈련에서는 효과가 있었지만 과학 수업에서는 학습이 줄어든 연구 결과를 근거로 드십시오.",
       `온라인 20 · 21쪽 | 우리 조 기재: ${d.checks?.load || "없음"}`],
-    ["6. 받은 부작용 1개의 원인이 되는 지각 · 인지 원리 및 같은 원리가 재설계안 장점으로 작용하는 지점",
+    ["6. 짝 조에게 받은 부작용 하나를 고르십시오. 그 부작용이 어떤 지각 · 인지 원리 때문에 생긴다고 생각하는지 쓰고, 같은 원리가 우리 설계안의 장점으로는 어떻게 작용하는지도 쓰십시오.",
       `온라인 15쪽 | 받은 부작용: ${list((got?.items || []).map(v => sideName(v.kind)))}`],
   ];
 
@@ -148,21 +113,16 @@ export function build({ team, name, boards, designs, sides }) {
     q(`입력한 부작용 (대상: ${teamLabel(target)} 설계안)`), gaveT,
 
     h2("4부. 온라인 강의 연결 질문"),
-    hint("작성 방법: 질문별 3~5문장 · 아래 회색 줄은 참고용 우리 조 입력 내용"),
+    hint("질문마다 3~5문장으로 쓰십시오. 질문 아래 회색 줄은 참고할 쪽 번호와 우리 조가 입력한 내용입니다."),
     ...QS.flatMap(([t, h]) => [q(t), hint(h), box()]),
 
     h2("5부. 개인 의견"),
-    q("1. 반 전체와 판단이 가장 다른 사례 및 우리 조의 판단 근거"), hint("참고: 1부 「불일치」 표시"), box(),
-    q("2. 실습 후 달라진 VR · AR 적용 판단 기준"), box(),
+    q("1. 우리 조의 판단이 반 전체와 가장 달랐던 사례는 무엇입니까? 우리 조가 그렇게 판단한 근거를 쓰고, 지금 다시 판단한다면 어느 칸에 놓을지 쓰십시오."), hint("참고: 1부 「불일치」 표시"), box(),
+    q("2. 이번 실습을 하기 전과 후에 VR · AR을 적용할지 판단하는 기준이 어떻게 달라졌다고 생각하는지 쓰십시오."), box(),
   ].join("");
   return docx(body);
 }
 
 export function download(data) {
-  const blob = build(data);
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `6주차_실습보고서_${teamLabel(data.team)}_${(data.name || "").replace(/[\\/:*?"<>|]/g, "")}.docx`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  saveBlob(build(data), `6주차_실습보고서_${teamLabel(data.team)}_${(data.name || "").replace(/[\\/:*?"<>|]/g, "")}.docx`);
 }
