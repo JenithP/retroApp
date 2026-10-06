@@ -3,7 +3,7 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","vrkit":"./vrkit.js"}}</script>
 </head><body>
 <script type="module">
-// 사례 장면 확인용 — ?case=3&mode=AR · ?demo=a 를 붙이면 3번 사례에 A 설계 예시 안내를 얹는다
+// 사례 장면 확인용 — ?case=3&mode=AR · ?demo=a · ?demo=b 를 붙이면 3번 사례에 A(상세)·B(누락) 설계 예시 안내를 얹는다
 import * as K from "vrkit";
 const q = new URLSearchParams(location.search);
 const W = K.start({ mode: q.get("mode") || "AR", case: q.get("case") || "3" });
@@ -16,6 +16,10 @@ if (q.get("demo") === "a") {
   W.button("다음 단계", { corner: "bottom-right", onClick: () => { if (step >= 3) return; step++; hl.remove(); hl = W.highlight(W.obj["shelf" + (step - 1)], { color: "#2f80ed" }); num.target = W.obj["shelf" + (step - 1)]; num.set(String(step)); prog.set(step); } });
   W.hands({});
   W.onClick(W.obj.sidePanel1, () => { hl.remove(); hl = W.highlight(W.obj.sidePanel1, { color: "#27ae60" }); });
+}
+if (q.get("demo") === "b") {
+  W.panel("옆판에 선반을 끼우고 나사 A 2개로 고정", { corner: "top-left" });
+  W.button("다음 단계", { corner: "bottom-right" });
 }
 </script>
 </body></html>

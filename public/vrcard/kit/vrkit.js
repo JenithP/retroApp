@@ -163,7 +163,7 @@ export function start({ mode = "AR", place = "room", sky, case: caseId } = {}) {
         const palm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.025, 0.1), mat(color)); h.add(palm);
         for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.CapsuleGeometry(0.009, 0.05, 4, 8), mat(color)); f.rotation.x = Math.PI / 2; f.position.set(-0.033 + i * 0.022, 0, -0.08); h.add(f); }
         const th = new THREE.Mesh(new THREE.CapsuleGeometry(0.01, 0.04, 4, 8), mat(color)); th.rotation.set(Math.PI / 2, 0, sx * 0.9); th.position.set(-sx * 0.06, 0, -0.02); h.add(th);
-        h.position.set(sx * 0.17, -0.22, -0.42); h.rotation.set(-0.5, -sx * 0.25, 0); g.add(h);
+        h.position.set(sx * 0.24, -0.17, -0.42); h.rotation.set(0.35, -sx * 0.35, sx * 0.15); g.add(h);
       }
       camera.add(g); scene.add(camera); return g;
     },
