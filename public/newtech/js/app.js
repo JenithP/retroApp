@@ -1,6 +1,6 @@
 // 신기술 인터페이스 체험 실습 — 학생 화면. 단계(교수 현황판이 넘김)에 따라 보이는 화면이 바뀐다.
 //   안내 → 1차 체험(조 유형별 조건) → 확인 과제 → 2차 체험 · 설계 → 결과 공개 → 조별 의견 → 종료
-import { TEAM_COUNT, PHASES, TYPES, STATIONS, GUIDES, MISSIONS, POTIONS, QUIZ, EFFICACY, LIKERT, OPINION, NATIONAL, NATIONAL_AI, INTERVIEW, bookingCheck,
+import { TEAM_COUNT, PHASES, TYPES, STATIONS, GUIDES, MISSIONS, POTIONS, QUIZ, EFFICACY, LIKERT, OPINION, NATIONAL, NATIONAL_AI, INTERVIEW, bookingCheck, familyReact,
          teamId, teamLabel, typeOf, access, score } from "./data.js";
 import { me, ready, watchState, watchPeople, watchHomes, watchOpinions, watchNotes, savePerson, saveOpinion, sendNote, replyNote, interviewAI, agentAI } from "./fb.js";
 import { mountEmo } from "./emo.js";
@@ -308,6 +308,12 @@ function ivHTML() {
     <div class="ivwhy">${Object.entries(D).map(([k, v]) => `<div class="ebar"><span>${v}</span><i><u style="width:${a.dims?.[k] || 0}%"></u></i><em>${a.dims?.[k] ?? "—"}</em></div>`).join("")}
     <h4>면접관 판단 기록</h4><ul>${(a.events || []).map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>`;
 }
+/* 결과 공개 때 처음 보여주는 모임 당일 가족 대화방 — 2차 확정이 있으면 2차, 없으면 1차 */
+function famHTML() {
+  const a = mine().agent?.r2?.final ? { r: "2차", b: mine().agent.r2.final } : mine().agent?.r1?.final ? { r: "1차", b: mine().agent.r1.final } : null;
+  return `<h3>가족 모임 당일 — 가족 대화방 <small>${a ? `${a.r}에 확정한 예약` : "확정한 예약 없음"}</small></h3>
+    <div class="famchat after">${familyReact(a?.b).map(([w, t]) => `<div class="fc"><b>${esc(w)}</b><span>${esc(t)}</span></div>`).join("")}</div>`;
+}
 function renderReveal() {
   if (S.phase !== "reveal") return;
   const t = tallyTypes(S.people, S.notes, S.homes);
@@ -317,6 +323,7 @@ function renderReveal() {
     <div class="typecards">${Object.entries(TYPES).map(([k, v]) => `<div class="typecard${k === type() ? " mine" : ""}" style="--tc:${v.color}">
       <b>${v.ko} · ${esc(v.name)}</b><span>${esc(v.desc)}</span><em>${esc(v.level)}</em>${k === type() ? `<i>우리 조</i>` : ""}</div>`).join("")}</div>
     ${ivHTML()}
+    ${famHTML()}
     <h3>미션에 쓰인 기술</h3>
     <div class="techcards">${STATIONS.map(s => `<div><b>${esc(s.ko)}</b> → ${esc(s.tech)}</div>`).join("")}</div>
     <div class="revgrid">

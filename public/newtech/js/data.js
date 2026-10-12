@@ -301,6 +301,26 @@ export function bookingCheck(b) {
   return { met: items.filter(x => x[1]).length, items };
 }
 
+/** 모임 당일 가족 대화방 — 확정한 예약의 조건마다 가족이 반응한다 (결과 공개 때 보여줌) */
+export function familyReact(b, dates = agentDates()) {
+  if (!b?.rest) return [["엄마", "예약은 어떻게 됐어? 연락이 없어서 다들 기다렸잖아…"]];
+  const R = RESTAURANTS[b.rest], chk = bookingCheck(b), ok = Object.fromEntries(chk.items.map(([k, v]) => [k, v]));
+  const m = R.menus.find(x => x.id === b.menu) || R.menus[0];
+  const L = [];
+  L.push(ok["금요일 저녁 7시"] ? ["엄마", `${dates.fri} 7시, 시간 딱 맞춰 다 모였네.`]
+    : ["엄마", `${b.slot === "sat19" ? `${dates.sat}로 잡혀 있어서` : "5시로 잡혀 있어서"} 다들 일정 다시 맞추느라 고생했어.`]);
+  L.push(ok["6명"] ? ["엄마", "자리도 여섯 명 딱 맞았고."] : ["언니", `자리가 ${b.people}명으로 잡혀 있어서 애들 의자를 따로 빌려 왔어.`]);
+  L.push(ok["휠체어 접근"] ? ["엄마", `할머니 휠체어로 편하게 들어가셨어. ${R.floor.includes("엘리베이터 있음") ? "엘리베이터가 있어서 다행." : ""}`.trim()]
+    : ["엄마", `${R.floor.split(" · ")[0]}인데 엘리베이터가 없어서 할머니를 업고 올라갔어… 다들 진땀 뺐다.`]);
+  L.push(ok["땅콩 알레르기"] ? ["언니", "민준이 먹을 건 따로 땅콩 빼고 나와서 안심했어."]
+    : ["언니", `${m.name}에 땅콩이 들어 있었어. 민준이는 거의 못 먹었고, 큰일 날 뻔했다.`]);
+  L.push(ok["1인 3만 원 이하"] ? ["아빠", "가격도 적당했고."] : ["아빠", `1인 ${m.price.toLocaleString("ko-KR")}원이면 예산 넘은 거 아니냐.`]);
+  L.push(ok["주차 가능"] ? ["삼촌", "주차도 편했어."] : ["삼촌", R.parking ? "주차 등록이 안 돼 있다고 해서 밖에 세우고 걸어왔다." : "주차장이 없어서 30분을 돌았다."]);
+  L.push(ok["유아용 의자"] ? ["언니", "서윤이 아기 의자도 준비돼 있었어."] : ["언니", "아기 의자가 없어서 서윤이를 내내 안고 먹었어."]);
+  L.push(chk.met === 7 ? ["할머니", "우리 손주가 예약을 참 잘했구나. 고맙다."] : ["엄마", `그래도 다들 모여서 좋았다. 다음엔 조금만 더 꼼꼼히 확인해 줘. (조건 ${chk.met}/7)`]);
+  return L;
+}
+
 /* ── 결과 보고 (1차 뒤 개인별) — 체험해야 알 수 있는 것을 묻는다. 다 유형은 쪽지로 얻은 정보로 답한다 ── */
 export const QUIZ = [
   { id: "e1", st: "emo", multi: true, q: "AI 면접이 실제로 점수에 반영했다고 생각하는 것을 모두 고르십시오.",

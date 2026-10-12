@@ -5,7 +5,7 @@
 //   4부 — 조별 의견 (자동)
 //   5부 — 온라인 강의 연결 질문 (학생이 씀)
 //   6부 — 개인 의견
-import { TYPES, TYPE_KEYS, STATIONS, QUIZ, EFFICACY, OPINION, WHEN, RESTAURANTS, PRESET_SETTINGS, SETTINGS, teamId, teamLabel, typeOf, score, evKo, actKo, bookingCheck } from "./data.js";
+import { TYPES, TYPE_KEYS, STATIONS, QUIZ, EFFICACY, OPINION, WHEN, RESTAURANTS, familyReact, PRESET_SETTINGS, SETTINGS, teamId, teamLabel, typeOf, score, evKo, actKo, bookingCheck } from "./data.js";
 import { tallyTypes } from "./stats.js";
 import { docxBlob as docx, saveBlob, BODY_W as W } from "../../js/docx.js";
 
@@ -72,6 +72,9 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const ivT = lastIv ? q("마지막 면접 평가 근거") + table([W], [[[...Object.entries({ 호감도: "likable", 진실성: "honest", 성실성: "diligent", "정서 안정성": "stable" }).map(([k, v]) => [`${k} ${lastIv.dims[v]}`, {}]),
     ...(lastIv.events || []).map(e => [e, { color: GREY }])]]]) : "";
 
+  const famB = me.agent?.r2?.final || me.agent?.r1?.final;
+  const famT = q("가족 모임 당일 — 가족 대화방") + table([1400, W - 1400], familyReact(famB).map(([w, t]) => [w, t]), { side: true });
+
   // 2부
   const ans = me.quiz?.answers || {};
   const sc = me.quiz ? score(ans) : null;
@@ -122,7 +125,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const body = [
     h1("7주차 오프라인 실습보고서 — 신기술 인터페이스 체험 실습"),
     p(`${teamLabel(team)} · 이름 ${name || ""} · 학번 `),
-    h2("1부. 미션 조건과 내 기록"), part1, ivT, sentT,
+    h2("1부. 미션 조건과 내 기록"), part1, ivT, famT, sentT,
     h2("2부. 결과 보고"), part2,
     h2("3부. 고양이 보리 — 우리 조 규칙 · 기기 설정 · 메모"), part3,
     h2("4부. 조별 의견"), part4,
