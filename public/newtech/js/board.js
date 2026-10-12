@@ -49,7 +49,7 @@ function renderAll() { renderKpis(); renderResults(); renderTeams(); renderOpini
 function renderKpis() {
   const ps = Object.values(B.people);
   const by = k => ps.filter(p => p.type === k).length;
-  const k = [[ps.length, "접속 인원"], ...TYPE_KEYS.map(t => [by(t), `${TYPES[t].ko} 유형 인원`]), [ps.filter(p => p.quiz).length, "확인 과제 제출"]];
+  const k = [[ps.length, "접속 인원"], ...TYPE_KEYS.map(t => [by(t), `${TYPES[t].ko} 유형 인원`]), [ps.filter(p => p.quiz).length, "결과 보고 제출"], [Object.keys(B.notes).length, "쪽지"]];
   $("kpis").innerHTML = k.map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
 }
 function renderResults() {

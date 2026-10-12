@@ -86,7 +86,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
       ...QUIZ.map((qq, i) => [String(i + 1), qq.q, optTxt(qq, ans[qq.id]), `${optTxt(qq, qq.a)} (${Math.round(sc.items[qq.id] * 100)}%)`])], { head: true }),
     p(`내 정답률 ${Math.round(sc.total / sc.n * 100)}% · 설명할 수 있다 ${EFFICACY.map(e => `${STATIONS.find(s => s.id === e.id).ko} ${me.quiz.eff?.[e.id] || "—"}`).join(" · ")}`),
     q("유형별 결과 (반 전체 · 1차)"),
-    table([2700, ...TYPE_KEYS.map(() => Math.floor((W - 2700) / 3))], [
+    table([2700, ...TYPE_KEYS.map(() => Math.floor((W - 2700) / TYPE_KEYS.length))], [
       ["", ...TYPE_KEYS.map(k => `${TYPES[k].ko} · ${TYPES[k].name}`)],
       ["인턴 면접 합격", ...TYPE_KEYS.map(k => f0(tt[k].pass))],
       ["고양이 보리 성공 (조)", ...TYPE_KEYS.map(k => f0(tt[k].home))],

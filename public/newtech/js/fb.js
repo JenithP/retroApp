@@ -121,7 +121,7 @@ if (isDemoMode) {
       const uid = `demo_${t}_${k}`;
       const answers = Object.fromEntries(QUIZ.map(q => [q.id, q.multi ? q.a.filter(() => rnd() < pOk).concat(rnd() < .3 ? [q.opts.length - 1] : []) : (rnd() < pOk ? q.a : (q.a + 1) % q.opts.length)]));
       const eff = Object.fromEntries(STATIONS.map(s => [s.id, Math.max(1, Math.min(5, Math.round({ A: 4, B: 3.2, C: 2.2 }[type] + (rnd() - .5) * 2)))]));
-      const app = type !== "C";
+      const app = true;
       D.people[uid] = { team: t, name: `${t}조 ${k + 1}`, type, help: { r1: Math.round(rnd() * 2) },
         ...(app ? {
           emo: { r1: { attempts: [{ total: 50 + Math.round(rnd() * 30), at: Date.now() }], passed: rnd() < (type === "A" ? .55 : .2), opened: rnd() < .6 } },
@@ -132,9 +132,9 @@ if (isDemoMode) {
         ...(afterCheck ? { quiz: { answers, eff, at: Date.now() } } : {}) };
       if (!D.people[uid].potion) delete D.people[uid].potion;
     }
-    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), checks: typeOf(t) === "C" ? {} : { r1: { ...homeCheckSummary(solved), at: Date.now() } } };
-    // 다 유형 조원은 쪽지를 많이, 나머지는 가끔 — 답은 대부분 달린다
-    for (let k = 0; k < (type === "C" ? 6 : 1); k++) {
+    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), checks: { r1: { ...homeCheckSummary(solved), at: Date.now() } } };
+    // 나 유형 조원은 쪽지를 많이, 가 유형은 가끔 — 답은 대부분 달린다
+    for (let k = 0; k < (type === "B" ? 5 : 1); k++) {
       if (phase === "ready") break;
       const to = 1 + Math.floor(rnd() * TEAM_COUNT);
       if (to === t) continue;

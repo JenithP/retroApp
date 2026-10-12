@@ -246,7 +246,7 @@ function flushTime() {
   const rd = S.phase === "r1" || S.phase === "r2" ? S.phase : null;
   const now = Date.now();
   if (rd && document.visibilityState === "visible") {
-    const k = access(rd, type()).demo ? S.st : "manual";
+    const k = S.st;
     tick.acc[rd] ||= {};
     tick.acc[rd][k] = (tick.acc[rd][k] || 0) + Math.min(60, (now - tick.at) / 1000);
   }
@@ -337,10 +337,10 @@ function renderReveal() {
       <div>
         <h3>세 단계로 읽기</h3>
         <ol class="levels">
-          <li><b>1단계 · 접근</b> 다 유형 — 앱이 없으면 미션 자체를 할 수 없고, 남에게 부탁해야 함</li>
-          <li><b>2단계 · 활용</b> 나 유형 — 앱이 있어도 숨은 원인을 찾는 방법을 모르면 실패</li>
-          <li><b>3단계 · 결과</b> 같은 수업 · 같은 시간인데 합격 · 해결 · 예약 결과가 달라짐</li>
-          <li><b>따뜻한 전문가</b> 쪽지로 물어본 조는 답을 얼마나 받았고, 그 답이 결과를 얼마나 바꿨는가</li>
+          <li><b>2단계 · 활용</b> 같은 앱인데 힌트(디지털 리터러시)가 없으면 숨은 원인을 찾지 못함</li>
+          <li><b>3단계 · 결과</b> 같은 수업 · 같은 시간인데 합격 · 성공 · 예약 결과가 달라짐</li>
+          <li><b>따뜻한 전문가</b> 나 유형이 쪽지로 물어본 횟수, 받은 답, 그 답이 결과를 얼마나 바꿨는가</li>
+          <li><b>1단계 · 접근</b> 오늘은 모두 기기가 있었음 — 기기 자체가 없는 사람은 아래 국내 통계로</li>
         </ol>
         <h3>국내 디지털정보격차 <small>취약계층 수준 · 일반 국민 = 100 · 2025 실태조사</small></h3>
         ${NATIONAL.map(n => `<div class="nb"><span>${n.ko}</span><i><u style="width:${n.v}%"></u></i><em>${n.v}</em></div>`).join("")}
