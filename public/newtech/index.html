@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>신기술 인터페이스 체험 실습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../appshop/css/appshop.css">
+<link rel="stylesheet" href="css/newtech.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 7주차 오프라인</p>
+    <h1>신기술 인터페이스 체험 실습</h1>
+  </div>
+  <div class="status">
+    <span class="chip" id="teamChip" hidden></span>
+    <span class="chip phase" id="phaseChip">연결 중</span>
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span></span>
+  </div>
+</header>
+
+<!-- 조 고르기 -->
+<section class="view" id="vJoin" hidden>
+  <div class="join">
+    <h2>조 선택</h2>
+    <p class="lead">조원별 노트북 · 패드 접속 · 카메라가 있는 기기 권장</p>
+    <div class="teampick" id="teamPick"></div>
+    <label class="field">이름 <input id="myName" maxlength="20" autocomplete="off" placeholder="실습보고서 기재용"></label>
+    <button class="btn primary big" id="joinBtn" disabled>입장</button>
+  </div>
+</section>
+
+<!-- 안내 -->
+<section class="view" id="vReady" hidden>
+  <div class="intro">
+    <h2>실습 개요</h2>
+    <p class="lead">7주차 온라인에서 다룬 신기술 세 가지 체험</p>
+    <div class="stcards" id="introStations"></div>
+    <h3>진행 순서</h3>
+    <ol class="flowlist">
+      <li><b>1차 체험</b> — 조마다 체험 조건이 다름</li>
+      <li><b>확인 과제</b> — 개인별 8문항</li>
+      <li><b>2차 체험 · 설계</b> — 모든 조 같은 조건 · 우리 집 자동화 규칙 설계</li>
+      <li><b>결과 공개</b> — 조건별 결과 비교</li>
+      <li><b>조별 의견</b></li>
+    </ol>
+    <p class="note">카메라 영상은 기기 안에서만 처리 · 저장 · 전송 없음 · 카메라를 원하지 않으면 사진으로 대신 가능<br>교수 화면의 <b>1차 체험</b> 시작 후 진행</p>
+  </div>
+</section>
+
+<!-- 체험 (1차 · 2차) -->
+<section class="view" id="vExp" hidden>
+  <div class="expbar">
+    <div><h2 id="expTitle">1차 체험</h2><p class="lead" id="expCond"></p></div>
+    <div class="helpbox"><button class="btn" id="helpBtn" type="button">도움 요청 +1</button><span class="muted small" id="helpCount"></span>
+      <p class="muted small">조원 · 다른 조에게 물어볼 때마다 누르기</p></div>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="expgrid" id="expGrid">
+    <div class="stbox" id="stBox"></div>
+    <aside class="tguide" id="guideBox"></aside>
+  </div>
+</section>
+
+<!-- 확인 과제 -->
+<section class="view" id="vCheck" hidden>
+  <form class="quiz" id="quizForm">
+    <h2>확인 과제 <small>개인별 · 제출 후 수정 불가</small></h2>
+    <div id="quizItems"></div>
+    <h3>스스로 평가</h3>
+    <div id="effItems"></div>
+    <label class="field">1차 체험에서 가장 낯설었던 것과 그 이유 <small>선택</small><textarea name="free" rows="3" maxlength="400"></textarea></label>
+    <button class="btn primary big" id="quizSubmit" type="submit">제출</button>
+    <p class="saved" id="quizMsg"></p>
+  </form>
+  <div class="wait" id="quizDone" hidden><p class="note big">제출 완료 — 휴식</p><p class="muted">2차 체험은 모든 조가 같은 조건으로 진행</p></div>
+</section>
+
+<!-- 결과 공개 -->
+<section class="view" id="vReveal" hidden>
+  <div class="reveal" id="revealBox"></div>
+</section>
+
+<!-- 조별 의견 -->
+<section class="view" id="vOpinion" hidden>
+  <form class="opinion" id="opForm" autocomplete="off">
+    <h2>조별 의견 <small>조원 전체 공유 · 수정 즉시 저장</small></h2>
+    <div id="opItems"></div>
+    <p class="saved" id="opSaved"></p>
+  </form>
+</section>
+
+<!-- 종료 -->
+<section class="view" id="vEnd" hidden>
+  <div class="wait">
+    <p class="note big">실습 종료</p>
+    <div class="reportbox">
+      <p><b>실습보고서</b>: 개인별 내려받기 (워드 .docx)<br>
+        자동 기재: 체험 조건 · 내 기록 · 확인 과제 결과와 유형별 비교 · 우리 집 규칙 · 조별 의견 / 직접 작성: 학번 · 온라인 강의 연결 질문 · 개인 의견<br>
+        <small>휴대폰은 카카오톡 · 인스타그램 앱 안 브라우저 대신 크롬 · 사파리에서 열어 내려받기</small></p>
+      <button class="btn primary big" id="reportBtn">실습보고서 내려받기</button>
+    </div>
+  </div>
+</section>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
