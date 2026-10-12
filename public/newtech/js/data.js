@@ -221,13 +221,11 @@ export function applyEvent(home, evId) {
       if (a === "curtain_close") st.curtain = false;
       if (a === "light_on") st.light = true;
       if (a === "light_off") st.light = false;
-      if (a === "vacuum") {
-        st.vacuum = true;
-        if (set.vacuumBump && st.water) { st.water = false; fired.push({ rule: "set", note: "로봇청소기", act: "water_spill" }); }
-      }
+      if (a === "vacuum") st.vacuum = true;
       if (a === "siren") { st.siren = true; st.sirens = (st.sirens || 0) + 1; }
       if (a === "alert") st.alerts = (st.alerts || 0) + 1;
       fired.push({ rule: r.id, note: r.note || "", act: a });
+      if (a === "vacuum" && set.vacuumBump && st.water) { st.water = false; fired.push({ rule: "set", note: "로봇청소기", act: "water_spill" }); }
     }
   }
   // 실내 온도 — 낮에 커튼이 열려 있으면 더 덥다. 에어컨은 재실 감지 설정이 켜져 있으면 외출 중에 꺼진다
