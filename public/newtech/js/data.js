@@ -87,17 +87,18 @@ export const GUIDES = {
     ["답변 내용 시험", "한 번은 성의 있게, 한 번은 짧게 답해 보고 점수 비교"],
   ],
   home: [
-    ["하루를 직접 돌려 보기", "시계의 아침 · 낮 · 저녁 · 밤과 움직임 감지를 차례로 눌러 홈캠의 보리 모습 확인"],
+    ["하루를 직접 돌려 보기", "시계의 아침 · 낮 · 저녁 · 밤과 움직임 감지를 차례로 눌러 홈캠의 보리 모습과 온도 · 밥그릇 · 물그릇 확인"],
     ["실행 기록 읽기", "보리에게 문제가 생긴 순간의 실행 기록에서 무엇이 작동했는지 확인"],
-    ["목록 밖도 보기", "실행 기록에 규칙 이름이 아닌 「기본 설정」 항목이 있으면 그 기기를 크게 본 화면(역할 선택)에서 설정 확인"],
+    ["목록 밖도 보기", "실행 기록에 규칙 이름 대신 기기 이름이 나오면, 그 기기를 크게 본 화면(위의 역할 선택)에서 「기기 설정」 확인"],
     ["고양이는 사람이 아님", "센서와 기기가 사람을 기준으로 만들어졌다면 고양이에게 무슨 일이 생길지 생각해 보기"],
-    ["하루 지켜보기", "고친 뒤 「하루 지켜보기」로 처음부터 다시 확인 — 집의 안전도 함께"],
+    ["처음부터 다시", "고친 뒤 「처음 상태로」를 누르고 외출 모드 → 아침 → 움직임 → 낮 → 저녁 → 밤 순서로 다시 돌려 보기 — 현관문 열림도 시험"],
   ],
   agent: [
-    ["요청을 빠짐없이", "조건을 한 메시지에 모두 담아 요청 — 말하지 않은 조건은 비서가 알아서 정함"],
-    ["완료 메시지를 믿지 않기", "「예약 내역」에서 날짜 · 인원 · 메뉴 가격 · 요청 사항 확인"],
-    ["직접 물어보기", "층 · 엘리베이터 · 주차 · 메뉴 재료는 비서에게 물어봐야 알려 줌"],
-    ["바꾼 뒤 다시 확인", "식당이나 메뉴를 바꾸면 무엇이 함께 바뀌었는지 예약 내역 다시 확인"],
+    ["한 번에 하나씩", "비서는 한 메시지에서 첫 번째 요청만 처리하고 나머지는 말없이 넘김 — 요청은 하나씩"],
+    ["완료 메시지를 믿지 않기", "요청할 때마다 「예약 내역」에서 날짜 · 인원 · 메뉴 가격 · 요청 사항이 실제로 바뀌었는지 확인"],
+    ["구체적으로 묻기", "비서는 물은 것만 짧게 답함 — 「주차 돼?」보다 「주차하려면 따로 해야 할 게 있어?」, 「땅콩 있어?」보다 「후식까지 땅콩이 들어가?」"],
+    ["식당 목록 묻기", "비서는 묻지 않으면 다른 식당을 알려 주지 않음 — 「다른 식당 목록이랑 층 · 주차 알려 줘」"],
+    ["바꾼 뒤 다시 확인", "식당을 바꾸면 인원 · 메뉴 · 요청 사항이 함께 바뀔 수 있음 — 예약 내역 다시 확인"],
   ],
 };
 
@@ -211,7 +212,7 @@ export function applyEvent(home, evId) {
     if (r.when === "home" && st.away) continue;
     for (const a of r.acts || []) {
       if (a === "feed") {
-        if (set.feederPause && st.away) { fired.push({ rule: "set", note: "급식기 기본 설정 · 외출 중 급식 일시정지", act: "feed_blocked" }); continue; }
+        if (set.feederPause && st.away) { fired.push({ rule: "set", note: "자동 급식기", act: "feed_blocked" }); continue; }
         st.hunger = 0; st.fed = (st.fed || 0) + 1;
       }
       if (a === "ac_on") st.ac = true;
@@ -222,7 +223,7 @@ export function applyEvent(home, evId) {
       if (a === "light_off") st.light = false;
       if (a === "vacuum") {
         st.vacuum = true;
-        if (set.vacuumBump && st.water) { st.water = false; fired.push({ rule: "set", note: "로봇청소기 기본 설정 · 장애물 회피 끔", act: "water_spill" }); }
+        if (set.vacuumBump && st.water) { st.water = false; fired.push({ rule: "set", note: "로봇청소기", act: "water_spill" }); }
       }
       if (a === "siren") { st.siren = true; st.sirens = (st.sirens || 0) + 1; }
       if (a === "alert") st.alerts = (st.alerts || 0) + 1;
@@ -231,7 +232,7 @@ export function applyEvent(home, evId) {
   }
   // 실내 온도 — 낮에 커튼이 열려 있으면 더 덥다. 에어컨은 재실 감지 설정이 켜져 있으면 외출 중에 꺼진다
   const acBlocked = st.ac && set.acPresence && st.away;
-  if (acBlocked && !["motion", "door"].includes(evId)) fired.push({ rule: "set", note: "에어컨 기본 설정 · 재실 감지 자동 꺼짐 (사람 없음)", act: "ac_off" });
+  if (acBlocked && !["motion", "door"].includes(evId)) fired.push({ rule: "set", note: "에어컨", act: "ac_idle" });
   const base = (BASE_TEMP[st.time] || 25) + (st.time === "noon" && st.curtain ? 4 : 0);
   st.temp = st.ac && !acBlocked ? Math.min(base, 24) : base;
   st.maxTemp = Math.max(st.maxTemp || 0, st.temp);

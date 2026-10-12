@@ -48,7 +48,8 @@ const yn = v => v ? "예" : "아니요";
 export function build({ team, name, me = {}, people = {}, homes = {}, opinions = {}, notes = {}, uid = null }) {
   const type = typeOf(team), T = TYPES[type];
   const iv = r => { const x = me.emo?.[r]; return x?.attempts?.length ? `응시 ${x.attempts.length}회 · 최고 ${Math.max(...x.attempts.map(a => a.total))}점 · ${x.passed ? "합격" : "불합격"}` : "응시 없음"; };
-  const hc = r => { const x = me.homeEv?.[r]; return x ? `하루 지켜보기 ${x.calls || 0}회 · ${x.pass ? "성공" : "미해결"}` : "기록 없음"; };
+  const hk = homes[teamId(team)]?.checks || {};
+  const hc = r => { const x = hk[r]; return x ? `우리 조 집 ${x.ok}/5 · ${x.pass ? "성공" : "미해결"}` : "기록 없음"; };
   const ag = r => { const x = me.agent?.[r]; if (!x) return "기록 없음";
     const o = x.opened || {};
     return `${x.final ? `확정: ${RESTAURANTS[x.final.rest].name} · 조건 ${x.met}/7` : "확정 안 함"} · 상세 ${o.detail || 0}회 · 식당 정보 ${o.info || 0}회 · 진행 과정 ${o.trace || 0}회`; };
@@ -102,7 +103,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const set = { ...PRESET_SETTINGS, ...(h.settings || {}) };
   const part3 = [
     table([2600, W - 2600], [
-      ["하루 지켜보기", h.check ? (h.check.pass ? "모두 해결" : `${h.check.ok}/5 해결`) : "하지 않음"],
+      ["보리의 하루 (홈캠 기록)", ["r1", "r2"].filter(r => hk[r]).map(r => `${r === "r1" ? "1차" : "2차"} ${hk[r].ok}/5\n${hk[r].tests.map(x => (x.ok ? "○ " : "× ") + x.text).join("\n")}`).join("\n\n") || "기록 없음"],
       ["기기 설정", SETTINGS.map(x => `${x.ko} ${set[x.id] ? "켜짐" : "꺼짐"}`).join(" · ")],
       ["집 관리 메모", h.sms || "(작성 없음)"],
     ], { side: true }),

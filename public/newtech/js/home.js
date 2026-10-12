@@ -1,9 +1,9 @@
 // 고양이 보리 (연결화) — 여행 중 빈집에 고양이 보리가 혼자 있다. 홈캠으로 보리를 보면서 스마트홈의 규칙과 기기 설정을 원격으로 고친다.
 // 미리 들어 있는 규칙과 기기 기본 설정이 사람을 기준으로 만들어져 있어 보리에게 문제가 생긴다(더위 · 배고픔 · 사이렌 · 엎어진 물그릇).
-// 원인은 규칙 목록과 기기 설정(그 기기를 크게 본 화면에서만 보임)에 나뉘어 있다. 「하루 지켜보기」가 외출한 하루를 처음부터 돌려 보고
-// 홈캠 기록(증상만)을 보여준다. 현관문 알림을 지우면 「집의 안전」이 실패한다.
+// 원인은 규칙 목록과 기기 설정(그 기기를 크게 본 화면에서만 보임)에 나뉘어 있다. 실행 기록에는 기기 이름과 결과만 남고 설정 이름은 나오지 않는다.
+// 미션 중에는 채점 결과를 보여주지 않는다 — 라운드가 끝날 때 서버가 조의 설정을 저장하고, 그 설정으로 돌린 하루 홈캠 기록을 결과 공개 때 보여준다.
 // 상태 · 규칙 · 기기 설정 · 실행 기록 · 확인 결과는 조마다 문서 하나(hci7_homes/T01)에 있고, 모든 조원 화면이 같은 문서를 지켜본다.
-import { DEVICES, EVENTS, ACTIONS, WHEN, MAX_RULES, PRESET_RULES, SETTINGS, PRESET_SETTINGS, PRESET_STATE, evKo, actKo, homeCheck } from "./data.js";
+import { DEVICES, EVENTS, ACTIONS, WHEN, MAX_RULES, PRESET_RULES, SETTINGS, PRESET_SETTINGS, PRESET_STATE, evKo, actKo } from "./data.js";
 import { watchHome, homeEvent, saveHome, clearHome, ensureHome } from "./fb.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -41,8 +41,7 @@ export function mountHome(box, { team, name, onCheck }) {
       </div>
       <details class="rulesview"><summary>자동화 규칙 (조 전체 공유)</summary><div class="rules"></div></details>
       <div class="callbox">
-        <button class="btn primary" data-a="call" type="button">하루 지켜보기 (홈캠 기록)</button>
-        <div class="callres"></div>
+        <p class="muted small">미션이 끝날 때의 규칙 · 기기 설정으로 보리의 하루가 기록됨 (결과 공개 때 확인)</p>
         <label class="field">집 관리 메모 <small>무엇을 왜 바꿨는지 — 함께 사는 가족이 알아들을 수 있게</small><textarea class="sms" rows="3" maxlength="300"></textarea></label>
         <button class="btn small" data-a="sms" type="button">메모 저장</button><span class="muted small smsmsg"></span>
       </div>
@@ -50,13 +49,6 @@ export function mountHome(box, { team, name, onCheck }) {
   const $ = s => box.querySelector(s);
   box.querySelectorAll(".rb").forEach(b => b.onclick = () => { role = b.dataset.r; store.set("role", role); draw(); });
   $('[data-a="clear"]').onclick = () => confirm("조 전체의 기기 상태와 실행 기록을 처음으로 되돌립니다. (규칙과 기기 설정은 그대로)") && clearHome(team);
-  $('[data-a="call"]').onclick = async () => {
-    const res = homeCheck(home?.rules || PRESET_RULES, { ...PRESET_SETTINGS, ...(home?.settings || {}) });
-    try { await saveHome(team, { check: { pass: res.pass, ok: res.tests.filter(t => t.ok).length, at: Date.now(), by: name } }); } catch (e) { console.error(e); }
-    onCheck?.(res.pass);
-    $(".callres").innerHTML = `<p class="muted small">외출한 하루(아침 7시 → 밤 10시)를 지금 규칙과 기기 설정으로 다시 돌려 본 홈캠 기록</p>
-      <ul class="calllist">${res.tests.map(t => `<li class="${t.ok ? "ok" : "no"}">${esc(t.ok ? t.yes : t.no)}</li>`).join("")}</ul>${res.pass ? `<p class="ok">하루를 무사히 보냄 — 미션 성공</p>` : ""}`;
-  };
   $('[data-a="sms"]').onclick = async () => {
     try { await saveHome(team, { sms: $(".sms").value.trim().slice(0, 300) }); $(".smsmsg").textContent = "저장됨"; }
     catch (e) { console.error(e); $(".smsmsg").textContent = "저장 실패"; }
@@ -106,7 +98,7 @@ export function mountHome(box, { team, name, onCheck }) {
     });
     const log = home?.log || [];
     $(".log").innerHTML = log.length ? [...log].reverse().map(l => `<li><span class="t">${hm(l.at)}</span> <b>${esc(evKo(l.ev))}</b> <small>${esc(l.who)}</small>
-      ${(l.fired || []).length ? `<ul>${l.fired.map(f => `<li>「${esc(f.note || "이름 없는 규칙")}」 → ${esc(f.act === "feed_blocked" ? "급식 안 함" : f.act === "water_spill" ? "물그릇에 부딪힘" : actKo(f.act))}</li>`).join("")}</ul>` : `<ul><li class="muted">작동한 것 없음</li></ul>`}</li>`).join("")
+      ${(l.fired || []).length ? `<ul>${l.fired.map(f => `<li>「${esc(f.note || "이름 없는 규칙")}」 → ${esc(f.act === "feed_blocked" ? "급식 안 함" : f.act === "water_spill" ? "물그릇에 부딪힘" : f.act === "ac_idle" ? "냉방 안 함" : actKo(f.act))}</li>`).join("")}</ul>` : `<ul><li class="muted">작동한 것 없음</li></ul>`}</li>`).join("")
       : `<li class="muted">기록 없음 — 시계 · 센서 버튼으로 시작</li>`;
     if (home?.sms && document.activeElement !== $(".sms") && !$(".sms").value) $(".sms").value = home.sms;
     drawRules();

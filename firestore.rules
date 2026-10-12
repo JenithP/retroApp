@@ -211,7 +211,7 @@ service cloud.firestore {
       allow delete: if false;
     }
     function hci7HomeOk(d) {
-      return d.keys().hasOnly(['state', 'rules', 'settings', 'log', 'check', 'sms', 'purpose', 'updatedAt', 'by'])
+      return d.keys().hasOnly(['state', 'rules', 'settings', 'log', 'check', 'checks', 'sms', 'purpose', 'updatedAt', 'by'])
           && d.by == request.auth.uid
           && (!('log' in d) || d.log.size() <= 40)
           && (!('rules' in d) || d.rules.size() <= 10)

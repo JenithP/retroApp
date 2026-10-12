@@ -12,7 +12,7 @@ export function tallyTypes(people, notes = {}, homes = {}) {
     const quizzed = ps.filter(p => p.quiz?.answers);
     const sc = quizzed.map(p => score(p.quiz.answers));
     const teams = [...new Set(ps.map(p => p.team))];
-    const solved = teams.filter(t => ps.some(p => p.team === t && p.homeEv?.r1?.pass));
+    const solved = teams.filter(t => homes["T" + String(t).padStart(2, "0")]?.checks?.r1?.pass);
     const sent = NS.filter(n => typeOf(n.fromTeam) === k);
     out[k] = {
       n: ps.length,

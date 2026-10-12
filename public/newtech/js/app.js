@@ -116,10 +116,7 @@ function renderExp() {
   const mb = box.querySelector(".mbox");
   const rd = round();
   if (S.st === "emo") S.mounted = mountEmo(mb, { prev: mine().emo?.[rd], ai: interviewAI, onRecord: rec => savePerson({ emo: { [rd]: rec } }) });
-  if (S.st === "home") S.mounted = mountHome(mb, { team: S.team, name: S.name, onCheck: pass => {
-    const h = mine().homeEv?.[rd] || {};
-    savePerson({ homeEv: { [rd]: { calls: (h.calls || 0) + 1, pass: !!(h.pass || pass) } } });
-  } });
+  if (S.st === "home") S.mounted = mountHome(mb, { team: S.team, name: S.name });
   if (S.st === "agent") S.mounted = mountAgent(mb, { prev: mine().agent?.[rd], ai: agentAI, onRecord: rec => savePerson({ agent: { [rd]: rec } }) });
 }
 /* 디지털 리터러시 물약 — 마시면 지금 미션의 다음 힌트가 팝업으로 뜬다 */
@@ -308,6 +305,14 @@ function ivHTML() {
     <div class="ivwhy">${Object.entries(D).map(([k, v]) => `<div class="ebar"><span>${v}</span><i><u style="width:${a.dims?.[k] || 0}%"></u></i><em>${a.dims?.[k] ?? "—"}</em></div>`).join("")}
     <h4>면접관 판단 기록</h4><ul>${(a.events || []).map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>`;
 }
+/* 결과 공개 때 처음 보여주는 보리의 하루 홈캠 기록 — 라운드가 끝날 때 서버가 저장한 것 */
+function catHTML() {
+  const c = S.homes[teamId(S.team)]?.checks || {};
+  const one = (r, x) => x ? `<div><h4>${r} 미션이 끝났을 때의 설정 <small>${x.ok}/5 ${x.pass ? "· 성공" : ""}</small></h4>
+    <ul class="calllist">${x.tests.map(t => `<li class="${t.ok ? "ok" : "no"}">${esc(t.text)}</li>`).join("")}</ul></div>` : "";
+  const body = one("1차", c.r1) + one("2차", c.r2);
+  return `<h3>보리의 하루 — 홈캠 기록 <small>우리 조 집 · 외출한 하루(아침 7시 → 밤 10시)</small></h3>${body || `<p class="muted">기록 없음 — 집을 한 번도 열지 않음</p>`}`;
+}
 /* 결과 공개 때 처음 보여주는 모임 당일 가족 대화방 — 2차 확정이 있으면 2차, 없으면 1차 */
 function famHTML() {
   const a = mine().agent?.r2?.final ? { r: "2차", b: mine().agent.r2.final } : mine().agent?.r1?.final ? { r: "1차", b: mine().agent.r1.final } : null;
@@ -323,6 +328,7 @@ function renderReveal() {
     <div class="typecards">${Object.entries(TYPES).map(([k, v]) => `<div class="typecard${k === type() ? " mine" : ""}" style="--tc:${v.color}">
       <b>${v.ko} · ${esc(v.name)}</b><span>${esc(v.desc)}</span><em>${esc(v.level)}</em>${k === type() ? `<i>우리 조</i>` : ""}</div>`).join("")}</div>
     ${ivHTML()}
+    ${catHTML()}
     ${famHTML()}
     <h3>미션에 쓰인 기술</h3>
     <div class="techcards">${STATIONS.map(s => `<div><b>${esc(s.ko)}</b> → ${esc(s.tech)}</div>`).join("")}</div>

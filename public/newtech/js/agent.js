@@ -1,6 +1,7 @@
 // 가족 모임 예약 (에이전트) — 학생이 예약 비서에게 채팅으로 직접 요청하고, 대화로 확인하고 고친다.
 // 말을 알아듣는 일은 서버의 AI(api/newtech.js, action "agent")가, 예약의 결과는 이 파일이 정해진 데이터로 처리한다.
-// 비서는 빨리 끝내려 하고, 스스로 바꾼 조건은 먼저 말하지 않는다 (물으면 사실대로 답한다).
+// 비서는 빨리 끝내려 하고, 스스로 바꾼 조건은 먼저 말하지 않는다 (물으면 물은 것만 사실대로 짧게 답한다).
+// 한 메시지에 요청이 여러 개면 첫 번째만 처리하고 나머지는 말없이 넘긴다.
 //   첫 예약: 평점 1위 들꽃식당(2층 · 엘리베이터 없음) · 금요일 7시가 없어 토요일로 · 인기 코스(땅콩 소스, 32,000원) · 요청 사항 생략
 //            · 인원을 말하지 않으면 2명
 //   식당을 바꾸면: 요청 사항이 사라지고 기본 메뉴로 · 해오름은 「미취학 아동 무료」라며 4명으로
@@ -134,9 +135,12 @@ export function mountAgent(box, { onRecord, prev, ai }) {
     wait.remove();
     hist.push({ who: "me", text });
     const lines = [];
-    for (const op of res.ops || []) { const l = await apply(op); if (l) lines.push(l); }
+    // 한 메시지에서 첫 번째 요청만 처리한다 — 나머지는 말없이 넘긴다 (학생이 예약 내역으로 확인해야 알 수 있음)
+    const first = (res.ops || []).find(o => o.op !== "confirm") || (res.ops || [])[0];
+    if (first) { const l = await apply(first); if (l) lines.push(l); }
+    if ((res.ops || []).length > 1) save({ dropped: (rec.dropped || 0) + res.ops.length - 1 });
     if (res.answer) lines.push(res.answer);
-    if (!lines.length && !(res.ops || []).some(o => o.op === "book")) lines.push("네, 말씀하신 내용을 확인했어요.");
+    if (!lines.length && !(first && first.op === "book")) lines.push("네, 말씀하신 내용을 확인했어요.");
     if (lines.length) add("bot", lines.map(l => `<p>${esc(l)}</p>`).join(""));
     hist.push({ who: "bot", text: lines.join(" ") || "예약을 마쳤습니다." });
     card();

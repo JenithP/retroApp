@@ -9,7 +9,13 @@ import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, addDoc, updateDoc, collection, onSnapshot, runTransaction }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { TEAM_COUNT, PHASE_ORDER, PRESET_RULES, PRESET_STATE, PRESET_SETTINGS, LOG_MAX, QUIZ, STATIONS, OPINION, teamId, typeOf, applyEvent } from "./data.js";
+import { TEAM_COUNT, PHASE_ORDER, PRESET_RULES, PRESET_STATE, PRESET_SETTINGS, LOG_MAX, QUIZ, STATIONS, OPINION, teamId, typeOf, applyEvent, homeCheck } from "./data.js";
+// 미리보기용 홈캠 기록 — 성공한 조는 모두 고친 설정, 아니면 처음 설정으로 돌린 결과
+const homeCheckSummary = solved => {
+  const r = solved ? homeCheck([], { acPresence: false, feederPause: false, vacuumBump: false }) : homeCheck(PRESET_RULES, PRESET_SETTINGS);
+  const tests = solved ? r.tests.map(x => ({ id: x.id, ok: true, text: x.yes })) : r.tests.map(x => ({ id: x.id, ok: x.ok, text: x.ok ? x.yes : x.no }));
+  return { pass: !!solved, ok: tests.filter(x => x.ok).length, tests };
+};
 
 const app = initializeApp({
   apiKey: "AIzaSyBC3M89Z6YTnpc7x6S5JvKhmB5BUIdIVlE",
@@ -126,7 +132,7 @@ if (isDemoMode) {
         ...(afterCheck ? { quiz: { answers, eff, at: Date.now() } } : {}) };
       if (!D.people[uid].potion) delete D.people[uid].potion;
     }
-    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), check: typeOf(t) === "C" ? null : { pass: solved, ok: solved ? 5 : 2 + (t % 3), at: Date.now() } };
+    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), checks: typeOf(t) === "C" ? {} : { r1: { ...homeCheckSummary(solved), at: Date.now() } } };
     // 다 유형 조원은 쪽지를 많이, 나머지는 가끔 — 답은 대부분 달린다
     for (let k = 0; k < (type === "C" ? 6 : 1); k++) {
       if (phase === "ready") break;
