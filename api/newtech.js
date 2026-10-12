@@ -4,7 +4,7 @@
 //   FIREBASE_SERVICE_ACCOUNT   서비스 계정 JSON 전체
 //   HCI4_ADMIN                 현황판 교수용 암호 — 7주차만 다른 암호를 쓰려면 NEWTECH_ADMIN_CODE
 //   ANTHROPIC_API_KEY          5주차 앱 공방이 넣어 둔 키 — AI 면접의 답변 채점 · 꼬리 질문
-//   NEWTECH_MODEL              (선택, 없으면 claude-opus-5-5) · NEWTECH_EFFORT (선택, 없으면 low — 질문 사이 대기를 줄이려고)
+//   NEWTECH_MODEL              (선택, 없으면 claude-haiku-5-5) · NEWTECH_EFFORT (선택, 없으면 low — 질문 사이 대기를 줄이려고)
 //
 // 예약 비서 (action: "agent") — 학생이 채팅으로 쓴 말을 예약 조작(ops)과 짧은 답으로 바꾼다.
 //   조작의 결과(빈자리 · 식당 규정 · 말없이 바뀌는 조건)는 학생 브라우저가 정해진 데이터로 처리한다. 이 함수는 말을 알아듣는 일만 한다.
@@ -22,7 +22,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { PHASE_ORDER, INTERVIEW, RESTAURANTS } from "../public/newtech/js/data.js";
 
-const MODEL = process.env.NEWTECH_MODEL || "claude-opus-5-5";
+const MODEL = process.env.NEWTECH_MODEL || "claude-haiku-5-5";   // 질문 사이 대기를 줄이려고 Haiku (Haiku 는 서버 쪽 거절 대체 모델이 없다)
 const EFFORT = process.env.NEWTECH_EFFORT || "low";
 const INTERVIEW_CAP = 40;   // 한 사람 한 라운드 호출 수 (응시 3회 × 질문 4개 = 12, 넉넉하게)
 const AGENT_CAP = 80;       // 예약 비서 대화 — 한 사람 한 라운드
@@ -103,11 +103,9 @@ ${hist}
 </conversation>
 <latest>${clip(body.message, 400)}</latest>`;
   const client = new Anthropic();
-  const msg = await client.beta.messages.create({
+  const msg = await client.messages.create({
     model: MODEL,
     max_tokens: 2000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
     output_config: { effort: EFFORT, format: { type: "json_schema", schema: AGENT_SCHEMA } },
     system: [{ type: "text", text: AGENT_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: user }],
@@ -151,11 +149,9 @@ async function interview(store, uid, body) {
 <next_difficulty>${next ? `${next} (${INTERVIEW.levels[next].ko})` : "none - last question"}</next_difficulty>`;
 
   const client = new Anthropic();
-  const msg = await client.beta.messages.create({
+  const msg = await client.messages.create({
     model: MODEL,
     max_tokens: 2000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
     output_config: { effort: EFFORT, format: { type: "json_schema", schema: SCHEMA } },
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: user }],

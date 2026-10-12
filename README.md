@@ -176,6 +176,6 @@ HCI와 커뮤니케이션 2주차 오프라인 실습. 거실 화면에서 라�
 | ⑦ 종료 | 실습보고서(.docx) 내려받기 | 없음 |
 
 - 모음: `hci7_state` · `hci7_ai`(AI 호출 횟수) (버셀 함수만) · `hci7_people` (자기 것) · `hci7_homes` · `hci7_opinions` · `hci7_notes` (쪽지 — 받는 조 조원만 답)
-- AI 호출(면접 채점 · 예약 비서)은 `ANTHROPIC_API_KEY` 와 `NEWTECH_MODEL`(기본 claude-opus-5-5) · `NEWTECH_EFFORT`(기본 low). 한 사람 한 라운드 면접 40회 · 비서 80회까지.
+- AI 호출(면접 채점 · 예약 비서)은 `ANTHROPIC_API_KEY` 와 `NEWTECH_MODEL`(기본 claude-haiku-5-5) · `NEWTECH_EFFORT`(기본 low). 한 사람 한 라운드 면접 40회 · 비서 80회까지.
 - 카메라 영상은 브라우저 안에서만 처리하고 저장 · 전송하지 않는다. 기록하는 것은 면접 점수와 면접관 판단 기록뿐이다.
 - 미션 · 힌트 · 결과 보고 문항을 고치면 `public/newtech/js/data.js` 한 곳만 고친다.
