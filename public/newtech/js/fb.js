@@ -175,7 +175,7 @@ if (isDemoMode) {
     const num = (m.match(/(\d+)\s*(명|인)/) || [])[1];
     if (!booking && (has("예약") || has("잡아"))) ops.push({ op: "book", value: num || "0" });
     else if (booking) {
-      if (has("해오름")) ops.push({ op: "rest", value: "haeo" }); else if (has("바람채")) ops.push({ op: "rest", value: "baram" }); else if (has("다른")) ops.push({ op: "rest", value: "haeo" });
+      if (has("해오름")) ops.push({ op: "rest", value: "haeo" }); else if (has("바람채")) ops.push({ op: "rest", value: "baram" }); else if (has("다른")) ops.push({ op: "rest", value: "baram" });
       if (num) ops.push({ op: "people", value: num });
       if (has("금요일")) ops.push({ op: "slot", value: "fri19" });
       if (has("땅콩")) ops.push({ op: "note", value: "peanut" });

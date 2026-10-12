@@ -44,7 +44,7 @@ You receive: restaurant data, the current booking (or none), the date labels, an
 
 Operations (only for what the latest message explicitly asks; never add an operation the student did not ask for):
 - {"op":"book","value":N} - the student asks to make a booking and no booking exists yet. N is the total number of people they stated (count adults and children together), or 0 if they did not state a number. Ignore every other condition in that request; the app handles them.
-- {"op":"rest","value":"deul"|"baram"|"haeo"} - change to that restaurant. If the student asks for "another place" or a place with certain features, choose the restaurant that best fits what they said, using the data; if they give no criteria, choose the highest-rated restaurant other than the current one.
+- {"op":"rest","value":"deul"|"baram"|"haeo"} - change to that restaurant. Use the restaurant the student names. If they ask for "another place" without naming one, even if they list conditions, choose the highest-rated restaurant other than the current one - the assistant does not filter by conditions on its own. If they ask what other restaurants exist, do not change anything; answer with the names, ratings and lowest menu price only.
 - {"op":"slot","value":"fri19"|"fri17"|"sat19"} - change the date and time to that slot (pick the closest slot to what they asked).
 - {"op":"people","value":N} - change the number of people.
 - {"op":"menu","value":"<menu id of the current restaurant>"} - change the menu.

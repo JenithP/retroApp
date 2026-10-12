@@ -89,7 +89,8 @@ function renderIntro() {
 function missionHTML(id) {
   const M = MISSIONS[id];
   const list = (h, a) => a?.length ? `<h4>${h}</h4><ul>${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
-  return `<div class="mcard"><h3>${esc(M.title)}</h3><p>${esc(M.story)}</p>${list("조건", M.conds)}${list("꼭 지킬 것", M.keep)}${list("미션", M.goals)}${M.note ? `<p class="muted small">${esc(M.note)}</p>` : ""}</div>`;
+  const chat = M.chat ? `<h4>가족 대화방 「할머니 팔순」</h4><div class="famchat" oncopy="return false" oncut="return false" oncontextmenu="return false">${M.chat.map(([w, t]) => `<div class="fc"><b>${esc(w)}</b><span>${esc(t)}</span></div>`).join("")}</div>` : "";
+  return `<div class="mcard"><h3>${esc(M.title)}</h3><p>${esc(M.story)}</p>${chat}${list("조건", M.conds)}${list("꼭 지킬 것", M.keep)}${list("미션", M.goals)}${M.note ? `<p class="muted small">${esc(M.note)}</p>` : ""}</div>`;
 }
 function renderExp() {
   const A = access(S.phase, type());

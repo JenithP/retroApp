@@ -238,3 +238,8 @@
 .catsay{margin:0;font-weight:700}
 .cammeta{display:flex;gap:14px;font-size:.85rem;opacity:.85}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+/* 가족 대화방 — 복사 막음 */
+.famchat{background:#B2C7DA;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;user-select:none;-webkit-user-select:none;max-width:560px}
+.fc{display:flex;flex-direction:column;align-items:flex-start}
+.fc b{font-size:.75rem;color:#33393F}
+.fc span{background:#fff;border-radius:4px 12px 12px 12px;padding:6px 10px;font-size:.9rem}
