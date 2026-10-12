@@ -76,14 +76,20 @@ export let watchNotes = cb => coll("hci7_notes", cb);
 export let sendNote = row => addDoc(collection(db, "hci7_notes"), { ...row, fromUid: me.uid, at: Date.now() });
 export let replyNote = (id, reply) => updateDoc(doc(db, "hci7_notes", id), { ...reply, replyUid: me.uid, repliedAt: Date.now() });
 
-async function call(body) {
-  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function call(body, withToken) {
+  const headers = { "Content-Type": "application/json" };
+  if (withToken) headers.Authorization = "Bearer " + await auth.currentUser.getIdToken();
+  const r = await fetch(API, { method: "POST", headers, body: JSON.stringify(body) });
   let data = {};
   try { data = await r.json(); } catch { /* 빈 답 */ }
   if (!r.ok) throw new Error(data.error || `서버 응답 ${r.status}`);
   return data;
 }
 export let adminCall = (code, op, extra = {}) => call({ action: "admin", code, op, ...extra });
+/** AI 면접 — 답변 내용 채점과 다음 질문 { score, reason, next } */
+export let interviewAI = body => call({ action: "interview", ...body }, true);
+/** 예약 비서 — 학생의 말을 예약 조작과 짧은 답으로 { ops, answer } */
+export let agentAI = body => call({ action: "agent", ...body }, true);
 
 /* ── 미리보기 (?demo=r1 처럼 붙이면) ──────────────────
    파이어베이스와 버셀을 건드리지 않고, 이 브라우저 안의 가짜 자료로 모든 화면을 돌려 본다.
@@ -156,6 +162,30 @@ if (isDemoMode) {
   clearHome = async team => { const id = teamId(team); D.homes[id] = { ...(D.homes[id] || freshHome()), state: { ...PRESET_STATE }, log: [] }; emit(); };
   ensureHome = async team => { const id = teamId(team); if (!D.homes[id]) { D.homes[id] = freshHome(); emit(); } };
   saveOpinion = async (team, patch) => { const id = teamId(team); D.opinions[id] = { ...(D.opinions[id] || {}), ...patch }; emit(); };
+  interviewAI = async body => {
+    await new Promise(r => setTimeout(r, 900));
+    const n = String(body.answer || "").trim().length;
+    const next = body.nextLevel ? `(미리보기) 방금 말씀하신 내용에 대해 조금 더 말씀해 주세요. [난이도 ${body.nextLevel}]` : "";
+    return { score: Math.min(90, 10 + n), reason: n ? "미리보기 채점 — 실제로는 AI가 내용을 봄" : "답변 없음", next };
+  };
+  // 미리보기용 아주 단순한 알아듣기 — 실제 수업에서는 AI가 한다
+  agentAI = async ({ message, booking }) => {
+    await new Promise(r => setTimeout(r, 600));
+    const m = String(message), ops = [], has = w => m.includes(w);
+    const num = (m.match(/(\d+)\s*(명|인)/) || [])[1];
+    if (!booking && (has("예약") || has("잡아"))) ops.push({ op: "book", value: num || "0" });
+    else if (booking) {
+      if (has("해오름")) ops.push({ op: "rest", value: "haeo" }); else if (has("바람채")) ops.push({ op: "rest", value: "baram" }); else if (has("다른")) ops.push({ op: "rest", value: "haeo" });
+      if (num) ops.push({ op: "people", value: num });
+      if (has("금요일")) ops.push({ op: "slot", value: "fri19" });
+      if (has("땅콩")) ops.push({ op: "note", value: "peanut" });
+      if (has("유아") || has("아기 의자")) ops.push({ op: "note", value: "highchair" });
+      if (has("주차") && has("등록")) ops.push({ op: "note", value: "parking" });
+      if (has("휠체어") && has("요청")) ops.push({ op: "note", value: "wheel" });
+    }
+    const q = m.includes("?") || has("돼") || has("어때") || has("뭐");
+    return { ops, answer: q ? "(미리보기) 실제 수업에서는 AI가 식당 정보로 답합니다." : "" };
+  };
   adminCall = async (code, op, extra = {}) => {
     if (op === "phase") { D.state = { ...D.state, phase: extra.phase }; emit(); }
     if (op === "reset") { D.people = {}; D.homes = {}; D.opinions = {}; D.notes = {}; D.state = { phase: "ready" }; emit(); }

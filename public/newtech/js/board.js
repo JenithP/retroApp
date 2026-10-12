@@ -70,7 +70,7 @@ function renderTeams() {
       <span class="tm">접속 ${ps.length}명 · 보고 제출 ${ps.filter(p => p.quiz).length}</span>
       <span class="tm">면접 합격 ${ps.filter(p => p.emo?.r1?.passed || p.emo?.r2?.passed).length} · 예약 7/7 ${ps.filter(p => p.agent?.r1?.met === 7 || p.agent?.r2?.met === 7).length}</span>
       <span class="tm">쪽지 보냄 ${Object.values(B.notes).filter(n => n.fromTeam === t).length} · 받음 ${Object.values(B.notes).filter(n => n.toTeam === t).length} (답 ${Object.values(B.notes).filter(n => n.toTeam === t && n.reply).length})</span>
-      <span class="tm">할머니 댁 ${h?.check ? (h.check.pass ? "해결" : `확인 ${h.check.ok}/5`) : "확인 전"}${h?.sms ? " · 문자 작성" : ""}</span>
+      <span class="tm">보리 ${h?.check ? (h.check.pass ? "성공" : `${h.check.ok}/5`) : "확인 전"}${h?.sms ? " · 메모" : ""}</span>
       <span class="tm">${op && OPINION.some(o => op[o.id]) ? "의견 작성 중" : ""}</span></button>`;
   }).join("");
   $("teams").querySelectorAll(".tcard").forEach(b => b.onclick = () => openTeam(Number(b.dataset.t)));
@@ -78,7 +78,7 @@ function renderTeams() {
 function openTeam(t) {
   const h = B.homes[teamId(t)] || {}, op = B.opinions[teamId(t)] || {};
   $("dTitle").textContent = `${teamLabel(t)} · ${TYPES[typeOf(t)].ko} 유형`;
-  $("dBody").innerHTML = `<h4>할머니 댁 규칙</h4><p>${h.check ? (h.check.pass ? "확인 전화: 모두 해결" : `확인 전화: ${h.check.ok}/5`) : "확인 전화 전"} · 기기 설정 ${Object.entries(h.settings || {}).filter(([, v]) => v).map(([k]) => k === "ecoHold" ? "절약 유지" : "자동 꺼짐").join(", ") || "모두 끔"}</p><p>${esc(h.sms || "(문자 없음)")}</p>
+  $("dBody").innerHTML = `<h4>고양이 보리 — 규칙</h4><p>${h.check ? (h.check.pass ? "하루 지켜보기: 모두 해결" : `하루 지켜보기: ${h.check.ok}/5`) : "하루 지켜보기 전"} · 켜진 기기 설정 ${Object.entries(h.settings || {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "없음"}</p><p>${esc(h.sms || "(문자 없음)")}</p>
     <ol>${(h.rules || []).map(r => `<li>${esc(evKo(r.ev))}${r.when !== "any" ? ` (${WHEN[r.when]})` : ""} → ${(r.acts || []).map(actKo).join(", ")} ${r.note ? `「${esc(r.note)}」` : ""}</li>`).join("") || "<li>규칙 없음</li>"}</ol>
     <h4>조별 의견</h4>${OPINION.map(o => `<p><b>${esc(o.q)}</b><br>${esc(op[o.id] || "—")}</p>`).join("")}`;
   $("detail").showModal();

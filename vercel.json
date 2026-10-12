@@ -9,6 +9,9 @@
     },
     "api/vrcard.js": {
       "maxDuration": 300
+    },
+    "api/newtech.js": {
+      "maxDuration": 30
     }
   },
   "redirects": [

@@ -228,3 +228,13 @@
 .potionpop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:grid;place-items:center;z-index:70}
 .potionpop .pp{background:#fff;border-radius:18px;padding:24px 28px;max-width:420px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
 .potionpop h3{margin:6px 0;color:var(--accent);font-size:1.2rem}
+/* 고양이 보리 홈캠 */
+.camview{position:relative;background:linear-gradient(#EADFCB,#D9CBB0);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;gap:4px;border:3px solid #22211E}
+.camview.night{background:linear-gradient(#2A3040,#1A1E28);color:#ddd}
+.camview.hot{background:linear-gradient(#F6D3B5,#EEB48C)}
+.camview.scared{animation:shake .4s 3}
+.camtag{position:absolute;top:8px;left:12px;font-size:.78rem;color:#C0392B;font-weight:700}
+.cat{font-size:4.5rem;line-height:1.1}
+.catsay{margin:0;font-weight:700}
+.cammeta{display:flex;gap:14px;font-size:.85rem;opacity:.85}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}

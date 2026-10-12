@@ -2,7 +2,7 @@
 //   안내 → 1차 체험(조 유형별 조건) → 확인 과제 → 2차 체험 · 설계 → 결과 공개 → 조별 의견 → 종료
 import { TEAM_COUNT, PHASES, TYPES, STATIONS, GUIDES, MISSIONS, POTIONS, QUIZ, EFFICACY, LIKERT, OPINION, NATIONAL, NATIONAL_AI, INTERVIEW, bookingCheck,
          teamId, teamLabel, typeOf, access, score } from "./data.js";
-import { me, ready, watchState, watchPeople, watchHomes, watchOpinions, watchNotes, savePerson, saveOpinion, sendNote, replyNote } from "./fb.js";
+import { me, ready, watchState, watchPeople, watchHomes, watchOpinions, watchNotes, savePerson, saveOpinion, sendNote, replyNote, interviewAI, agentAI } from "./fb.js";
 import { mountEmo } from "./emo.js";
 import { mountHome } from "./home.js";
 import { mountAgent } from "./agent.js";
@@ -89,7 +89,7 @@ function renderIntro() {
 function missionHTML(id) {
   const M = MISSIONS[id];
   const list = (h, a) => a?.length ? `<h4>${h}</h4><ul>${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
-  return `<div class="mcard"><h3>${esc(M.title)}</h3><p>${esc(M.story)}</p>${list("할머니의 전화", M.call)}${list("조건", M.conds)}${list("꼭 지킬 것", M.keep)}${list("미션", M.goals)}${M.note ? `<p class="muted small">${esc(M.note)}</p>` : ""}</div>`;
+  return `<div class="mcard"><h3>${esc(M.title)}</h3><p>${esc(M.story)}</p>${list("조건", M.conds)}${list("꼭 지킬 것", M.keep)}${list("미션", M.goals)}${M.note ? `<p class="muted small">${esc(M.note)}</p>` : ""}</div>`;
 }
 function renderExp() {
   const A = access(S.phase, type());
@@ -114,12 +114,12 @@ function renderExp() {
   box.innerHTML = missionHTML(S.st) + `<div class="mbox"></div>`;
   const mb = box.querySelector(".mbox");
   const rd = round();
-  if (S.st === "emo") S.mounted = mountEmo(mb, { prev: mine().emo?.[rd], onRecord: rec => savePerson({ emo: { [rd]: rec } }) });
+  if (S.st === "emo") S.mounted = mountEmo(mb, { prev: mine().emo?.[rd], ai: interviewAI, onRecord: rec => savePerson({ emo: { [rd]: rec } }) });
   if (S.st === "home") S.mounted = mountHome(mb, { team: S.team, name: S.name, onCheck: pass => {
     const h = mine().homeEv?.[rd] || {};
     savePerson({ homeEv: { [rd]: { calls: (h.calls || 0) + 1, pass: !!(h.pass || pass) } } });
   } });
-  if (S.st === "agent") S.mounted = mountAgent(mb, { prev: mine().agent?.[rd], onRecord: rec => savePerson({ agent: { [rd]: rec } }) });
+  if (S.st === "agent") S.mounted = mountAgent(mb, { prev: mine().agent?.[rd], ai: agentAI, onRecord: rec => savePerson({ agent: { [rd]: rec } }) });
 }
 /* 디지털 리터러시 물약 — 마시면 지금 미션의 다음 힌트가 팝업으로 뜬다 */
 function potionState() {
@@ -297,6 +297,16 @@ $("quizForm").onsubmit = async e => {
 };
 
 /* ── 결과 공개 ───────────────────────────────────────── */
+/* 결과 공개 때 처음 보여주는 내 면접 평가 근거 */
+function ivHTML() {
+  const all = ["r1", "r2"].flatMap(r => (mine().emo?.[r]?.attempts || []).map(a => ({ ...a, r })));
+  if (!all.length) return "";
+  const a = all.sort((x, y) => y.at - x.at)[0];
+  const D = { likable: "호감도", honest: "진실성", diligent: "성실성", stable: "정서 안정성" };
+  return `<h3>내 AI 면접 평가 근거 <small>마지막 응시 · ${a.r === "r1" ? "1차" : "2차"} · 종합 ${a.total}점 ${a.pass ? "합격" : "불합격"}</small></h3>
+    <div class="ivwhy">${Object.entries(D).map(([k, v]) => `<div class="ebar"><span>${v}</span><i><u style="width:${a.dims?.[k] || 0}%"></u></i><em>${a.dims?.[k] ?? "—"}</em></div>`).join("")}
+    <h4>면접관 판단 기록</h4><ul>${(a.events || []).map(e => `<li>${esc(e)}</li>`).join("")}</ul></div>`;
+}
 function renderReveal() {
   if (S.phase !== "reveal") return;
   const t = tallyTypes(S.people, S.notes, S.homes);
@@ -305,6 +315,7 @@ function renderReveal() {
     <h2>1차 미션의 조건</h2>
     <div class="typecards">${Object.entries(TYPES).map(([k, v]) => `<div class="typecard${k === type() ? " mine" : ""}" style="--tc:${v.color}">
       <b>${v.ko} · ${esc(v.name)}</b><span>${esc(v.desc)}</span><em>${esc(v.level)}</em>${k === type() ? `<i>우리 조</i>` : ""}</div>`).join("")}</div>
+    ${ivHTML()}
     <h3>미션에 쓰인 기술</h3>
     <div class="techcards">${STATIONS.map(s => `<div><b>${esc(s.ko)}</b> → ${esc(s.tech)}</div>`).join("")}</div>
     <div class="revgrid">

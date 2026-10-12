@@ -1,7 +1,7 @@
 // 실습보고서 — 내 기록과 조의 결과를 미리 적은 워드 문서(.docx)를 만들어 내려 준다.
 //   1부 — 미션 조건과 내 미션 기록 · 보낸 쪽지 (자동)
 //   2부 — 결과 보고와 유형별 비교 (자동)
-//   3부 — 할머니 댁 규칙과 할머니께 보낸 문자 (자동)
+//   3부 — 고양이 보리: 우리 조 규칙 · 기기 설정 · 집 관리 메모 (자동)
 //   4부 — 조별 의견 (자동)
 //   5부 — 온라인 강의 연결 질문 (학생이 씀)
 //   6부 — 개인 의견
@@ -47,8 +47,8 @@ const yn = v => v ? "예" : "아니요";
 
 export function build({ team, name, me = {}, people = {}, homes = {}, opinions = {}, notes = {}, uid = null }) {
   const type = typeOf(team), T = TYPES[type];
-  const iv = r => { const x = me.emo?.[r]; return x?.attempts?.length ? `응시 ${x.attempts.length}회 · 최고 ${Math.max(...x.attempts.map(a => a.total))}점 · ${x.passed ? "합격" : "불합격"}${x.opened ? " · 평가 근거 확인" : ""}` : "응시 없음"; };
-  const hc = r => { const x = me.homeEv?.[r]; return x ? `확인 전화 ${x.calls || 0}회 · ${x.pass ? "해결" : "미해결"}` : "기록 없음"; };
+  const iv = r => { const x = me.emo?.[r]; return x?.attempts?.length ? `응시 ${x.attempts.length}회 · 최고 ${Math.max(...x.attempts.map(a => a.total))}점 · ${x.passed ? "합격" : "불합격"}` : "응시 없음"; };
+  const hc = r => { const x = me.homeEv?.[r]; return x ? `하루 지켜보기 ${x.calls || 0}회 · ${x.pass ? "성공" : "미해결"}` : "기록 없음"; };
   const ag = r => { const x = me.agent?.[r]; if (!x) return "기록 없음";
     const o = x.opened || {};
     return `${x.final ? `확정: ${RESTAURANTS[x.final.rest].name} · 조건 ${x.met}/7` : "확정 안 함"} · 상세 ${o.detail || 0}회 · 식당 정보 ${o.info || 0}회 · 진행 과정 ${o.trace || 0}회`; };
@@ -58,7 +58,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
     ["1차 미션 조건", `${T.ko} 유형 · ${T.name} — ${T.desc}`],
     ["인턴 면접", `1차 ${iv("r1")}
 2차 ${iv("r2")}`],
-    ["할머니 댁", `1차 ${hc("r1")}
+    ["고양이 보리", `1차 ${hc("r1")}
 2차 ${hc("r2")}`],
     ["가족 모임 예약", `1차 ${ag("r1")}
 2차 ${ag("r2")}`],
@@ -85,7 +85,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
     table([2700, ...TYPE_KEYS.map(() => Math.floor((W - 2700) / 3))], [
       ["", ...TYPE_KEYS.map(k => `${TYPES[k].ko} · ${TYPES[k].name}`)],
       ["인턴 면접 합격", ...TYPE_KEYS.map(k => f0(tt[k].pass))],
-      ["할머니 댁 해결 (조)", ...TYPE_KEYS.map(k => f0(tt[k].home))],
+      ["고양이 보리 성공 (조)", ...TYPE_KEYS.map(k => f0(tt[k].home))],
       ["예약 조건 충족 (7개 중)", ...TYPE_KEYS.map(k => f1(tt[k].agentMet))],
       ["결과 보고 정답률", ...TYPE_KEYS.map(k => f0(tt[k].report))],
       ["설명할 수 있다 (1~5)", ...TYPE_KEYS.map(k => f1(avgOf(tt[k].eff)))],
@@ -99,9 +99,9 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const set = { ...PRESET_SETTINGS, ...(h.settings || {}) };
   const part3 = [
     table([2600, W - 2600], [
-      ["확인 전화", h.check ? (h.check.pass ? "모두 해결" : `${h.check.ok}/5 해결`) : "하지 않음"],
+      ["하루 지켜보기", h.check ? (h.check.pass ? "모두 해결" : `${h.check.ok}/5 해결`) : "하지 않음"],
       ["기기 설정", SETTINGS.map(x => `${x.ko} ${set[x.id] ? "켜짐" : "꺼짐"}`).join(" · ")],
-      ["할머니께 보낸 문자", h.sms || "(작성 없음)"],
+      ["집 관리 메모", h.sms || "(작성 없음)"],
     ], { side: true }),
     (h.rules || []).length ? table([500, 1700, 1300, W - 3500], [["순서", "이벤트", "조건", "동작 · 이름"],
       ...h.rules.map((ru, i) => [String(i + 1), evKo(ru.ev), WHEN[ru.when] || "", `${(ru.acts || []).map(actKo).join(", ")}${ru.note ? ` 「${ru.note}」` : ""}`])], { head: true }) : p("저장된 규칙 없음"),
@@ -114,7 +114,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const QS = [
     ["1. 1차 미션에서 우리 조의 조건은 디지털 격차의 세 단계(접근 · 활용 · 결과) 가운데 어디에 해당했는지 쓰고, 그 조건이 미션 결과에 어떤 영향을 주었는지 2부 표를 근거로 설명하십시오.", "온라인 14 · 15쪽"],
     ["2. AI 면접이 표정으로 진실성 · 성실성 같은 성격을 판단하고, 읽은 감정에 따라 질문 난이도를 바꾼 것을 정서 컴퓨팅의 관점에서 설명하고, 이런 판단의 문제를 표정과 감정에 대한 반론(Barrett et al., 2019)과 EU AI법의 직장 내 감정 인식 금지와 연결하여 쓰십시오.", "온라인 8쪽 · 1부 평가 근거"],
-    ["3. 할머니 댁의 원인이 규칙 목록 밖(기기 설정 · 기본값 규칙)에도 숨어 있었던 것을 보이지 않는 컴퓨터(Weiser, 1991)와 이해 가능성(Bellotti & Edwards, 2001)의 관점에서 설명하고, 할머니처럼 직접 고칠 수 없는 사용자에게 어떤 설계가 필요한지 쓰십시오.", "온라인 9쪽 · 3부"],
+    ["3. 보리에게 생긴 문제의 원인이 규칙 목록 밖(기기 설정)에도 숨어 있었고, 기기들이 사람을 기준으로 만들어져 있었던 것을 보이지 않는 컴퓨터(Weiser, 1991)와 이해 가능성(Bellotti & Edwards, 2001)의 관점에서 설명하고, 어떤 설계가 필요한지 쓰십시오.", "온라인 9쪽 · 3부"],
     ["4. 예약 비서가 말없이 바꾼 조건을 찾았는지, 찾았거나 놓친 이유는 무엇이었는지 쓰고, 자동화의 아이러니(Bainbridge, 1983)와 평가의 간극으로 설명하십시오.", "온라인 10 · 11쪽"],
     ["5. 쪽지로 다른 조에 묻거나 다른 조의 쪽지에 답한 경험을 쓰고, 어떤 답이 실제로 도움이 되었는지를 따뜻한 전문가(Bakardjieva, 2005) 개념으로 설명하십시오.", "온라인 17쪽 · 1부 내가 보낸 쪽지"],
   ];
@@ -124,7 +124,7 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
     p(`${teamLabel(team)} · 이름 ${name || ""} · 학번 `),
     h2("1부. 미션 조건과 내 기록"), part1, ivT, sentT,
     h2("2부. 결과 보고"), part2,
-    h2("3부. 할머니 댁 — 우리 조 규칙과 문자"), part3,
+    h2("3부. 고양이 보리 — 우리 조 규칙 · 기기 설정 · 메모"), part3,
     h2("4부. 조별 의견"), part4,
     h2("5부. 온라인 강의 연결 질문"),
     hint("질문마다 3~5문장으로 쓰십시오. 회색 줄은 참고할 7주차 온라인 자료 쪽 번호입니다."),

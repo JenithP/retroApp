@@ -1,9 +1,9 @@
 // 신기술 인터페이스 체험 실습 (7주차) — 조 유형 · 단계 · 미션 · 힌트 · 결과 보고. 학생 화면 · 현황판 · 버셀 함수가 같은 파일을 읽는다.
 //
 // 7주차 온라인 「기술의 발전 방향과 격차」 를 실생활 미션으로 확인하는 실습이다.
-// 학생 화면에는 기술 이름을 쓰지 않는다 — 상황(인턴 면접 · 할머니 댁 · 가족 모임 예약)만 보이고, 기술 이름은 결과 공개 때 밝힌다.
+// 학생 화면에는 기술 이름을 쓰지 않는다 — 상황(인턴 면접 · 고양이 보리 · 가족 모임 예약)만 보이고, 기술 이름은 결과 공개 때 밝힌다.
 //   인턴 면접        — 정서 컴퓨팅: 표정 · 시선 · 머리 움직임으로 성격을 매기고, 읽은 감정에 따라 다음 질문의 난이도를 바꾼다 (쉬운 질문은 배점 상한이 낮음)
-//   할머니 댁        — 연결화: 서로 부딪히는 자동화 규칙을 원격으로 고친다
+//   고양이 보리      — 연결화: 여행 중 홈캠으로 고양이를 보며, 사람을 기준으로 만든 규칙과 기기 설정을 원격으로 고친다
 //   가족 모임 예약    — 에이전트: 조건 일곱 개를 말없이 바꾸는 예약 비서
 // 1차 미션은 조 유형마다 조건이 다르다. 가: 앱 + 힌트 / 나: 앱만 / 다: 앱 없음(미션 카드와 쪽지만)
 // 유형은 결과 공개 단계 전까지 학생 화면에 드러내지 않는다.
@@ -42,7 +42,7 @@ export function access(phase, type) {
 /* ── 미션 세 가지 (화면에는 상황 이름만) ─────────────────────── */
 export const STATIONS = [
   { id: "emo", ko: "인턴 면접", sub: "1차 AI 화상 면접", tech: "정서 컴퓨팅" },
-  { id: "home", ko: "할머니 댁", sub: "밤마다 걸려 오는 전화", tech: "연결화" },
+  { id: "home", ko: "고양이 보리", sub: "여행 중 집 관리", tech: "연결화" },
   { id: "agent", ko: "가족 모임 예약", sub: "예약 비서에게 맡기기", tech: "에이전트" },
 ];
 
@@ -50,19 +50,13 @@ export const MISSIONS = {
   emo: {
     title: "인턴 1차 AI 화상 면접 통과하기",
     story: "지원한 회사의 1차 면접은 사람 없이 AI가 진행합니다. 카메라 앞에서 질문 네 개에 답하면 AI가 지원자를 평가하고, 종합 70점 이상이면 2차 면접에 갈 수 있습니다.",
-    goals: ["종합 70점 이상으로 통과 (응시 기회 1인 3회)", "AI가 실제로 무엇을 보고 점수를 매겼는지 알아내기 — 결과 보고 때 제출"],
-    note: "카메라가 있는 기기에서만 응시 가능 · 영상은 기기 안에서만 처리 · 저장 · 전송 없음",
+    goals: ["종합 70점 이상으로 통과 (응시 기회 1인 3회)"],
+    note: "카메라와 마이크가 있는 기기에서만 응시 가능 · 영상은 기기 안에서만 처리 · 답변은 음성 인식으로 글자로 바뀌어 채점 서버로 전송 (크롬 음성 인식은 구글 서버 사용) · 말 대신 입력도 가능",
   },
   home: {
-    title: "할머니 댁 스마트홈 원격으로 고치기",
-    story: "혼자 사시는 할머니 댁에 작년에 스마트홈을 달아 드렸습니다. 오늘 할머니께 전화가 왔습니다.",
-    call: [
-      "「밤에 화장실 가려고 복도에 나가면 불이 켜졌다가 금방 꺼져. 깜깜해서 무서워.」",
-      "「복지관 다녀오면 집이 너무 추워. 보일러가 꺼져 있는 것 같아.」",
-      "「밤 10시만 되면 보던 텔레비전이 혼자 꺼져.」",
-    ],
-    keep: ["밤에 현관문이 열리면 아들에게 문자가 가는 것은 꼭 유지 (할머니 안전)", "외출할 때 불과 텔레비전을 끄는 절전은 유지"],
-    goals: ["원인을 찾아 규칙 고치기 (조원 전체가 한 집을 함께 고침)", "「할머니께 확인 전화」로 세 가지가 모두 해결되었는지 확인", "할머니께 바뀐 점을 설명하는 문자 쓰기"],
+    title: "여행 중 고양이 보리 돌보기",
+    story: "3박 4일 여행을 떠났습니다. 집에는 고양이 보리가 혼자 있습니다. 홈캠으로 보리를 볼 수 있고, 스마트홈 앱으로 집의 기기를 조절할 수 있습니다.",
+    goals: ["여행하는 동안 보리가 잘 지내도록 집을 관리하기", "집은 계속 안전해야 함", "조원 전체가 한 집을 함께 관리함"],
   },
   agent: {
     title: "가족 모임 식당 예약하기",
@@ -77,24 +71,23 @@ export const MISSIONS = {
 export const POTIONS = 6;   // 한 사람 · 한 라운드
 export const GUIDES = {
   emo: [
-    ["결과 화면을 끝까지", "불합격이면 결과 화면 아래 「평가 근거 보기」에서 항목별 점수 확인"],
-    ["한 번에 하나만 바꾸기", "다음 응시에서는 한 가지 행동만 바꿔 보고 어느 점수가 달라지는지 비교"],
-    ["면접관의 말 기록", "질문 사이 면접관의 말과 질문의 어려움이 언제 · 왜 바뀌는지 메모 — 평가 근거의 「면접관 판단 기록」과 비교"],
-    ["답변 내용 시험", "한 번은 성의 있게, 한 번은 아무 말이나 입력해 보고 점수 비교"],
+    ["한 번에 하나만 바꾸기", "다음 응시에서는 한 가지 행동만 바꿔 보고 종합 점수가 어떻게 달라지는지 비교"],
+    ["면접관의 말 기록", "질문 사이 면접관의 말과 질문의 어려움이 언제 바뀌는지 메모 — 바로 전 내 표정 · 자세와 비교"],
+    ["답변 말고도 보기", "답변 내용만 바꾸지 말고 표정 · 시선 · 자세도 바꿔 보기"],
+    ["답변 내용 시험", "한 번은 성의 있게, 한 번은 짧게 답해 보고 점수 비교"],
   ],
   home: [
-    ["실행 기록부터", "할머니가 말한 상황(밤 · 복도 움직임 · 외출 후 귀가 · 밤 10시)을 이벤트 버튼으로 재현하고 실행 기록 확인"],
-    ["규칙 순서", "규칙은 위에서부터 차례로 실행 · 같은 기기는 나중 규칙이 이김"],
-    ["지킬 것 확인", "규칙을 지우기 전에 유지 조건(현관 문자 · 외출 절전)에 걸리지 않는지 확인"],
-    ["목록 밖도 보기", "실행 기록에 규칙 이름이 아닌 항목이 있으면 그 기기의 화면(역할 선택)에서 설정 확인"],
-    ["확인 전화", "고친 뒤 「할머니께 확인 전화」 — 해결되지 않은 불편이 남아 있으면 다시"],
+    ["하루를 직접 돌려 보기", "시계의 아침 · 낮 · 저녁 · 밤과 움직임 감지를 차례로 눌러 홈캠의 보리 모습 확인"],
+    ["실행 기록 읽기", "보리에게 문제가 생긴 순간의 실행 기록에서 무엇이 작동했는지 확인"],
+    ["목록 밖도 보기", "실행 기록에 규칙 이름이 아닌 「기본 설정」 항목이 있으면 그 기기를 크게 본 화면(역할 선택)에서 설정 확인"],
+    ["고양이는 사람이 아님", "센서와 기기가 사람을 기준으로 만들어졌다면 고양이에게 무슨 일이 생길지 생각해 보기"],
+    ["하루 지켜보기", "고친 뒤 「하루 지켜보기」로 처음부터 다시 확인 — 집의 안전도 함께"],
   ],
   agent: [
-    ["완료 메시지를 믿지 않기", "「예약 상세」에서 날짜 · 시간 · 메뉴 가격 · 예약금 확인"],
-    ["식당 정보 확인", "「식당 정보」에서 층 · 엘리베이터 · 주차 · 유아용 의자 · 메뉴 재료 확인"],
-    ["진행 과정 확인", "「진행 과정」에서 비서가 스스로 바꾼 조건 찾기"],
-    ["다른 식당 비교", "후보 식당마다 식당 정보를 열어 조건 일곱 가지를 하나씩 대조"],
-    ["바꾼 뒤 다시 확인", "식당이나 메뉴를 바꿀 때마다 예약 상세를 다시 열어 일곱 가지 전부 재확인"],
+    ["요청을 빠짐없이", "조건을 한 메시지에 모두 담아 요청 — 말하지 않은 조건은 비서가 알아서 정함"],
+    ["완료 메시지를 믿지 않기", "「예약 내역」에서 날짜 · 인원 · 메뉴 가격 · 요청 사항 확인"],
+    ["직접 물어보기", "층 · 엘리베이터 · 주차 · 메뉴 재료는 비서에게 물어봐야 알려 줌"],
+    ["바꾼 뒤 다시 확인", "식당이나 메뉴를 바꾸면 무엇이 함께 바뀌었는지 예약 내역 다시 확인"],
   ],
 };
 
@@ -105,7 +98,9 @@ export const EXPR = [
 ];
 export const exprKo = id => EXPR.find(e => e.id === id)?.ko || id;
 export const INTERVIEW = {
-  seconds: 20,          // 질문당 답변 시간
+  think: 10,            // 질문마다 생각 시간 (측정 안 함)
+  seconds: 45,          // 질문당 답변 시간
+  early: 15,            // 이보다 일찍 답변을 마치면 성실성 감점
   count: 4,             // 질문 수
   pass: 70,
   attempts: 3,
@@ -123,104 +118,135 @@ export const INTERVIEW = {
   ],
 };
 
-/* ── 할머니 댁 (스마트홈) ─────────────────────────────── */
+/* ── 고양이 보리 (여행 중 스마트홈) ─────────────────────── */
 export const DEVICES = [
-  { id: "light", ko: "복도 조명" },
-  { id: "tv", ko: "텔레비전" },
-  { id: "aircon", ko: "보일러" },
+  { id: "cam", ko: "홈캠" },
+  { id: "aircon", ko: "에어컨" },
+  { id: "feeder", ko: "자동 급식기" },
+  { id: "vacuum", ko: "로봇청소기" },
+  { id: "curtain", ko: "커튼" },
+  { id: "light", ko: "거실 조명" },
+  { id: "sensor", ko: "움직임 센서" },
+  { id: "siren", ko: "사이렌" },
   { id: "door", ko: "현관" },
-  { id: "motion", ko: "복도 센서" },
-  { id: "phone", ko: "할머니 휴대폰" },
   { id: "clock", ko: "시계" },
-  { id: "family", ko: "아들 휴대폰" },
+  { id: "phone", ko: "내 휴대폰" },
 ];
 export const EVENTS = [
+  { id: "away_on", ko: "외출 모드 켜짐", dev: "phone", btn: "외출 모드 켜기" },
+  { id: "away_off", ko: "외출 모드 꺼짐", dev: "phone", btn: "외출 모드 끄기" },
+  { id: "morning", ko: "아침 7시", dev: "clock", btn: "아침 7시" },
+  { id: "noon", ko: "낮 12시", dev: "clock", btn: "낮 12시" },
+  { id: "evening", ko: "저녁 6시", dev: "clock", btn: "저녁 6시" },
+  { id: "night", ko: "밤 10시", dev: "clock", btn: "밤 10시" },
+  { id: "motion", ko: "거실 움직임", dev: "sensor", btn: "움직임 감지" },
   { id: "door", ko: "현관문 열림", dev: "door", btn: "현관문 열기" },
-  { id: "motion", ko: "복도 움직임", dev: "motion", btn: "복도 지나가기" },
-  { id: "leave", ko: "외출", dev: "phone", btn: "외출" },
-  { id: "arrive", ko: "귀가", dev: "phone", btn: "귀가" },
-  { id: "night", ko: "밤 10시", dev: "clock", btn: "밤 10시로" },
-  { id: "morning", ko: "아침 7시", dev: "clock", btn: "아침 7시로" },
-  { id: "tv_on", ko: "텔레비전 켬", dev: "tv", btn: "텔레비전 켜기" },
 ];
 export const ACTIONS = [
-  { id: "light_on", ko: "복도 조명 켜기", key: "light", val: true },
-  { id: "light_off", ko: "복도 조명 끄기", key: "light", val: false },
-  { id: "tv_off", ko: "텔레비전 끄기", key: "tv", val: false },
-  { id: "temp_18", ko: "보일러 18도", key: "temp", val: 18 },
-  { id: "temp_22", ko: "보일러 22도", key: "temp", val: 22 },
-  { id: "alert", ko: "아들에게 문자", key: "alerts", val: "+1" },
+  { id: "feed", ko: "급식 1회" },
+  { id: "ac_on", ko: "에어컨 켜기" },
+  { id: "ac_off", ko: "에어컨 끄기" },
+  { id: "curtain_open", ko: "커튼 열기" },
+  { id: "curtain_close", ko: "커튼 닫기" },
+  { id: "light_on", ko: "조명 켜기" },
+  { id: "light_off", ko: "조명 끄기" },
+  { id: "vacuum", ko: "청소 시작" },
+  { id: "siren", ko: "사이렌 울리기" },
+  { id: "alert", ko: "내 휴대폰 알림" },
 ];
-export const WHEN = { any: "언제나", night: "밤일 때만", day: "낮일 때만" };
+export const WHEN = { any: "언제나", away: "외출 중일 때만", home: "집에 있을 때만" };
 export const evKo = id => EVENTS.find(e => e.id === id)?.ko || id;
 export const actKo = id => ACTIONS.find(a => a.id === id)?.ko || id;
 export const MAX_RULES = 12;
 export const LOG_MAX = 40;
 
-// 미리 들어 있는 규칙과 기기 기본 설정 — 할머니의 불편 세 가지가 여기서 나온다. 원인마다 두 군데씩 숨어 있다.
-//   복도 불: 4번 「야간 절전」과 맨 아래 7번 「기본값」이 2번 야간등을 덮어씀
-//   추운 집: 외출 때 18도로 내리고 귀가 규칙이 없음 + 보일러 기본 설정 「외출 후 절약 유지」가 귀가 뒤에도 18도로 되돌림
-//   텔레비전: 3번 취침 모드 + 텔레비전 기본 설정 「밤 10시 자동 꺼짐」
-// 기기 기본 설정은 규칙 목록에 없다 — 실행 기록과 기기 화면의 설정에서만 보인다.
+// 미리 들어 있는 규칙과 기기 기본 설정 — 보리에게 생기는 문제가 여기서 나온다. 문제마다 원인이 규칙과 기기 설정에 나뉘어 있다.
+//   더위: 「외출 절전」이 에어컨을 끔 + 에어컨 기본 설정 「재실 감지 자동 꺼짐」(고양이는 사람으로 감지되지 않음)
+//   배고픔: 아침 급식 규칙이 없음 + 급식기 기본 설정 「외출 중 급식 일시정지」
+//   놀람: 「침입 경보」가 고양이 움직임에도 사이렌을 울림
+//   물: 「낮 청소」 + 로봇청소기 기본 설정 「장애물 회피 끔」 → 물그릇을 엎음
+//   지킬 것: 외출 중 현관문이 열리면 내 휴대폰 알림
 export const PRESET_RULES = [
-  { id: "r1", ev: "door", when: "any", acts: ["light_on"], note: "현관 조명" },
-  { id: "r2", ev: "motion", when: "night", acts: ["light_on"], note: "복도 야간등" },
-  { id: "r3", ev: "night", when: "any", acts: ["light_off", "tv_off"], note: "취침 모드" },
-  { id: "r4", ev: "motion", when: "night", acts: ["light_off"], note: "야간 절전" },
-  { id: "r5", ev: "leave", when: "any", acts: ["light_off", "tv_off", "temp_18"], note: "외출 절전" },
-  { id: "r6", ev: "door", when: "night", acts: ["alert"], note: "밤 현관 알림" },
-  { id: "r7", ev: "motion", when: "night", acts: ["light_off"], note: "기본값" },
+  { id: "r1", ev: "morning", when: "any", acts: ["curtain_open", "light_off"], note: "아침 루틴" },
+  { id: "r2", ev: "evening", when: "any", acts: ["feed", "light_on"], note: "저녁 급식" },
+  { id: "r3", ev: "night", when: "any", acts: ["curtain_close", "light_off"], note: "취침" },
+  { id: "r4", ev: "away_on", when: "any", acts: ["ac_off", "light_off"], note: "외출 절전" },
+  { id: "r5", ev: "noon", when: "away", acts: ["vacuum"], note: "낮 청소" },
+  { id: "r6", ev: "motion", when: "away", acts: ["siren", "alert"], note: "침입 경보" },
+  { id: "r7", ev: "door", when: "away", acts: ["alert"], note: "현관 알림" },
 ];
 export const SETTINGS = [
-  { id: "ecoHold", dev: "aircon", ko: "외출 후 절약 유지", desc: "외출했다 돌아와도 2시간 동안 18도 유지" },
-  { id: "tvTimer", dev: "tv", ko: "밤 10시 자동 꺼짐", desc: "밤 10시가 되면 텔레비전 끄기" },
+  { id: "acPresence", dev: "aircon", ko: "재실 감지 자동 꺼짐", desc: "사람이 감지되지 않으면 에어컨을 끔 (절전)" },
+  { id: "feederPause", dev: "feeder", ko: "외출 중 급식 일시정지", desc: "외출 모드에서는 급식을 멈춤 (사료 낭비 방지)" },
+  { id: "vacuumBump", dev: "vacuum", ko: "장애물 회피 끔", desc: "작은 물건을 피하지 않고 빠르게 청소" },
 ];
-export const PRESET_SETTINGS = { ecoHold: true, tvTimer: true };
-export const PRESET_STATE = { light: false, tv: false, temp: 22, night: false, home: true, alerts: 0 };
+export const PRESET_SETTINGS = { acPresence: true, feederPause: true, vacuumBump: true };
+export const PRESET_STATE = { time: "morning", away: true, ac: true, curtain: false, light: false, hunger: 1, fed: 0, water: true,
+  siren: false, sirens: 0, alerts: 0, vacuum: false, temp: 25, maxTemp: 25 };
 
-/** 이벤트 하나를 규칙대로 처리한다 — 규칙은 위에서부터 차례로, 같은 기기는 나중 규칙이 이김 */
+const BASE_TEMP = { morning: 25, noon: 29, evening: 27, night: 24 };
+/** 이벤트 하나를 규칙대로 처리한다 — 규칙은 위에서부터 차례로, 같은 기기는 나중 규칙이 이김. 기기 기본 설정이 그 뒤에 적용된다 */
 export function applyEvent(home, evId) {
   const st = { ...PRESET_STATE, ...(home.state || {}) };
-  if (evId === "night") st.night = true;
-  if (evId === "morning") st.night = false;
-  if (evId === "leave") st.home = false;
-  if (evId === "arrive") st.home = true;
-  if (evId === "tv_on") st.tv = true;
+  const set = { ...PRESET_SETTINGS, ...(home.settings || {}) };
   const fired = [];
+  if (["morning", "noon", "evening", "night"].includes(evId)) {
+    st.time = evId; st.hunger = Math.min(3, (st.hunger || 0) + 1); st.siren = false; st.vacuum = false;
+  }
+  if (evId === "away_on") st.away = true;
+  if (evId === "away_off") st.away = false;
   for (const r of home.rules || []) {
     if (r.ev !== evId) continue;
-    if (r.when === "night" && !st.night) continue;
-    if (r.when === "day" && st.night) continue;
+    if (r.when === "away" && !st.away) continue;
+    if (r.when === "home" && st.away) continue;
     for (const a of r.acts || []) {
-      const act = ACTIONS.find(x => x.id === a);
-      if (!act) continue;
-      st[act.key] = act.val === "+1" ? (st[act.key] || 0) + 1 : act.val;
+      if (a === "feed") {
+        if (set.feederPause && st.away) { fired.push({ rule: "set", note: "급식기 기본 설정 · 외출 중 급식 일시정지", act: "feed_blocked" }); continue; }
+        st.hunger = 0; st.fed = (st.fed || 0) + 1;
+      }
+      if (a === "ac_on") st.ac = true;
+      if (a === "ac_off") st.ac = false;
+      if (a === "curtain_open") st.curtain = true;
+      if (a === "curtain_close") st.curtain = false;
+      if (a === "light_on") st.light = true;
+      if (a === "light_off") st.light = false;
+      if (a === "vacuum") {
+        st.vacuum = true;
+        if (set.vacuumBump && st.water) { st.water = false; fired.push({ rule: "set", note: "로봇청소기 기본 설정 · 장애물 회피 끔", act: "water_spill" }); }
+      }
+      if (a === "siren") { st.siren = true; st.sirens = (st.sirens || 0) + 1; }
+      if (a === "alert") st.alerts = (st.alerts || 0) + 1;
       fired.push({ rule: r.id, note: r.note || "", act: a });
     }
   }
-  // 규칙 다음에 기기 기본 설정이 적용된다
-  const set = { ...PRESET_SETTINGS, ...(home.settings || {}) };
-  if (evId === "arrive" && set.ecoHold) { st.temp = 18; fired.push({ rule: "set", note: "보일러 기본 설정 · 외출 후 절약 유지", act: "temp_18" }); }
-  if (evId === "night" && set.tvTimer) { st.tv = false; fired.push({ rule: "set", note: "텔레비전 기본 설정 · 밤 10시 자동 꺼짐", act: "tv_off" }); }
+  // 실내 온도 — 낮에 커튼이 열려 있으면 더 덥다. 에어컨은 재실 감지 설정이 켜져 있으면 외출 중에 꺼진다
+  const acBlocked = st.ac && set.acPresence && st.away;
+  if (acBlocked && !["motion", "door"].includes(evId)) fired.push({ rule: "set", note: "에어컨 기본 설정 · 재실 감지 자동 꺼짐 (사람 없음)", act: "ac_off" });
+  const base = (BASE_TEMP[st.time] || 25) + (st.time === "noon" && st.curtain ? 4 : 0);
+  st.temp = st.ac && !acBlocked ? Math.min(base, 24) : base;
+  st.maxTemp = Math.max(st.maxTemp || 0, st.temp);
   return { state: st, fired };
 }
 
-/** 할머니께 확인 전화 — 지금 규칙으로 상황 다섯 개를 처음부터 돌려 본다 */
+/** 하루 지켜보기 — 지금 규칙과 기기 설정으로 외출한 하루를 처음부터 돌려 보고 홈캠 기록을 남긴다 */
+export const DAY = ["away_on", "morning", "motion", "noon", "motion", "evening", "motion", "night"];
 export function homeCheck(rules, settings) {
-  const run = (evs, init = {}) => evs.reduce((st, ev) => applyEvent({ state: st, rules, settings }, ev).state, { ...PRESET_STATE, ...init });
+  const run = evs => evs.reduce((st, ev) => applyEvent({ state: st, rules, settings }, ev).state, { ...PRESET_STATE, maxTemp: 0 });
+  const day = run(DAY);
+  const sec = run(["away_on", "door"]);
   const tests = [
-    { id: "hall", kind: "불편", ok: run(["night", "motion"]).light === true,
-      yes: "「이제 밤에 복도 나가면 불이 안 꺼지네. 고맙다.」", no: "「아직도 복도 불이 켜졌다가 금방 꺼지는구나…」" },
-    { id: "cold", kind: "불편", ok: run(["leave", "arrive"]).temp >= 22,
-      yes: "「복지관 다녀왔는데 집이 따뜻하더라.」", no: "「오늘도 다녀오니 집이 춥더라.」" },
-    { id: "tv", kind: "불편", ok: run(["tv_on", "night"]).tv === true,
-      yes: "「텔레비전 끝까지 잘 봤다.」", no: "「또 10시에 텔레비전이 꺼졌어.」" },
-    { id: "alert", kind: "유지", ok: run(["night", "door"]).alerts >= 1,
-      yes: null, no: "아들: 「어젯밤 현관문 열렸을 때 문자가 안 왔어요. 이건 꼭 있어야 하는데…」" },
-    { id: "save", kind: "유지", ok: (() => { const s = run(["tv_on", "leave"], { light: true }); return s.light === false && s.tv === false; })(),
-      yes: null, no: "할머니: 「나갔다 왔더니 불이랑 텔레비전이 켜져 있더라. 전기세 많이 나오겠어.」" },
+    { id: "food", kind: "보리", ok: day.fed >= 2,
+      yes: "보리가 아침 · 저녁 밥을 잘 먹었어요.", no: `보리가 밥그릇 앞에서 오래 울었어요. (오늘 급식 ${day.fed}번)` },
+    { id: "heat", kind: "보리", ok: day.maxTemp <= 26,
+      yes: "낮에도 시원한 곳에서 잘 잤어요.", no: `낮에 보리가 바닥에 배를 깔고 헐떡였어요. (가장 높은 실내 온도 ${day.maxTemp}도)` },
+    { id: "water", kind: "보리", ok: day.water,
+      yes: "물그릇이 그대로 있어요.", no: "물그릇이 엎어져 바닥이 젖어 있어요." },
+    { id: "scare", kind: "보리", ok: day.sirens === 0,
+      yes: "보리가 거실을 편하게 돌아다녔어요.", no: `보리가 소파 밑에 숨어서 나오지 않아요. 이웃이 사이렌 소리 민원을 넣었어요. (사이렌 ${day.sirens}번)` },
+    { id: "secure", kind: "집", ok: sec.alerts >= 1,
+      yes: "현관문이 열리자 내 휴대폰으로 알림이 왔어요.", no: "현관문이 열렸는데 아무 알림도 오지 않았어요." },
   ];
-  return { pass: tests.every(t => t.ok), tests };
+  return { pass: tests.every(t => t.ok), tests, day };
 }
 
 /* ── 가족 모임 예약 ─────────────────────────────────────── */
@@ -267,16 +293,16 @@ export function bookingCheck(b) {
 
 /* ── 결과 보고 (1차 뒤 개인별) — 체험해야 알 수 있는 것을 묻는다. 다 유형은 쪽지로 얻은 정보로 답한다 ── */
 export const QUIZ = [
-  { id: "e1", st: "emo", multi: true, q: "AI 면접이 실제로 점수에 반영한 것을 모두 고르십시오.",
-    opts: ["답변 내용", "웃는 표정", "화면을 보는 시선", "머리 움직임", "목소리 크기", "답변을 일찍 끝냈는지"], a: [1, 2, 3, 5] },
+  { id: "e1", st: "emo", multi: true, q: "AI 면접이 실제로 점수에 반영했다고 생각하는 것을 모두 고르십시오.",
+    opts: ["답변 내용", "웃는 표정", "화면을 보는 시선", "머리 움직임", "목소리 크기", "답변을 일찍 끝냈는지", "말하는 속도"], a: [0, 1, 2, 3, 5] },
   { id: "e2", st: "emo", q: "면접관 AI가 지원자의 긴장한 표정을 읽었을 때 한 일과 그 결과는?",
     opts: ["응원 문구를 보여 주고 점수는 그대로 둠", "면접을 중단함", "아무 변화 없음", "쉬운 질문으로 바꿨고, 쉬운 질문은 배점 상한이 낮아 종합 점수가 떨어짐"], a: 3 },
-  { id: "h1", st: "home", multi: true, q: "할머니 댁 불편의 원인을 모두 고르십시오.",
-    opts: ["밤 복도 움직임에 조명을 끄는 규칙이 켜는 규칙 뒤에 있음", "보일러 고장", "외출 때 18도로 내리고 귀가 때 올리는 규칙이 없음", "밤 10시 취침 모드가 텔레비전을 끔", "와이파이 끊김", "현관 알림 규칙"], a: [0, 2, 3] },
+  { id: "h1", st: "home", multi: true, q: "보리에게 생긴 문제의 원인을 모두 고르십시오.",
+    opts: ["외출 절전 규칙이 에어컨을 끔", "에어컨이 사람이 없으면 자동으로 꺼짐", "급식기가 외출 중에는 멈춤", "고양이 움직임에 침입 경보가 울림", "로봇청소기가 물그릇을 엎음", "보리가 아픔", "인터넷 끊김"], a: [0, 1, 2, 3, 4] },
+  { id: "h2", st: "home", q: "고칠 때 남겨 두어야 하는 기능은?",
+    opts: ["침입 경보 사이렌", "외출 중 현관문 열림 알림", "낮 청소", "외출 절전"], a: 1 },
   { id: "h3", st: "home", multi: true, q: "규칙 목록만 봐서는 찾기 어려웠던 원인을 모두 고르십시오.",
-    opts: ["목록 맨 아래 「기본값」 소등 규칙", "보일러 기본 설정 「외출 후 절약 유지」", "텔레비전 기본 설정 「밤 10시 자동 꺼짐」", "할머니 휴대폰 배터리", "현관 센서 고장"], a: [0, 1, 2] },
-  { id: "h2", st: "home", q: "고칠 때 지워서는 안 되는 규칙은?",
-    opts: ["야간 절전", "밤 현관 알림", "취침 모드", "복도 야간등"], a: 1 },
+    opts: ["에어컨 재실 감지 자동 꺼짐", "급식기 외출 중 일시정지", "로봇청소기 장애물 회피 끔", "침입 경보 규칙", "저녁 급식 규칙"], a: [0, 1, 2] },
   { id: "a1", st: "agent", multi: true, q: "예약 비서의 첫 예약이 조건과 달랐던 것을 모두 고르십시오.",
     opts: ["요일", "인원", "휠체어 접근", "메뉴 가격", "땅콩 알레르기", "유아용 의자", "식당 지역"], a: [0, 2, 3, 4, 5] },
   { id: "a2", st: "agent", q: "조건 일곱 가지를 모두 만족할 수 있는 식당은?",

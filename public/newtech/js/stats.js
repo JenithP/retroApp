@@ -47,7 +47,7 @@ export function barsHTML(t, rows) {
 
 export const RESULT_ROWS = [
   { ko: "인턴 면접 합격", sub: "1차 · 조원 중 비율", key: "pass", max: 100, unit: "%" },
-  { ko: "할머니 댁 해결", sub: "1차 · 조 단위", key: "home", max: 100, unit: "%" },
+  { ko: "고양이 보리 성공", sub: "1차 · 조 단위", key: "home", max: 100, unit: "%" },
   { ko: "예약 조건 충족", sub: "1차 · 7개 중 평균", key: "agentMet", max: 7, unit: "개", digits: 1 },
   { ko: "결과 보고 정답률", sub: "개인별", key: "report", max: 100, unit: "%" },
   { ko: "설명할 수 있다 (평균)", sub: "1~5", key: t => { const v = Object.values(t.eff).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }, max: 5, digits: 1 },
