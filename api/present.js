@@ -129,7 +129,8 @@ export const SYSTEM = `You help run student presentations in a Korean university
 Choose the three questions that will most sharpen the class's understanding of this presentation. Prefer questions that:
 - go to the core claim, method, or evidence of the paper as presented in the slides, rather than surface details;
 - expose an assumption, a limitation, a gap between the evidence and the conclusion, or an alternative explanation;
-- connect the paper to the students' own lab experiences or to another concept from the course in a way the presenters can actually answer;
+- test the communication problem the team identified from the paper, or whether the team's proposed solution would actually address it (each team's slides include a communication problem grounded in the paper and the team's own solution);
+- connect the paper to another concept from the course in a way the presenters can actually answer;
 - are clear and answerable in a few minutes.
 Avoid questions that are vague, already answered plainly in the slides, purely factual lookups, off-topic, or near-duplicates of a stronger question you already chose. If several questions are near-duplicates, choose the clearest and earliest one.
 
