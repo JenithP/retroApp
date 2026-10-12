@@ -1,5 +1,5 @@
-// 조별 발표 현황판 — 문헌 신청 현황 · 발표 순서 입력 · 발표 날 질문 생성 · 보너스 명단.
-import { TEAM_COUNT, MAX_TEAMS_PER_PAPER, WEEKS, SLOTS_PER_WEEK, PAPERS, teamId, paperOf, weekLabel, fmt, openAt, questionCloseAt } from "./data.js";
+// 조별 발표 현황판 — 문헌 신청 현황 · 신청 마감 후 사다리로 주차 배정 · 발표 날 질문 생성 · 보너스 명단.
+import { TEAM_COUNT, MAX_TEAMS_PER_PAPER, WEEKS, SLOTS_PER_WEEK, PAPERS, teamId, paperOf, weekLabel, weekName, fmt, openAt, questionCloseAt } from "./data.js";
 import { ready, watchState, watchPicks, watchFiles, watchSelect, watchPeople, adminCall } from "./fb.js";
 
 const $ = id => document.getElementById(id);
@@ -24,7 +24,10 @@ const msg = t => $("stepMsg").textContent = t;
 $("lockPicks").onclick = async () => {
   const to = !B.state.locked;
   if (!confirm(to ? "문헌 신청 마감 (학생 화면에서 신청 · 변경 불가)" : "문헌 신청 다시 열기")) return;
-  try { await adminCall(B.code, "lock", { locked: to }); msg(to ? "신청 마감" : "신청 열림"); } catch (e) { msg(e.message); }
+  try {
+    await adminCall(B.code, "lock", { locked: to }); msg(to ? "신청 마감 — 「주차 배정」에서 사다리 시작" : "신청 열림");
+    if (to) { B.view = "order"; tab(); }
+  } catch (e) { msg(e.message); }
 };
 $("reset").onclick = async () => {
   if (!confirm("신청 · 일정 · 발표 자료 · 질문 · 선정 결과 전체 삭제 (리허설 후 전용)")) return;
@@ -80,6 +83,108 @@ $("saveOrder").onclick = async () => {
   const slots = {};
   for (const [key, t] of Object.entries(B.draft || {})) if (t) { const [w, o] = key.split("_").map(Number); slots[teamId(t)] = { week: w, order: o }; }
   try { const r = await adminCall(B.code, "schedule", { slots }); B.dirty = false; $("orderMsg").textContent = `저장 — ${r.n}개 조`; } catch (e) { $("orderMsg").textContent = e.message; }
+};
+
+/* ── 사다리 ───────────────────────────────────────── */
+// 위: 1~20조, 아래: 가려진 20칸 (10주차 1번 … 14주차 4번을 무작위로 섞어 놓음). 가로줄을 따라 내려가 도착한 칸이 그 조의 발표 주차 · 순서.
+const N = TEAM_COUNT, LV = 26, X = c => 25 + c * (950 / (N - 1)), TOP = 78, BOT = 548, Y = l => TOP + (l + 0.5) * (BOT - TOP) / LV;
+const SLOT = i => ({ week: Math.floor(i / SLOTS_PER_WEEK), order: i % SLOTS_PER_WEEK + 1 });
+const HUE = t => `hsl(${(t * 137) % 360} 62% 42%)`;
+const L = { rungs: null, perm: null, result: null, running: false, skip: false };
+const DEMO = new URLSearchParams(location.search).has("demo");   // board.html?demo — 연습: 마감 전에도 돌려 보고 저장하지 않음
+const svgEl = (tag, attrs, text) => { const e = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+function makeRungs() {
+  const r = Array.from({ length: LV }, () => new Array(N - 1).fill(false));
+  for (let l = 0; l < LV; l++) for (let c = 0; c < N - 1; c++) if (!(c && r[l][c - 1]) && Math.random() < 0.36) r[l][c] = true;
+  return r;
+}
+function trace(start) {
+  let c = start; const pts = [[X(c), TOP]];
+  for (let l = 0; l < LV; l++) {
+    const y = Y(l);
+    if (L.rungs[l][c]) { pts.push([X(c), y], [X(c + 1), y]); c++; }
+    else if (c && L.rungs[l][c - 1]) { pts.push([X(c), y], [X(c - 1), y]); c--; }
+  }
+  pts.push([X(c), BOT]);
+  return { end: c, pts };
+}
+function drawLadder() {
+  const svg = $("ladder"); svg.innerHTML = "";
+  for (let c = 0; c < N; c++) {
+    const t = c + 1, p = paperOf(B.picks[teamId(t)]?.paper);
+    svg.append(svgEl("rect", { x: X(c) - 21, y: 10, width: 42, height: 40, rx: 8, fill: L.result ? HUE(t) : "#22211E" }));
+    svg.append(svgEl("text", { x: X(c), y: 36, "text-anchor": "middle", class: "lt" }, `${t}조`));
+    svg.append(svgEl("text", { x: X(c), y: 66, "text-anchor": "middle", class: "lp" }, p ? `${PAPERS.indexOf(p) + 1}번` : "—"));
+    svg.append(svgEl("line", { x1: X(c), y1: TOP, x2: X(c), y2: BOT, class: "lv" }));
+  }
+  if (L.rungs) L.rungs.forEach((row, l) => row.forEach((on, c) => on && svg.append(svgEl("line", { x1: X(c), y1: Y(l), x2: X(c + 1), y2: Y(l), class: "lr" }))));
+  for (let c = 0; c < N; c++) {
+    const x = X(c), slot = L.perm ? L.perm[c] : null, who = L.result && slot != null ? Object.keys(L.result).find(t => L.result[t] === slot) : null;
+    svg.append(svgEl("rect", { x: x - 21, y: 562, width: 42, height: 40, rx: 8, fill: who ? HUE(Number(who)) : "#fff", stroke: "#22211E", "stroke-width": 1.5, id: "slot" + c }));
+    svg.append(svgEl("text", { x, y: 588, "text-anchor": "middle", class: who ? "lt" : "lo", id: "slotT" + c }, who ? `${who}조` : "?"));
+    svg.append(svgEl("text", { x, y: 622, "text-anchor": "middle", class: "lw", id: "slotW" + c }, who ? slotName(slot) : ""));
+  }
+}
+const slotName = i => { const s = SLOT(i); return `${weekName(s.week).replace("주차", "")}-${s.order}`; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function runLadder() {
+  if (!B.state.locked && !DEMO) { $("ladMsg").textContent = "먼저 위의 「신청 마감」"; return; }
+  if (!DEMO && Object.keys(B.state.slots || {}).length && !confirm("이미 저장된 주차 배정이 있습니다. 사다리를 다시 해서 새로 정할까요? (저장 전까지는 바뀌지 않음)")) return;
+  L.rungs = makeRungs(); L.result = null; L.running = true; L.skip = false;
+  L.perm = Array.from({ length: N }, (_, i) => i);
+  for (let i = N - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [L.perm[i], L.perm[j]] = [L.perm[j], L.perm[i]]; }
+  $("ladStart").disabled = true; $("ladSkip").hidden = false; $("ladSave").hidden = true; $("ladRes").innerHTML = ""; $("ladMsg").textContent = "";
+  drawLadder();
+  const svg = $("ladder"), result = {};
+  for (let c = 0; c < N; c++) {
+    const t = c + 1, { end, pts } = trace(c);
+    const path = svgEl("polyline", { points: pts.map(p => p.join(",")).join(" "), class: "lpath", stroke: HUE(t) });
+    svg.append(path);
+    if (!L.skip) {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+      path.getBoundingClientRect();
+      path.style.transition = "stroke-dashoffset 0.9s linear"; path.style.strokeDashoffset = 0;
+      await sleep(950);
+      path.style.opacity = 0.35;
+    } else path.style.opacity = 0.35;
+    result[t] = L.perm[end];
+    $("slot" + end).setAttribute("fill", HUE(t)); const tx = $("slotT" + end); tx.textContent = `${t}조`; tx.setAttribute("class", "lt");
+    $("slotW" + end).textContent = slotName(L.perm[end]);
+  }
+  L.result = result; L.running = false;
+  $("ladStart").disabled = false; $("ladStart").textContent = "다시 하기"; $("ladSkip").hidden = true; $("ladSave").hidden = false;
+  renderLadRes(result, "저장 전");
+}
+function renderLadRes(map, label) {
+  // map: { 조: 칸 번호(0~19) }
+  const byWeek = WEEKS.map(() => []);
+  for (const [t, i] of Object.entries(map)) { const s = SLOT(i); byWeek[s.week].push({ t: Number(t), order: s.order }); }
+  $("ladRes").innerHTML = `<p class="small muted">${label}</p><div class="ordergrid">${byWeek.map((rows, w) => `<div class="oweek"><h3>${weekLabel(w)}</h3>
+    ${rows.sort((a, b) => a.order - b.order).map(r => { const p = paperOf(B.picks[teamId(r.t)]?.paper);
+      return `<div class="lres"><b style="color:${HUE(r.t)}">${r.order}. ${r.t}조</b><span>${p ? esc(p.ko || p.title) : "문헌 미신청"}</span></div>`; }).join("")}</div>`).join("")}</div>`;
+}
+function renderLadderIdle() {
+  if (L.running || L.result) return;
+  const saved = Object.entries(B.state.slots || {});
+  $("ladStart").disabled = !B.state.locked && !DEMO;
+  $("ladStart").textContent = saved.length ? "사다리 다시 하기" : "사다리 시작";
+  $("ladMsg").textContent = B.state.locked ? "" : "문헌 신청을 마감하면 시작할 수 있음";
+  L.rungs = null; L.perm = null; drawLadder();
+  if (saved.length) renderLadRes(Object.fromEntries(saved.map(([id, s]) => [Number(id.slice(1)), s.week * SLOTS_PER_WEEK + s.order - 1])), "저장된 배정 — 학생 화면에 반영됨");
+  else $("ladRes").innerHTML = "";
+}
+$("ladStart").onclick = runLadder;
+$("ladSkip").onclick = () => { L.skip = true; };
+$("ladSave").onclick = async () => {
+  if (DEMO) { $("ladMsg").textContent = "연습 모드 — 저장하지 않음"; return; }
+  const slots = {};
+  for (const [t, i] of Object.entries(L.result || {})) slots[teamId(Number(t))] = SLOT(i);
+  try {
+    const r = await adminCall(B.code, "schedule", { slots });
+    $("ladMsg").textContent = `저장 — ${r.n}개 조 · 학생 화면 주차 탭에 반영`;
+    $("ladSave").hidden = true; L.result = null; B.dirty = false; renderAll();
+  } catch (e) { $("ladMsg").textContent = e.message; }
 };
 
 /* ── 발표 날 ───────────────────────────────────────── */
@@ -144,7 +249,7 @@ $("csv").onclick = () => {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "조별발표_질문채택_보너스.csv"; a.click();
 };
 
-function renderAll() { renderPicks(); if (!B.dirty) B.draft = null; renderOrder(); renderDay(); renderBonus(); }   // 저장 안 한 순서는 지우지 않는다
+function renderAll() { renderPicks(); if (!B.dirty) B.draft = null; renderOrder(); renderLadderIdle(); renderDay(); renderBonus(); }   // 저장 안 한 순서는 지우지 않는다
 await ready();
 watchState(st => { B.state = st; renderAll(); });
 watchPicks(p => { B.picks = p; renderAll(); });

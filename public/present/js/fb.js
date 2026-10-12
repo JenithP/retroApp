@@ -68,6 +68,6 @@ async function call(body, withToken) {
   return data;
 }
 export const pickPaper = (team, paper) => call({ action: "pick", team, paper }, true);
-export const fileUrl = team => call({ action: "file", team }, true);
+export const fileUrl = (team, download = false) => call({ action: "file", team, download }, true);
 export const uploadChunk = body => call({ action: "upload", ...body }, true);
 export const adminCall = (code, op, extra = {}) => call({ action: "admin", code, op, ...extra });

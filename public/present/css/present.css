@@ -69,3 +69,29 @@
 .ptag{display:inline-block;font-size:.76rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 9px;margin-bottom:4px}
 .pen{margin:0 0 2px;color:var(--soft);font-size:.86rem;font-style:italic}
 .angles{margin:0;padding-left:1.1em}.angles li{margin:1px 0}
+.ptab.mine{border-color:var(--accent);color:var(--accent);font-weight:700}
+.ptab.mine.on{background:var(--accent);color:#fff}
+.whead{margin-bottom:10px}
+.ask.own{border:2px solid var(--accent)}
+.ask .dacts{margin-top:0}
+.uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.picked{margin-top:10px;background:#F7F5EF;border-radius:10px;padding:8px 12px}
+.picked b{font-size:.85rem;color:var(--warm)}
+.picked ol{margin:4px 0 0;padding-left:1.2em}.picked li{margin:4px 0}.picked li p{margin:0}
+.picked li.me{background:var(--accent-2);border-radius:6px;padding:2px 6px}
+/* 사다리 */
+.ladhead{display:flex;gap:10px;align-items:center;margin:8px 0 10px;flex-wrap:wrap}
+.ladhead .btn{width:auto;flex:none;white-space:nowrap}
+.ladbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+#ladder{width:100%;height:auto;display:block}
+#ladder .lt{fill:#fff;font-weight:700;font-size:15px}
+#ladder .lo{fill:#22211E;font-weight:700;font-size:15px}
+#ladder .lp{fill:#777;font-size:12px}
+#ladder .lw{fill:#22211E;font-weight:700;font-size:13px}
+#ladder .lv{stroke:#22211E;stroke-width:2.5}
+#ladder .lr{stroke:#22211E;stroke-width:2.5}
+#ladder .lpath{fill:none;stroke-width:7;stroke-linejoin:round;stroke-linecap:round}
+.ladres{margin-top:12px}
+.lres{display:flex;flex-direction:column;border-top:1px dashed var(--line);padding:4px 0}
+.lres span{font-size:.82rem;color:var(--soft)}
+.manual{margin-top:16px}.manual summary{cursor:pointer;color:var(--soft);margin-bottom:8px}

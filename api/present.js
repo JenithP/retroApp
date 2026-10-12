@@ -117,7 +117,9 @@ async function fileUrl({ db, bucket }, uid, body, admin = false) {
   const f = bucket.file(`present/${teamId(team)}/deck.pdf`);
   const [exists] = await f.exists();
   if (!exists) return [404, { error: "올라온 자료가 없습니다" }];
-  const [url] = await f.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000, responseDisposition: "inline", responseType: "application/pdf" });
+  // download: 내려받기 — 파일 이름을 「3조_발표자료.pdf」로 붙인다. 아니면 브라우저에서 바로 연다
+  const disp = body.download ? `attachment; filename="T${String(team).padStart(2, "0")}.pdf"; filename*=UTF-8''${encodeURIComponent(`${team}조_발표자료.pdf`)}` : "inline";
+  const [url] = await f.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000, responseDisposition: disp, responseType: "application/pdf" });
   return [200, { url }];
 }
 

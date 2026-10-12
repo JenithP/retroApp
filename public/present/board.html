@@ -30,7 +30,7 @@
   <div class="steps" id="steps" hidden>
     <nav class="ptabs" id="btabs">
       <button type="button" class="ptab on" data-v="picks">문헌 신청</button>
-      <button type="button" class="ptab" data-v="order">발표 순서</button>
+      <button type="button" class="ptab" data-v="order">주차 배정</button>
       <button type="button" class="ptab" data-v="day">발표 날</button>
       <button type="button" class="ptab" data-v="bonus">보너스</button>
     </nav>
@@ -47,10 +47,18 @@
   </section>
 
   <section class="pv" id="pv-order" hidden>
-    <h2>발표 순서 <small>칸마다 조 선택 → 저장 · 저장하면 학생 화면 일정 · 자료 공개 시각에 바로 반영</small></h2>
-    <div class="ordergrid" id="orderGrid"></div>
-    <div class="orderfoot"><button class="btn" id="autoOrder" type="button">빈칸을 문헌 순서대로 채우기</button>
-      <button class="btn primary" id="saveOrder" type="button">저장</button><span class="msg" id="orderMsg"></span></div>
+    <h2>주차 배정 — 사다리 <small>신청 마감 후 시작 · 위는 조, 아래는 10~14주차 발표 칸 · 저장하면 학생 화면 주차 탭에 바로 반영</small></h2>
+    <div class="ladhead"><button class="btn primary big" id="ladStart" type="button">사다리 시작</button>
+      <button class="btn" id="ladSkip" type="button" hidden>바로 결과</button>
+      <button class="btn primary" id="ladSave" type="button" hidden>이대로 저장</button>
+      <span class="msg" id="ladMsg"></span></div>
+    <div class="ladbox"><svg id="ladder" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="ladres" id="ladRes"></div>
+    <details class="manual"><summary>칸마다 직접 고치기</summary>
+      <div class="ordergrid" id="orderGrid"></div>
+      <div class="orderfoot"><button class="btn" id="autoOrder" type="button">빈칸을 문헌 순서대로 채우기</button>
+        <button class="btn primary" id="saveOrder" type="button">저장</button><span class="msg" id="orderMsg"></span></div>
+    </details>
   </section>
 
   <section class="pv" id="pv-day" hidden>

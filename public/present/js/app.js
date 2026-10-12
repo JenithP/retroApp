@@ -1,5 +1,6 @@
-// 조별 발표 — 학생 화면. 문헌 신청 → 발표 일정 → 우리 조 발표 자료 올리기 → 열린 발표마다 질문 하나 → 채택된 질문
-import { TEAM_COUNT, MAX_TEAMS_PER_PAPER, UPLOAD_DEADLINE, MAX_FILE_MB, WEEKS, PAPERS, teamId, teamLabel, paperOf, weekLabel, fmt } from "./data.js";
+// 조별 발표 — 학생 화면. 문헌 신청 → (신청 마감 후 사다리로 주차 배정) → 10~14주차 탭마다 그 주 4개 조:
+//   우리 조는 자료 올리기, 다른 조는 공개 후 열기 · 내려받기 · 질문 하나, 발표 날 채택된 질문
+import { TEAM_COUNT, MAX_TEAMS_PER_PAPER, UPLOAD_DEADLINE, MAX_FILE_MB, WEEKS, PAPERS, teamId, teamLabel, paperOf, weekName, weekDate, openAt, questionCloseAt, fmt } from "./data.js";
 import { me, ready, watchState, watchPicks, watchFiles, watchSelect, watchMyQuestions, savePerson, addQuestion, pickPaper, fileUrl, uploadChunk } from "./fb.js";
 
 const $ = id => document.getElementById(id);
@@ -38,22 +39,37 @@ async function start() {
   $("meChip").hidden = false;
   $("meChip").textContent = `${teamLabel(S.team)} · ${S.name}`;
   $("meChip").onclick = () => { if (confirm("조 · 학번 · 이름을 다시 입력하시겠습니까?")) { store.set("team", ""); location.reload(); } };
-  document.querySelectorAll(".ptab").forEach(b => b.onclick = () => { S.view = b.dataset.v; store.set("view", S.view); tab(); });
-  tab();
+  renderTabs();
   renderAll();   // 문헌 목록은 데이터 없이도 바로 보이게
   watchState(st => { S.state = st; renderAll(); });
   watchPicks(p => { S.picks = p; renderAll(); });
   watchFiles(f => { S.files = f; renderAll(); });
-  watchSelect(s => { S.select = s; renderPicked(); });
-  watchMyQuestions(q => { S.myQ = q; renderAsk(); });
+  watchSelect(s => { S.select = s; if (S.view !== "papers") renderWeek(); });
+  watchMyQuestions(q => { S.myQ = q; renderTabs(); });
   setInterval(renderAll, 30000);   // 열람 시각 · 마감이 지나면 화면이 바뀌도록
 }
 function show(id) { ["vJoin", "vMain"].forEach(v => $(v).hidden = v !== id); }
 function tab() {
+  if (!/^(papers|w[0-4])$/.test(S.view)) S.view = "papers";
   document.querySelectorAll(".ptab").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
-  document.querySelectorAll(".pv").forEach(v => v.hidden = v.id !== "pv-" + S.view);
+  $("pv-papers").hidden = S.view !== "papers";
+  $("pv-week").hidden = S.view === "papers";
+  if (S.view !== "papers") renderWeek();
 }
-function renderAll() { renderPapers(); renderSchedule(); renderUpload(); renderAsk(); renderPicked(); }
+const slotOf = id => S.state.slots?.[id];
+const weekRows = w => Object.entries(S.state.slots || {}).filter(([, s]) => s.week === w).sort((a, b) => a[1].order - b[1].order);
+/** 아직 질문하지 않은, 질문 기간인 발표 수 */
+const pendingIn = w => { const now = Date.now(); return weekRows(w).filter(([id, s]) => Number(id.slice(1)) !== S.team && s.open?.getTime() <= now && s.close?.getTime() > now && !S.myQ[`${id}_${me.uid}`]).length; };
+function renderTabs() {
+  const mine = slotOf(teamId(S.team));
+  $("ptabs").innerHTML = `<button type="button" class="ptab" data-v="papers">문헌 신청</button>` + WEEKS.map((_, w) => {
+    const n = pendingIn(w), my = mine?.week === w;
+    return `<button type="button" class="ptab${my ? " mine" : ""}" data-v="w${w}">${weekName(w)}${my ? " · 우리 조" : ""}${n ? ` <span class="badge">${n}</span>` : ""}</button>`;
+  }).join("");
+  $("ptabs").querySelectorAll(".ptab").forEach(b => b.onclick = () => { S.view = b.dataset.v; store.set("view", S.view); tab(); });
+  tab();
+}
+function renderAll() { renderPapers(); renderTabs(); }
 
 /* ── 문헌 신청 ───────────────────────────────────────── */
 const teamsOf = pid => Object.values(S.picks).filter(p => p.paper === pid).map(p => p.team).sort((a, b) => a - b);
@@ -91,96 +107,71 @@ function renderPapers() {
   $("papers").querySelectorAll("[data-un]").forEach(b => b.onclick = () => confirm("우리 조 신청을 취소합니다") && act(null, b));
 }
 
-/* ── 발표 일정 ───────────────────────────────────────── */
-function renderSchedule() {
-  const slots = S.state.slots || {};
-  if (!Object.keys(slots).length) { $("schedule").innerHTML = `<p class="muted">아직 발표 순서가 정해지지 않음</p>`; return; }
-  $("schedule").innerHTML = WEEKS.map((_, w) => {
-    const rows = Object.entries(slots).filter(([, s]) => s.week === w).sort((a, b) => a[1].order - b[1].order);
-    if (!rows.length) return "";
-    const open = rows[0][1].open;
-    return `<div class="week"><h3>${weekLabel(w)} <small>자료 공개 ${open ? fmt(open) : ""}</small></h3>
-      <ol>${rows.map(([id, s]) => { const t = Number(id.slice(1)), p = paperOf(S.picks[id]?.paper);
-        return `<li class="${t === S.team ? "me" : ""}"><b>${s.order}. ${t}조</b> <span>${p ? esc(p.title) : "문헌 미신청"}</span> ${S.files[id] ? `<em class="okmark">자료 있음</em>` : `<em class="muted">자료 없음</em>`}</li>`; }).join("")}</ol></div>`;
+/* ── 주차 ─────────────────────────────────────────── */
+function renderWeek() {
+  const w = Number(S.view.slice(1)), rows = weekRows(w), now = Date.now();
+  $("wTitle").textContent = `${weekName(w)} 발표 · ${weekDate(w)}`;
+  $("wLead").textContent = `자료 공개 ${fmt(openAt(w))} · 질문 마감 ${fmt(questionCloseAt(w))} · 업로드 마감 ${fmt(UPLOAD_DEADLINE)}`;
+  if (!rows.length) { $("wBody").innerHTML = `<p class="muted">아직 배정 전 — 문헌 신청 마감 후 사다리로 발표 주차를 정함</p>`; return; }
+  const act = document.activeElement;
+  if ($("wBody").dataset.busy || ($("wBody").contains(act) && act.tagName === "TEXTAREA")) return;   // 올리는 중 · 쓰는 중에는 다시 그리지 않는다
+  $("wBody").innerHTML = rows.map(([id, s]) => {
+    const t = Number(id.slice(1)), p = paperOf(S.picks[id]?.paper), f = S.files[id], own = t === S.team;
+    const opened = own || s.open.getTime() <= now, closed = s.close.getTime() <= now, q = S.myQ[`${id}_${me.uid}`];
+    const fileLine = f ? `<span class="okmark">자료 있음</span> <span class="muted small">${esc(f.name)} · ${(f.size / 1024 / 1024).toFixed(1)}MB · ${fmt(new Date(f.at))}</span>` : `<span class="muted small">자료 없음</span>`;
+    const fileBtns = f && opened ? `<button class="btn small" data-open="${t}" type="button">열기</button><button class="btn small" data-down="${t}" type="button">내려받기</button>` : "";
+    let part = "";
+    if (own) {
+      part = now > UPLOAD_DEADLINE.getTime() ? `<p class="note">업로드 마감</p>`
+        : `<div class="uprow"><label class="btn primary small">${f ? "다시 올리기" : "PDF 올리기"}<input type="file" data-up="${t}" accept="application/pdf,.pdf" hidden></label>
+           <span class="muted small">PDF만 · ${MAX_FILE_MB}MB 이하 · 마감 ${fmt(UPLOAD_DEADLINE)} · 다시 올리면 바뀜 · AI가 이 PDF를 읽고 질문을 고름</span></div><div class="upprog" id="prog${t}"></div>`;
+    } else if (!opened) part = `<p class="muted small">자료 공개 전 — ${fmt(s.open)}에 열림</p>`;
+    else if (q) part = `<div class="myq"><small>내 질문 · ${fmt(new Date(q.at))}</small><p>${esc(q.text)}</p></div>`;
+    else if (closed) part = `<p class="muted small">질문 마감 (${fmt(s.close)})</p>`;
+    else part = `<div class="qform"><textarea rows="3" maxlength="300" data-q="${t}" placeholder="발표 자료를 읽고 질문 하나 — 핵심 주장 · 방법 · 한계 · 수업 개념과의 연결"></textarea>
+        <div class="qfoot"><span class="muted small">마감 ${fmt(s.close)} · 등록 후 수정 불가</span><button class="btn primary small" data-send="${t}" type="button">질문 등록</button></div></div>`;
+    const sel = S.select[id], shown = sel ? sel.picks.slice(0, sel.revealed || 0) : [];
+    const picked = shown.length ? `<div class="picked"><b>채택된 질문</b><ol>${shown.map(x => `<li class="${x.sid === S.sid ? "me" : ""}"><p>${esc(x.text)}</p><small>${esc(x.reason)}${x.sid === S.sid ? " · <b>내 질문 채택 — 보너스 1점</b>" : ""}</small></li>`).join("")}</ol></div>` : "";
+    return `<article class="ask${own ? " own" : ""}"><div class="ahead"><div><b>${s.order}. ${t}조</b>${own ? ` <span class="ptag">우리 조</span>` : ""}
+        <h3>${p ? esc(p.ko || p.title) : "문헌 미신청"}</h3><div>${fileLine}</div></div><div class="dacts">${fileBtns}</div></div>${part}${picked}</article>`;
   }).join("");
+  $("wBody").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openDeck(Number(b.dataset.open)));
+  $("wBody").querySelectorAll("[data-down]").forEach(b => b.onclick = () => downDeck(Number(b.dataset.down)));
+  $("wBody").querySelectorAll("[data-up]").forEach(i => i.onchange = e => e.target.files[0] && doUpload(e.target.files[0], Number(i.dataset.up)));
+  $("wBody").querySelectorAll("[data-send]").forEach(b => b.onclick = async () => {
+    const t = Number(b.dataset.send), ta = $("wBody").querySelector(`textarea[data-q="${t}"]`), text = ta.value.trim();
+    if (text.length < 10) { alert("질문을 10자 이상 써 주십시오"); return; }
+    if (!confirm(`${t}조 발표에 이 질문을 등록합니다. 등록 후에는 고칠 수 없습니다.\n\n${text}`)) return;
+    b.disabled = true;
+    try { await addQuestion(t, person(), text); ta.blur(); renderWeek(); }
+    catch (e) { console.error(e); alert("등록 실패 — 질문 기간인지 확인 후 다시"); b.disabled = false; }
+  });
 }
-
-/* ── 우리 조 발표 자료 ─────────────────────────────────── */
-function renderUpload() {
-  const f = S.files[teamId(S.team)], closed = Date.now() > UPLOAD_DEADLINE.getTime();
-  const slot = S.state.slots?.[teamId(S.team)];
-  $("upLead").textContent = `PDF만 · ${MAX_FILE_MB}MB 이하 · 마감 ${fmt(UPLOAD_DEADLINE)} · 다시 올리면 바뀜${slot ? ` · 우리 조 발표 ${weekLabel(slot.week)} ${slot.order}번째` : ""}`;
-  if ($("upBox").dataset.busy) return;
-  $("upBox").innerHTML = `
-    <div class="upstat">${f ? `<b>올라온 자료</b> ${esc(f.name)} · ${(f.size / 1024 / 1024).toFixed(1)}MB · ${fmt(new Date(f.at))} <button class="btn small" id="upView" type="button">열어 보기</button>` : `<span class="muted">아직 올라온 자료 없음</span>`}</div>
-    ${closed ? `<p class="note">업로드 마감</p>` : `<label class="btn primary">PDF 고르기<input type="file" id="upFile" accept="application/pdf,.pdf" hidden></label><p class="muted small">PPT는 「다른 이름으로 저장 → PDF」로 바꿔서 올리기 · AI가 이 PDF를 읽고 질문을 고름</p>`}
-    <div class="upprog" id="upProg"></div>`;
-  $("upView")?.addEventListener("click", () => openDeck(S.team));
-  $("upFile")?.addEventListener("change", e => e.target.files[0] && doUpload(e.target.files[0]));
-}
-async function doUpload(file) {
+async function doUpload(file, team) {
   if (file.size > MAX_FILE_MB * 1024 * 1024) { alert(`${MAX_FILE_MB}MB 이하만 올릴 수 있습니다`); return; }
   if (!/\.pdf$/i.test(file.name)) { alert("PDF 파일만 올릴 수 있습니다"); return; }
   const CH = 3 * 1024 * 1024, total = Math.ceil(file.size / CH), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  const box = $("upBox"); box.dataset.busy = "1";
-  const prog = t => $("upProg").textContent = t;
+  const box = $("wBody"); box.dataset.busy = "1";
+  const prog = t => { const el = $("prog" + team); if (el) el.textContent = t; };
   try {
     for (let i = 0; i < total; i++) {
       prog(`올리는 중 ${i + 1} / ${total}`);
       const buf = new Uint8Array(await file.slice(i * CH, (i + 1) * CH).arrayBuffer());
       let bin = ""; for (let k = 0; k < buf.length; k += 0x8000) bin += String.fromCharCode(...buf.subarray(k, k + 0x8000));
-      await uploadChunk({ team: S.team, uploadId: id, idx: i, total, data: btoa(bin), name: file.name });
+      await uploadChunk({ team, uploadId: id, idx: i, total, data: btoa(bin), name: file.name });
     }
     prog("올리기 완료");
   } catch (e) { console.error(e); prog("실패 — " + e.message); }
-  delete box.dataset.busy;
-  setTimeout(renderUpload, 1500);
+  setTimeout(() => { delete box.dataset.busy; renderWeek(); }, 1500);
 }
 async function openDeck(team) {
   const w = window.open("", "_blank");
   try { const { url } = await fileUrl(team); if (w) w.location = url; else location.href = url; }
   catch (e) { if (w) w.close(); alert(e.message); }
 }
-
-/* ── 질문하기 ───────────────────────────────────────── */
-function renderAsk() {
-  const now = Date.now(), slots = S.state.slots || {};
-  const open = Object.entries(slots).filter(([id, s]) => Number(id.slice(1)) !== S.team && s.open && s.open.getTime() <= now)
-    .sort((a, b) => a[1].week - b[1].week || a[1].order - b[1].order);
-  const pending = open.filter(([id, s]) => s.close.getTime() > now && !S.myQ[`${id}_${me.uid}`]).length;
-  $("askBadge").hidden = !pending; $("askBadge").textContent = pending;
-  if (!open.length) { $("asks").innerHTML = `<p class="muted">아직 열린 발표 자료 없음 — 발표 1주일 전 정오에 열림</p>`; return; }
-  const typing = $("asks").contains(document.activeElement) ? document.activeElement : null;
-  if (typing && typing.tagName === "TEXTAREA") return;   // 쓰는 중에는 다시 그리지 않는다
-  $("asks").innerHTML = open.map(([id, s]) => {
-    const t = Number(id.slice(1)), p = paperOf(S.picks[id]?.paper), q = S.myQ[`${id}_${me.uid}`], closed = s.close.getTime() <= now;
-    return `<article class="ask"><div class="ahead"><div><b>${t}조</b> <span class="muted small">${weekLabel(s.week)} ${s.order}번째 발표</span><h3>${p ? esc(p.title) : "문헌 미신청"}</h3></div>
-      ${S.files[id] ? `<button class="btn small" data-open="${t}" type="button">발표 자료 열기</button>` : `<span class="muted small">자료 없음</span>`}</div>
-      ${q ? `<div class="myq"><small>내 질문 · ${fmt(new Date(q.at))}</small><p>${esc(q.text)}</p></div>`
-        : closed ? `<p class="muted small">질문 마감 (${fmt(s.close)})</p>`
-        : `<div class="qform"><textarea rows="3" maxlength="300" data-q="${t}" placeholder="발표 자료를 읽고 질문 하나 — 핵심 주장 · 방법 · 한계 · 우리 실습과의 연결"></textarea>
-           <div class="qfoot"><span class="muted small">마감 ${fmt(s.close)} · 등록 후 수정 불가</span><button class="btn primary small" data-send="${t}" type="button">질문 등록</button></div></div>`}
-    </article>`;
-  }).join("");
-  $("asks").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openDeck(Number(b.dataset.open)));
-  $("asks").querySelectorAll("[data-send]").forEach(b => b.onclick = async () => {
-    const t = Number(b.dataset.send), ta = $("asks").querySelector(`textarea[data-q="${t}"]`), text = ta.value.trim();
-    if (text.length < 10) { alert("질문을 10자 이상 써 주십시오"); return; }
-    if (!confirm(`${t}조 발표에 이 질문을 등록합니다. 등록 후에는 고칠 수 없습니다.\n\n${text}`)) return;
-    b.disabled = true;
-    try { await addQuestion(t, person(), text); ta.blur(); }
-    catch (e) { console.error(e); alert("등록 실패 — 질문 기간인지 확인 후 다시"); b.disabled = false; }
-  });
-}
-
-/* ── 채택된 질문 ─────────────────────────────────────── */
-function renderPicked() {
-  const rows = Object.entries(S.select).filter(([, s]) => s.revealed > 0).sort();
-  $("picked").innerHTML = rows.length ? rows.map(([id, s]) => {
-    const p = paperOf(S.picks[id]?.paper);
-    return `<div class="week"><h3>${Number(id.slice(1))}조 발표 <small>${p ? esc(p.title) : ""} · 등록 질문 ${s.total || ""}개 중</small></h3>
-      <ol>${s.picks.slice(0, s.revealed).map(q => `<li class="${q.sid === S.sid ? "me" : ""}"><p>${esc(q.text)}</p><small>${esc(q.reason)}${q.sid === S.sid ? " · <b>내 질문 채택 — 보너스 1점</b>" : ""}</small></li>`).join("")}</ol></div>`;
-  }).join("") : `<p class="muted">아직 없음 — 발표 날 공개</p>`;
+async function downDeck(team) {
+  try { const { url } = await fileUrl(team, true); const a = document.createElement("a"); a.href = url; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); }
+  catch (e) { alert(e.message); }
 }
 
 const QP = new URLSearchParams(location.search);

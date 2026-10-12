@@ -23,7 +23,10 @@ export const MAX_FILE_MB = 20;   // AI가 PDF를 통째로 읽으므로 20MB 이
 export const openAt = w => { const d = kst(WEEKS[w], "12:00"); d.setDate(d.getDate() - 7); return d; };
 /** 질문 마감 — 발표 당일 아침 */
 export const questionCloseAt = w => kst(WEEKS[w], QUESTION_CLOSE_HM);
-export const weekLabel = w => { const d = kst(WEEKS[w], "12:00"); return `${d.getMonth() + 1}월 ${d.getDate()}일 (화)`; };
+export const WEEK_NO = [10, 11, 12, 13, 14];   // 수업 주차 — WEEKS 와 같은 순서
+export const weekName = w => `${WEEK_NO[w]}주차`;
+export const weekDate = w => { const d = kst(WEEKS[w], "12:00"); return `${d.getMonth() + 1}월 ${d.getDate()}일 (화)`; };
+export const weekLabel = w => `${weekName(w)} · ${weekDate(w)}`;
 export const fmt = d => `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 /* ── 문헌 목록 ─────────────────────────────────────────
