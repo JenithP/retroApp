@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조별 발표 — 문헌 · 발표 자료 · 질문</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../appshop/css/appshop.css">
+<link rel="stylesheet" href="css/present.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 조별 발표</p>
+    <h1>문헌 · 발표 자료 · 질문</h1>
+  </div>
+  <div class="status">
+    <span class="chip" id="meChip" hidden></span>
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span></span>
+  </div>
+</header>
+
+<!-- 입장 -->
+<section class="view" id="vJoin" hidden>
+  <div class="join">
+    <h2>입장</h2>
+    <p class="lead">조 · 학번 · 이름 — 질문 채택 보너스 점수는 학번으로 기록</p>
+    <div class="teampick" id="teamPick"></div>
+    <label class="field">학번 <input id="mySid" maxlength="12" inputmode="numeric" autocomplete="off"></label>
+    <label class="field">이름 <input id="myName" maxlength="20" autocomplete="off"></label>
+    <button class="btn primary big" id="joinBtn" disabled>입장</button>
+  </div>
+</section>
+
+<section class="view" id="vMain" hidden>
+  <nav class="ptabs" id="ptabs">
+    <button type="button" class="ptab on" data-v="papers">문헌 신청</button>
+    <button type="button" class="ptab" data-v="schedule">발표 일정</button>
+    <button type="button" class="ptab" data-v="upload">우리 조 발표 자료</button>
+    <button type="button" class="ptab" data-v="ask">질문하기 <span class="badge" id="askBadge" hidden></span></button>
+    <button type="button" class="ptab" data-v="picked">채택된 질문</button>
+  </nav>
+
+  <div class="pv" id="pv-papers">
+    <div class="phead"><div><h2>문헌 신청</h2><p class="lead" id="pickLead"></p></div><div class="mypick" id="myPick"></div></div>
+    <div class="papers" id="papers"></div>
+  </div>
+
+  <div class="pv" id="pv-schedule" hidden>
+    <h2>발표 일정</h2>
+    <p class="lead">매주 화요일 4개 조 · 발표 1주일 전 정오에 그 주 발표 자료 공개</p>
+    <div id="schedule"></div>
+  </div>
+
+  <div class="pv" id="pv-upload" hidden>
+    <h2>우리 조 발표 자료</h2>
+    <p class="lead" id="upLead"></p>
+    <div class="upbox" id="upBox"></div>
+  </div>
+
+  <div class="pv" id="pv-ask" hidden>
+    <h2>질문하기</h2>
+    <p class="lead">열린 발표 자료를 읽고 발표마다 질문 하나 · 등록 후 수정 불가 · 발표 당일 AI가 질문 3개를 골라 발표 중에 묻고, 채택된 질문자는 보너스 1점</p>
+    <div id="asks"></div>
+  </div>
+
+  <div class="pv" id="pv-picked" hidden>
+    <h2>채택된 질문</h2>
+    <div id="picked"></div>
+  </div>
+</section>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

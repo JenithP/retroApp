@@ -8,7 +8,7 @@ rules_version = '2';
 //    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
 //    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
 //
-//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_*
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_* · hcipres_*
 //    지능형콘텐츠         icp_teams · icp3_* · icp5_*
 //
 //  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
@@ -257,6 +257,41 @@ service cloud.firestore {
                    && (!('q1' in request.resource.data) || request.resource.data.q1.size() <= 800)
                    && (!('q2' in request.resource.data) || request.resource.data.q2.size() <= 800)
                    && (!('q3' in request.resource.data) || request.resource.data.q3.size() <= 800);
+    }
+
+    /* ── 조별 발표 (present/) — 9주차부터 ──────────────────────
+       신청 · 일정 · 파일 정보 · AI 선정은 버셀 함수(api/present.js)만 쓴다.
+       질문은 학생이 직접 — 발표마다 한 사람 하나(문서 이름 「발표 조_학생」), 열람 시각부터 질문 마감까지, 자기 조 발표는 안 됨,
+       등록 후 고칠 수 없고, 자기 질문만 읽는다 (다른 학생의 질문을 베끼지 못하게). */
+    match /hcipres_state/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hcipres_people/{uid} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && request.resource.data.keys().hasOnly(['team', 'sid', 'name', 'at'])
+                   && request.resource.data.team is int && request.resource.data.team >= 1 && request.resource.data.team <= 20
+                   && request.resource.data.sid is string && request.resource.data.sid.size() >= 6 && request.resource.data.sid.size() <= 12
+                   && request.resource.data.name is string && request.resource.data.name.size() < 30;
+    }
+    match /hcipres_picks/{id}  { allow read: if request.auth != null; allow write: if false; }
+    match /hcipres_files/{id}  { allow read: if request.auth != null; allow write: if false; }
+    match /hcipres_select/{id} { allow read: if request.auth != null; allow write: if false; }
+    match /hcipres_questions/{id} {
+      allow read:   if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['target', 'uid', 'sid', 'name', 'team', 'text', 'at'])
+                    && request.resource.data.uid == request.auth.uid
+                    && id == request.resource.data.target + '_' + request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() >= 10 && request.resource.data.text.size() <= 300
+                    && get(/databases/$(database)/documents/hcipres_people/$(request.auth.uid)).data.team == request.resource.data.team
+                    && request.resource.data.target != 'T0' + string(request.resource.data.team)
+                    && request.resource.data.target != 'T' + string(request.resource.data.team)
+                    && request.time >= get(/databases/$(database)/documents/hcipres_state/current).data.slots[request.resource.data.target].open
+                    && request.time < get(/databases/$(database)/documents/hcipres_state/current).data.slots[request.resource.data.target].close;
+      allow update, delete: if false;
     }
 
     /* ══ 지능형콘텐츠 ════════════════════════════════════════ */

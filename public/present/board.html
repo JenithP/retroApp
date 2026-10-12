@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조별 발표 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../appshop/css/appshop.css">
+<link rel="stylesheet" href="../appshop/css/board.css">
+<link rel="stylesheet" href="css/present.css">
+</head>
+<body class="board">
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 조별 발표</p>
+    <h1>조별 발표 <span class="sub">현황판</span></h1>
+  </div>
+  <div class="status"><span class="net"><span class="dot" id="netdot"></span><span id="netmsg">연결 중…</span></span></div>
+</header>
+
+<section class="control">
+  <div class="lock" id="lock">
+    <label>교수용 암호 <input id="code" type="password" autocomplete="off"></label>
+    <button class="btn primary" id="unlock">열기</button>
+    <span class="msg" id="lockMsg"></span>
+  </div>
+  <div class="steps" id="steps" hidden>
+    <nav class="ptabs" id="btabs">
+      <button type="button" class="ptab on" data-v="picks">문헌 신청</button>
+      <button type="button" class="ptab" data-v="order">발표 순서</button>
+      <button type="button" class="ptab" data-v="day">발표 날</button>
+      <button type="button" class="ptab" data-v="bonus">보너스</button>
+    </nav>
+    <button class="btn" id="lockPicks" type="button">신청 마감</button>
+    <button class="btn ghost danger" id="reset" type="button">전체 초기화</button>
+    <span class="msg" id="stepMsg"></span>
+  </div>
+</section>
+
+<main class="bmain">
+  <section class="pv" id="pv-picks">
+    <h2>문헌별 신청 <small id="pickSum"></small></h2>
+    <div id="pickTable"></div>
+  </section>
+
+  <section class="pv" id="pv-order" hidden>
+    <h2>발표 순서 <small>칸마다 조 선택 → 저장 · 저장하면 학생 화면 일정 · 자료 공개 시각에 바로 반영</small></h2>
+    <div class="ordergrid" id="orderGrid"></div>
+    <div class="orderfoot"><button class="btn" id="autoOrder" type="button">빈칸을 문헌 순서대로 채우기</button>
+      <button class="btn primary" id="saveOrder" type="button">저장</button><span class="msg" id="orderMsg"></span></div>
+  </section>
+
+  <section class="pv" id="pv-day" hidden>
+    <div class="dayhead"><h2>발표 날</h2><select id="daySel"></select></div>
+    <div class="daygrid" id="dayGrid"></div>
+    <div class="stagebox" id="stageBox" hidden></div>
+  </section>
+
+  <section class="pv" id="pv-bonus" hidden>
+    <h2>채택된 질문 — 보너스 1점 <button class="btn small" id="csv" type="button">CSV 내려받기</button></h2>
+    <div id="bonusTable"></div>
+  </section>
+</main>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

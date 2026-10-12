@@ -12,6 +12,9 @@
     },
     "api/newtech.js": {
       "maxDuration": 30
+    },
+    "api/present.js": {
+      "maxDuration": 300
     }
   },
   "redirects": [
