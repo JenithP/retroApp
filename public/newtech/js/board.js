@@ -1,6 +1,6 @@
 // 신기술 인터페이스 체험 실습 현황판 — 교수가 단계를 넘기고(버셀 함수 · 교수용 암호), 유형별 결과와 조별 진행을 본다.
 import { PHASES, TEAM_COUNT, TYPES, TYPE_KEYS, QUIZ, OPINION, WHEN, teamId, teamLabel, typeOf, evKo, actKo } from "./data.js";
-import { ready, watchState, watchPeople, watchHomes, watchOpinions, adminCall } from "./fb.js";
+import { ready, watchState, watchPeople, watchHomes, watchOpinions, watchNotes, adminCall } from "./fb.js";
 import { tallyTypes, barsHTML, RESULT_ROWS } from "./stats.js";
 
 const $ = id => document.getElementById(id);
@@ -9,7 +9,7 @@ const ss = {
   get() { try { return sessionStorage.getItem("newtech.code") || ""; } catch { return ""; } },
   set(v) { try { sessionStorage.setItem("newtech.code", v); } catch { /* 이 탭에서만 */ } },
 };
-const B = { state: {}, people: {}, homes: {}, opinions: {}, code: ss.get() };
+const B = { state: {}, people: {}, homes: {}, opinions: {}, notes: {}, code: ss.get() };
 
 /* ── 잠금과 단계 ─────────────────────────────────────── */
 async function unlock(code) {
@@ -44,7 +44,7 @@ $("reset").onclick = async () => {
 $("dClose").onclick = () => $("detail").close();
 
 /* ── 그리기 ─────────────────────────────────────────── */
-function renderAll() { renderKpis(); renderResults(); renderTeams(); renderOpinions(); }
+function renderAll() { renderKpis(); renderResults(); renderTeams(); renderOpinions(); renderNotes(); }
 
 function renderKpis() {
   const ps = Object.values(B.people);
@@ -53,11 +53,9 @@ function renderKpis() {
   $("kpis").innerHTML = k.map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
 }
 function renderResults() {
-  const t = tallyTypes(B.people);
-  const emoN = t.emo.match + t.emo.mismatch;
-  $("results").innerHTML = barsHTML(t, RESULT_ROWS)
-    + `<p class="small">표정 판정 비교 ${emoN}회 중 「다름」 <b>${emoN ? Math.round(t.emo.mismatch / emoN * 100) : 0}%</b></p>`;
-  $("items").innerHTML = QUIZ.map((q, i) => `<div class="trow"><h4>${i + 1}. ${esc(q.q)} <small>${q.kind}</small></h4>${TYPE_KEYS.map(k => {
+  const t = tallyTypes(B.people, B.notes, B.homes);
+  $("results").innerHTML = barsHTML(t, RESULT_ROWS);
+  $("items").innerHTML = QUIZ.map((q, i) => `<div class="trow"><h4>${i + 1}. ${esc(q.q)}</h4>${TYPE_KEYS.map(k => {
     const v = t.types[k].items[q.id];
     return `<div class="tb"><span class="tl" style="color:${TYPES[k].color}">${TYPES[k].ko}</span><i><u style="width:${v || 0}%;background:${TYPES[k].color}"></u></i><em>${v == null ? "—" : Math.round(v) + "%"}</em></div>`;
   }).join("")}</div>`).join("");
@@ -69,9 +67,10 @@ function renderTeams() {
     const ty = TYPES[typeOf(t)];
     return `<button type="button" class="tcard" data-t="${t}" style="border-left:5px solid ${ty.color}">
       <span class="tn"><b>${teamLabel(t)}</b><span style="color:${ty.color}">${ty.ko} · ${esc(ty.name)}</span></span>
-      <span class="tm">접속 ${ps.length}명 · 과제 제출 ${ps.filter(p => p.quiz).length}</span>
-      <span class="tm">도움 요청 ${ps.reduce((a, p) => a + (p.help?.r1 || 0), 0)}회 (1차)</span>
-      <span class="tm">규칙 ${(h?.rules || []).length}개${h?.purpose ? " · 목적 기재" : ""}</span>
+      <span class="tm">접속 ${ps.length}명 · 보고 제출 ${ps.filter(p => p.quiz).length}</span>
+      <span class="tm">면접 합격 ${ps.filter(p => p.emo?.r1?.passed || p.emo?.r2?.passed).length} · 예약 7/7 ${ps.filter(p => p.agent?.r1?.met === 7 || p.agent?.r2?.met === 7).length}</span>
+      <span class="tm">쪽지 보냄 ${Object.values(B.notes).filter(n => n.fromTeam === t).length} · 받음 ${Object.values(B.notes).filter(n => n.toTeam === t).length} (답 ${Object.values(B.notes).filter(n => n.toTeam === t && n.reply).length})</span>
+      <span class="tm">할머니 댁 ${h?.check ? (h.check.pass ? "해결" : `확인 ${h.check.ok}/5`) : "확인 전"}${h?.sms ? " · 문자 작성" : ""}</span>
       <span class="tm">${op && OPINION.some(o => op[o.id]) ? "의견 작성 중" : ""}</span></button>`;
   }).join("");
   $("teams").querySelectorAll(".tcard").forEach(b => b.onclick = () => openTeam(Number(b.dataset.t)));
@@ -79,10 +78,16 @@ function renderTeams() {
 function openTeam(t) {
   const h = B.homes[teamId(t)] || {}, op = B.opinions[teamId(t)] || {};
   $("dTitle").textContent = `${teamLabel(t)} · ${TYPES[typeOf(t)].ko} 유형`;
-  $("dBody").innerHTML = `<h4>우리 집 규칙</h4><p>${esc(h.purpose || "(설계 목적 없음)")}</p>
+  $("dBody").innerHTML = `<h4>할머니 댁 규칙</h4><p>${h.check ? (h.check.pass ? "확인 전화: 모두 해결" : `확인 전화: ${h.check.ok}/5`) : "확인 전화 전"} · 기기 설정 ${Object.entries(h.settings || {}).filter(([, v]) => v).map(([k]) => k === "ecoHold" ? "절약 유지" : "자동 꺼짐").join(", ") || "모두 끔"}</p><p>${esc(h.sms || "(문자 없음)")}</p>
     <ol>${(h.rules || []).map(r => `<li>${esc(evKo(r.ev))}${r.when !== "any" ? ` (${WHEN[r.when]})` : ""} → ${(r.acts || []).map(actKo).join(", ")} ${r.note ? `「${esc(r.note)}」` : ""}</li>`).join("") || "<li>규칙 없음</li>"}</ol>
     <h4>조별 의견</h4>${OPINION.map(o => `<p><b>${esc(o.q)}</b><br>${esc(op[o.id] || "—")}</p>`).join("")}`;
   $("detail").showModal();
+}
+function renderNotes() {
+  const rows = Object.values(B.notes).sort((a, b) => b.at - a.at).slice(0, 60);
+  const hm = ts => { const d = new Date(ts); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  $("noteFeed").innerHTML = rows.length ? rows.map(n => `<div class="opcard"><b style="color:${TYPES[typeOf(n.fromTeam)].color}">${n.fromTeam}조</b> → <b style="color:${TYPES[typeOf(n.toTeam)].color}">${n.toTeam}조</b> <small>${hm(n.at)}</small>
+    <p>${esc(n.text)}</p>${n.reply ? `<p><small>답</small> ${esc(n.reply)}</p>` : `<p class="muted small">답 없음</p>`}</div>`).join("") : `<p class="muted">아직 없음</p>`;
 }
 function renderOpinions() {
   const rows = Object.entries(B.opinions).filter(([, o]) => OPINION.some(q => o[q.id])).sort();
@@ -98,6 +103,7 @@ watchState(st => {
   document.querySelectorAll(".step[data-phase]").forEach(b => b.classList.toggle("on", b.dataset.phase === st.phase));
 });
 watchPeople(all => { B.people = all; renderAll(); });
-watchHomes(all => { B.homes = all; renderTeams(); });
+watchHomes(all => { B.homes = all; renderTeams(); renderResults(); });
 watchOpinions(all => { B.opinions = all; renderTeams(); renderOpinions(); });
+watchNotes(all => { B.notes = all; renderResults(); renderTeams(); renderNotes(); });
 renderAll();

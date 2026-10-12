@@ -3,12 +3,13 @@
 //   hci7_people/{uid}    학생 한 사람의 기록 — 체험 시간 · 도움 요청 · 표정 판정 비교 · 예약 결정 · 확인 과제
 //   hci7_homes/{T01}     조의 스마트홈 — 기기 상태 · 규칙 · 실행 기록 · 설계 목적
 //   hci7_opinions/{T01}  조별 의견
+//   hci7_notes/{id}      다른 조에 보내는 쪽지와 답
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, onSnapshot, runTransaction }
+import { getFirestore, doc, setDoc, addDoc, updateDoc, collection, onSnapshot, runTransaction }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { TEAM_COUNT, PHASE_ORDER, PRESET_RULES, PRESET_STATE, LOG_MAX, QUIZ, STATIONS, OPINION, teamId, typeOf, applyEvent } from "./data.js";
+import { TEAM_COUNT, PHASE_ORDER, PRESET_RULES, PRESET_STATE, PRESET_SETTINGS, LOG_MAX, QUIZ, STATIONS, OPINION, teamId, typeOf, applyEvent } from "./data.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyBC3M89Z6YTnpc7x6S5JvKhmB5BUIdIVlE",
@@ -48,7 +49,7 @@ export let watchHome = (team, cb) => onSnapshot(doc(db, "hci7_homes", teamId(tea
 /** 내 기록 — 필드 단위로 합쳐 쓴다 */
 export let savePerson = patch => setDoc(doc(db, "hci7_people", me.uid), { ...patch, updatedAt: Date.now() }, { merge: true });
 
-const freshHome = () => ({ state: { ...PRESET_STATE }, rules: PRESET_RULES.map(r => ({ ...r, acts: [...r.acts] })), log: [] });
+const freshHome = () => ({ state: { ...PRESET_STATE }, rules: PRESET_RULES.map(r => ({ ...r, acts: [...r.acts] })), settings: { ...PRESET_SETTINGS }, log: [] });
 
 /** 이벤트 하나 — 조원 여럿이 동시에 눌러도 꼬이지 않게 트랜잭션으로 */
 export let homeEvent = (team, evId, who) => runTransaction(db, async tx => {
@@ -57,7 +58,7 @@ export let homeEvent = (team, evId, who) => runTransaction(db, async tx => {
   const home = snap.exists() ? { ...freshHome(), ...snap.data() } : freshHome();
   const { state, fired } = applyEvent(home, evId);
   const entry = { at: Date.now(), ev: evId, who: String(who || "").slice(0, 20), fired };
-  tx.set(ref, { state, rules: home.rules, log: [...(home.log || []), entry].slice(-LOG_MAX), updatedAt: Date.now(), by: me.uid }, { merge: true });
+  tx.set(ref, { state, log: [...(home.log || []), entry].slice(-LOG_MAX), updatedAt: Date.now(), by: me.uid, ...(snap.exists() ? {} : { rules: home.rules, settings: home.settings }) }, { merge: true });
 });
 /** 규칙 · 설계 목적 저장 (2차) */
 export let saveHome = (team, patch) => setDoc(doc(db, "hci7_homes", teamId(team)), { ...patch, updatedAt: Date.now(), by: me.uid }, { merge: true });
@@ -69,6 +70,11 @@ export let ensureHome = async team => {
 };
 
 export let saveOpinion = (team, patch) => setDoc(doc(db, "hci7_opinions", teamId(team)), { ...patch, updatedAt: Date.now(), by: me.uid }, { merge: true });
+
+/* 쪽지 — 보낸 사람이 만들고, 받는 조의 조원만 답을 단다 (규칙이 hci7_people 의 조 번호로 확인) */
+export let watchNotes = cb => coll("hci7_notes", cb);
+export let sendNote = row => addDoc(collection(db, "hci7_notes"), { ...row, fromUid: me.uid, at: Date.now() });
+export let replyNote = (id, reply) => updateDoc(doc(db, "hci7_notes", id), { ...reply, replyUid: me.uid, repliedAt: Date.now() });
 
 async function call(body) {
   const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -91,25 +97,40 @@ if (isDemoMode) {
   const on = f => { subs.add(f); f(); return () => subs.delete(f); };
   let seed = 11;
   const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  const D = { state: { phase }, people: {}, homes: {}, opinions: {} };
+  const D = { state: { phase }, people: {}, homes: {}, opinions: {}, notes: {} };
   const later = PHASE_ORDER.indexOf(phase) >= PHASE_ORDER.indexOf("reveal");
   const afterCheck = PHASE_ORDER.indexOf(phase) > PHASE_ORDER.indexOf("check");
   // 반 전체 가짜 기록 — 유형별로 그럴듯하게 차이를 둔다
   for (let t = 1; t <= TEAM_COUNT; t++) {
     const type = typeOf(t);
-    const pOk = { A: { 개념: .85, 체험: .8 }, B: { 개념: .7, 체험: .55 }, C: { 개념: .65, 체험: .3 } }[type];
+    const pOk = { A: .8, B: .5, C: .3 }[type];
+    const solved = type === "A" ? rnd() < .7 : type === "B" ? rnd() < .3 : false;
     for (let k = 0; k < 4 + (t % 2); k++) {
       const uid = `demo_${t}_${k}`;
-      const answers = Object.fromEntries(QUIZ.map(q => [q.id, rnd() < pOk[q.kind] ? q.a : (q.a + 1 + Math.floor(rnd() * 3)) % q.opts.length]));
-      const eff = Object.fromEntries(STATIONS.map(s => [s.id, Math.max(1, Math.min(5, Math.round({ A: 4, B: 3.3, C: 2.2 }[type] + (rnd() - .5) * 2)))]));
-      const sec = type === "C" ? { manual: 300 + rnd() * 200 } : { emo: 400 + rnd() * 200, home: 400 + rnd() * 200, agent: 200 + rnd() * 100 };
-      D.people[uid] = { team: t, name: `${t}조 ${k + 1}`, type, help: { r1: type === "C" ? Math.round(rnd() * 4) : Math.round(rnd() * 2) },
-        t: { r1: sec },
-        emo: type === "C" ? {} : { match: Math.round(rnd() * 4), mismatch: Math.round(rnd() * 5) },
-        agent: type === "C" ? {} : { r1: { detail: rnd() < (type === "A" ? .9 : .35), steps: rnd() < (type === "A" ? .7 : .2), decision: rnd() < (type === "A" ? .8 : .3) ? "fix" : "confirm" } },
+      const answers = Object.fromEntries(QUIZ.map(q => [q.id, q.multi ? q.a.filter(() => rnd() < pOk).concat(rnd() < .3 ? [q.opts.length - 1] : []) : (rnd() < pOk ? q.a : (q.a + 1) % q.opts.length)]));
+      const eff = Object.fromEntries(STATIONS.map(s => [s.id, Math.max(1, Math.min(5, Math.round({ A: 4, B: 3.2, C: 2.2 }[type] + (rnd() - .5) * 2)))]));
+      const app = type !== "C";
+      D.people[uid] = { team: t, name: `${t}조 ${k + 1}`, type, help: { r1: Math.round(rnd() * 2) },
+        ...(app ? {
+          emo: { r1: { attempts: [{ total: 50 + Math.round(rnd() * 30), at: Date.now() }], passed: rnd() < (type === "A" ? .55 : .2), opened: rnd() < .6 } },
+          homeEv: { r1: { calls: 1 + Math.round(rnd() * 3), pass: solved } },
+          agent: { r1: { met: type === "A" ? 4 + Math.round(rnd() * 3) : 2 + Math.round(rnd() * 3), final: { rest: "haeo" } } },
+          potion: type === "A" ? { r1: { used: Math.round(rnd() * 6) } } : undefined,
+        } : {}),
         ...(afterCheck ? { quiz: { answers, eff, at: Date.now() } } : {}) };
+      if (!D.people[uid].potion) delete D.people[uid].potion;
     }
-    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), purpose: rnd() < .5 ? "미리보기 — 밤에 화장실 갈 때 눈부심 줄이기" : "", rules: PRESET_RULES.slice(0, 3 + (t % 3)) };
+    if (afterCheck) D.homes[teamId(t)] = { ...freshHome(), check: typeOf(t) === "C" ? null : { pass: solved, ok: solved ? 5 : 2 + (t % 3), at: Date.now() } };
+    // 다 유형 조원은 쪽지를 많이, 나머지는 가끔 — 답은 대부분 달린다
+    for (let k = 0; k < (type === "C" ? 6 : 1); k++) {
+      if (phase === "ready") break;
+      const to = 1 + Math.floor(rnd() * TEAM_COUNT);
+      if (to === t) continue;
+      const nid = `n_${t}_${k}`, ans = rnd() < .75;
+      D.notes[nid] = { fromTeam: t, fromName: `${t}조 ${k % 4 + 1}`, fromUid: `demo_${t}_${k % 4}`, fromType: type, toTeam: to, st: ["emo", "home", "agent"][k % 3],
+        text: ["표정 인식 화면에서 판정이 바뀌는 조건이 뭐예요?", "밤에 문 열면 조명이 어떻게 돼요?", "예약 비서 결과에서 이상한 점 있었어요?"][k % 3], at: Date.now() - (6 - k) * 60000, phase: "r1",
+        ...(ans ? { reply: "미리보기 답 — 실제로는 받은 조가 씁니다", replyName: `${to}조`, replyTeam: to, repliedAt: Date.now() - k * 30000 } : {}) };
+    }
     if (later && phase !== "reveal" && rnd() < .7) D.opinions[teamId(t)] = Object.fromEntries(OPINION.map(o => [o.id, `미리보기 의견 (${t}조) — 실제로는 조가 씁니다`]));
   }
   me.uid = "demo";
@@ -119,6 +140,9 @@ if (isDemoMode) {
   watchPeople = cb => on(() => cb(copy(D.people)));
   watchHomes = cb => on(() => cb(copy(D.homes)));
   watchOpinions = cb => on(() => cb(copy(D.opinions)));
+  watchNotes = cb => on(() => cb(copy(D.notes)));
+  sendNote = async row => { D.notes["n" + Date.now()] = { ...copy(row), fromUid: "demo", at: Date.now() }; emit(); };
+  replyNote = async (id, reply) => { D.notes[id] = { ...D.notes[id], ...copy(reply), replyUid: "demo", repliedAt: Date.now() }; emit(); };
   watchHome = (team, cb) => on(() => cb(D.homes[teamId(team)] ? copy(D.homes[teamId(team)]) : null));
   const deep = (a, b) => { for (const [k, v] of Object.entries(b)) a[k] = v && typeof v === "object" && !Array.isArray(v) ? deep(a[k] && typeof a[k] === "object" ? a[k] : {}, v) : v; return a; };
   savePerson = async patch => { D.people.demo = deep(D.people.demo || {}, copy(patch)); emit(); };
@@ -134,7 +158,7 @@ if (isDemoMode) {
   saveOpinion = async (team, patch) => { const id = teamId(team); D.opinions[id] = { ...(D.opinions[id] || {}), ...patch }; emit(); };
   adminCall = async (code, op, extra = {}) => {
     if (op === "phase") { D.state = { ...D.state, phase: extra.phase }; emit(); }
-    if (op === "reset") { D.people = {}; D.homes = {}; D.opinions = {}; D.state = { phase: "ready" }; emit(); }
+    if (op === "reset") { D.people = {}; D.homes = {}; D.opinions = {}; D.notes = {}; D.state = { phase: "ready" }; emit(); }
     return { ok: true };
   };
   document.title = "[미리보기] " + document.title;

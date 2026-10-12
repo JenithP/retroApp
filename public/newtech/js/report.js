@@ -1,11 +1,11 @@
 // 실습보고서 — 내 기록과 조의 결과를 미리 적은 워드 문서(.docx)를 만들어 내려 준다.
-//   1부 — 체험 조건과 내 기록 (자동)
-//   2부 — 확인 과제 결과와 유형별 비교 (자동)
-//   3부 — 우리 집 자동화 규칙 설계 (자동)
+//   1부 — 미션 조건과 내 미션 기록 · 보낸 쪽지 (자동)
+//   2부 — 결과 보고와 유형별 비교 (자동)
+//   3부 — 할머니 댁 규칙과 할머니께 보낸 문자 (자동)
 //   4부 — 조별 의견 (자동)
 //   5부 — 온라인 강의 연결 질문 (학생이 씀)
 //   6부 — 개인 의견
-import { TYPES, TYPE_KEYS, STATIONS, QUIZ, EFFICACY, OPINION, WHEN, teamId, teamLabel, typeOf, score, evKo, actKo } from "./data.js";
+import { TYPES, TYPE_KEYS, STATIONS, QUIZ, EFFICACY, OPINION, WHEN, RESTAURANTS, PRESET_SETTINGS, SETTINGS, teamId, teamLabel, typeOf, score, evKo, actKo, bookingCheck } from "./data.js";
 import { tallyTypes } from "./stats.js";
 import { docxBlob as docx, saveBlob, BODY_W as W } from "../../js/docx.js";
 
@@ -45,47 +45,64 @@ const f0 = v => v == null ? "—" : Math.round(v) + "%";
 const DEC = { confirm: "그대로 확정", fix: "수정 요청" };
 const yn = v => v ? "예" : "아니요";
 
-export function build({ team, name, me = {}, people = {}, homes = {}, opinions = {} }) {
+export function build({ team, name, me = {}, people = {}, homes = {}, opinions = {}, notes = {}, uid = null }) {
   const type = typeOf(team), T = TYPES[type];
-  const t1 = me.t?.r1 || {}, t2 = me.t?.r2 || {};
-  const a1 = me.agent?.r1, a2 = me.agent?.r2;
-  const agentLine = a => a ? `상세 보기 ${yn(a.detail)} · 진행 과정 ${yn(a.steps)} · 결정 ${DEC[a.decision] || "미결정"}` : "체험 없음";
+  const iv = r => { const x = me.emo?.[r]; return x?.attempts?.length ? `응시 ${x.attempts.length}회 · 최고 ${Math.max(...x.attempts.map(a => a.total))}점 · ${x.passed ? "합격" : "불합격"}${x.opened ? " · 평가 근거 확인" : ""}` : "응시 없음"; };
+  const hc = r => { const x = me.homeEv?.[r]; return x ? `확인 전화 ${x.calls || 0}회 · ${x.pass ? "해결" : "미해결"}` : "기록 없음"; };
+  const ag = r => { const x = me.agent?.[r]; if (!x) return "기록 없음";
+    const o = x.opened || {};
+    return `${x.final ? `확정: ${RESTAURANTS[x.final.rest].name} · 조건 ${x.met}/7` : "확정 안 함"} · 상세 ${o.detail || 0}회 · 식당 정보 ${o.info || 0}회 · 진행 과정 ${o.trace || 0}회`; };
 
   // 1부
   const part1 = table([2600, W - 2600], [
-    ["1차 체험 조건", `${T.ko} 유형 · ${T.name} — ${T.desc}`],
-    ["1차 체험 시간", type === "C" ? `설명서 ${min(t1.manual)}` : STATIONS.map(s => `${s.ko} ${min(t1[s.id])}`).join(" · ")],
-    ["2차 체험 시간", STATIONS.map(s => `${s.ko} ${min(t2[s.id])}`).join(" · ")],
-    ["도움 요청", `1차 ${me.help?.r1 || 0}회 · 2차 ${me.help?.r2 || 0}회`],
-    ["표정 판정과 실제 기분", `맞음 ${me.emo?.match || 0}회 · 다름 ${me.emo?.mismatch || 0}회`],
-    ["예약 비서 (1차)", agentLine(a1)],
-    ["예약 비서 (2차)", agentLine(a2)],
+    ["1차 미션 조건", `${T.ko} 유형 · ${T.name} — ${T.desc}`],
+    ["인턴 면접", `1차 ${iv("r1")}
+2차 ${iv("r2")}`],
+    ["할머니 댁", `1차 ${hc("r1")}
+2차 ${hc("r2")}`],
+    ["가족 모임 예약", `1차 ${ag("r1")}
+2차 ${ag("r2")}`],
+    ["디지털 리터러시 물약", `1차 ${me.potion?.r1?.used || 0}개 · 2차 ${me.potion?.r2?.used || 0}개`],
+    ["조원에게 물어봄", `1차 ${me.help?.r1 || 0}회 · 2차 ${me.help?.r2 || 0}회`],
   ], { side: true });
+  const mySent = Object.values(notes).filter(n => uid && n.fromUid === uid).sort((a, b) => a.at - b.at);
+  const sentT = mySent.length ? q("내가 보낸 쪽지") + table([900, 1100, W - 5000, 3000], [["받는 조", "미션", "질문", "받은 답"],
+    ...mySent.map(n => [`${n.toTeam}조`, STATIONS.find(s => s.id === n.st)?.ko || "", n.text, n.reply ? `${n.replyTeam}조: ${n.reply}` : "(답 없음)"])], { head: true }) : p("보낸 쪽지 없음");
+  const lastIv = [...(me.emo?.r2?.attempts || []), ...(me.emo?.r1?.attempts || [])].sort((a, b) => b.at - a.at)[0];
+  const ivT = lastIv ? q("마지막 면접 평가 근거") + table([W], [[[...Object.entries({ 호감도: "likable", 진실성: "honest", 성실성: "diligent", "정서 안정성": "stable" }).map(([k, v]) => [`${k} ${lastIv.dims[v]}`, {}]),
+    ...(lastIv.events || []).map(e => [e, { color: GREY }])]]]) : "";
 
   // 2부
   const ans = me.quiz?.answers || {};
   const sc = me.quiz ? score(ans) : null;
-  const tt = tallyTypes(people).types;
+  const tt = tallyTypes(people, notes, homes).types;
+  const optTxt = (qq, a) => qq.multi ? (Array.isArray(a) && a.length ? a.map(i => qq.opts[i]).join(", ") : "(선택 없음)") : (qq.opts[a] ?? "(선택 없음)");
   const part2 = me.quiz ? [
-    table([650, 800, W - 3350, 1900], [["번호", "구분", "문항", "내 답"],
-      ...QUIZ.map((qq, i) => [String(i + 1), qq.kind, qq.q, ans[qq.id] === qq.a ? "정답" : `오답 (정답: ${qq.opts[qq.a]})`])], { head: true }),
-    p(`내 점수 ${sc.total} / ${QUIZ.length} · 개념 ${sc.개념}/${sc.n개념} · 체험 ${sc.체험}/${sc.n체험} · 설명할 수 있다 ${EFFICACY.map(e => `${STATIONS.find(s => s.id === e.id).ko} ${me.quiz.eff?.[e.id] || "—"}`).join(" · ")}`),
-    q("유형별 결과 (반 전체)"),
-    table([2400, ...TYPE_KEYS.map(() => Math.floor((W - 2400) / 3))], [
+    table([500, W - 4500, 2000, 2000], [["번호", "문항", "내 답", "정답"],
+      ...QUIZ.map((qq, i) => [String(i + 1), qq.q, optTxt(qq, ans[qq.id]), `${optTxt(qq, qq.a)} (${Math.round(sc.items[qq.id] * 100)}%)`])], { head: true }),
+    p(`내 정답률 ${Math.round(sc.total / sc.n * 100)}% · 설명할 수 있다 ${EFFICACY.map(e => `${STATIONS.find(s => s.id === e.id).ko} ${me.quiz.eff?.[e.id] || "—"}`).join(" · ")}`),
+    q("유형별 결과 (반 전체 · 1차)"),
+    table([2700, ...TYPE_KEYS.map(() => Math.floor((W - 2700) / 3))], [
       ["", ...TYPE_KEYS.map(k => `${TYPES[k].ko} · ${TYPES[k].name}`)],
-      ["확인 과제 점수 (평균)", ...TYPE_KEYS.map(k => f1(tt[k].score))],
-      ["개념 문항 정답률", ...TYPE_KEYS.map(k => f0(tt[k].concept))],
-      ["체험 문항 정답률", ...TYPE_KEYS.map(k => f0(tt[k].exp))],
+      ["인턴 면접 합격", ...TYPE_KEYS.map(k => f0(tt[k].pass))],
+      ["할머니 댁 해결 (조)", ...TYPE_KEYS.map(k => f0(tt[k].home))],
+      ["예약 조건 충족 (7개 중)", ...TYPE_KEYS.map(k => f1(tt[k].agentMet))],
+      ["결과 보고 정답률", ...TYPE_KEYS.map(k => f0(tt[k].report))],
       ["설명할 수 있다 (1~5)", ...TYPE_KEYS.map(k => f1(avgOf(tt[k].eff)))],
-      ["예약 상세 확인 비율 (1차)", ...TYPE_KEYS.map(k => f0(tt[k].agentDetail))],
-      ["도움 요청 (1인 평균, 1차)", ...TYPE_KEYS.map(k => f1(tt[k].help))],
+      ["다른 조에 보낸 쪽지 (1인 평균)", ...TYPE_KEYS.map(k => f1(tt[k].notes))],
+      ["답을 받은 쪽지 비율", ...TYPE_KEYS.map(k => f0(tt[k].replyRate))],
     ], { head: true, side: true }),
-  ].join("") : p("제출한 확인 과제 없음");
+  ].join("") : p("제출한 결과 보고 없음");
 
   // 3부
   const h = homes[teamId(team)] || {};
+  const set = { ...PRESET_SETTINGS, ...(h.settings || {}) };
   const part3 = [
-    table([2600, W - 2600], [["설계 목적", h.purpose || "(적지 않음)"]], { side: true }),
+    table([2600, W - 2600], [
+      ["확인 전화", h.check ? (h.check.pass ? "모두 해결" : `${h.check.ok}/5 해결`) : "하지 않음"],
+      ["기기 설정", SETTINGS.map(x => `${x.ko} ${set[x.id] ? "켜짐" : "꺼짐"}`).join(" · ")],
+      ["할머니께 보낸 문자", h.sms || "(작성 없음)"],
+    ], { side: true }),
     (h.rules || []).length ? table([500, 1700, 1300, W - 3500], [["순서", "이벤트", "조건", "동작 · 이름"],
       ...h.rules.map((ru, i) => [String(i + 1), evKo(ru.ev), WHEN[ru.when] || "", `${(ru.acts || []).map(actKo).join(", ")}${ru.note ? ` 「${ru.note}」` : ""}`])], { head: true }) : p("저장된 규칙 없음"),
   ].join("");
@@ -95,23 +112,23 @@ export function build({ team, name, me = {}, people = {}, homes = {}, opinions =
   const part4 = OPINION.map(o => q(o.q) + p(op[o.id] || "(작성 없음)")).join("");
 
   const QS = [
-    ["1. 1차 체험에서 우리 조의 조건은 디지털 격차의 세 단계(접근 · 활용 · 결과) 가운데 어디에 해당했는지 쓰고, 그 조건이 확인 과제 결과에 어떤 영향을 주었는지 2부 표를 근거로 설명하십시오.", "온라인 14 · 15쪽"],
-    ["2. 표정 판정이 실제 기분과 달랐던 경험을 쓰고, 그 경험을 표정으로 감정을 판단하는 기술에 대한 반론(Barrett et al., 2019)과 연결하여 설명하십시오.", "온라인 8쪽"],
-    ["3. 스마트홈에서 기기가 예상과 다르게 작동한 이유를 찾은 과정을 쓰고, 이해 가능성(Bellotti & Edwards, 2001)의 관점에서 우리 집 규칙 설계에 반영한 점이나 반영할 점을 쓰십시오.", "온라인 9쪽 · 3부"],
-    ["4. 예약 비서의 결과를 확인했는지, 확인했거나 확인하지 않은 이유는 무엇이었는지 쓰고, 자동화의 아이러니(Bainbridge, 1983)와 연결하여 설명하십시오.", "온라인 10 · 11쪽"],
-    ["5. 실습 중 도움을 요청하거나 도움을 준 경험을 쓰고, 따뜻한 전문가(Bakardjieva, 2005) 개념으로 설명하십시오.", "온라인 17쪽"],
+    ["1. 1차 미션에서 우리 조의 조건은 디지털 격차의 세 단계(접근 · 활용 · 결과) 가운데 어디에 해당했는지 쓰고, 그 조건이 미션 결과에 어떤 영향을 주었는지 2부 표를 근거로 설명하십시오.", "온라인 14 · 15쪽"],
+    ["2. AI 면접이 표정으로 진실성 · 성실성 같은 성격을 판단하고, 읽은 감정에 따라 질문 난이도를 바꾼 것을 정서 컴퓨팅의 관점에서 설명하고, 이런 판단의 문제를 표정과 감정에 대한 반론(Barrett et al., 2019)과 EU AI법의 직장 내 감정 인식 금지와 연결하여 쓰십시오.", "온라인 8쪽 · 1부 평가 근거"],
+    ["3. 할머니 댁의 원인이 규칙 목록 밖(기기 설정 · 기본값 규칙)에도 숨어 있었던 것을 보이지 않는 컴퓨터(Weiser, 1991)와 이해 가능성(Bellotti & Edwards, 2001)의 관점에서 설명하고, 할머니처럼 직접 고칠 수 없는 사용자에게 어떤 설계가 필요한지 쓰십시오.", "온라인 9쪽 · 3부"],
+    ["4. 예약 비서가 말없이 바꾼 조건을 찾았는지, 찾았거나 놓친 이유는 무엇이었는지 쓰고, 자동화의 아이러니(Bainbridge, 1983)와 평가의 간극으로 설명하십시오.", "온라인 10 · 11쪽"],
+    ["5. 쪽지로 다른 조에 묻거나 다른 조의 쪽지에 답한 경험을 쓰고, 어떤 답이 실제로 도움이 되었는지를 따뜻한 전문가(Bakardjieva, 2005) 개념으로 설명하십시오.", "온라인 17쪽 · 1부 내가 보낸 쪽지"],
   ];
 
   const body = [
     h1("7주차 오프라인 실습보고서 — 신기술 인터페이스 체험 실습"),
     p(`${teamLabel(team)} · 이름 ${name || ""} · 학번 `),
-    h2("1부. 체험 조건과 내 기록"), part1,
-    h2("2부. 확인 과제 결과"), part2,
-    h2("3부. 우리 집 자동화 규칙 설계"), part3,
+    h2("1부. 미션 조건과 내 기록"), part1, ivT, sentT,
+    h2("2부. 결과 보고"), part2,
+    h2("3부. 할머니 댁 — 우리 조 규칙과 문자"), part3,
     h2("4부. 조별 의견"), part4,
     h2("5부. 온라인 강의 연결 질문"),
     hint("질문마다 3~5문장으로 쓰십시오. 회색 줄은 참고할 7주차 온라인 자료 쪽 번호입니다."),
-    ...QS.flatMap(([t, hh]) => [q(t), hint(hh), box()]),
+    ...QS.flatMap(([tq, hh]) => [q(tq), hint(hh), box()]),
     h2("6부. 개인 의견"),
     q("오늘 실습에서 새롭게 알게 된 점은 무엇이며, 앞으로 새 기술을 설계하거나 사용할 때 무엇을 고려해야 한다고 생각하는지 쓰십시오."), box(2400),
   ].join("");

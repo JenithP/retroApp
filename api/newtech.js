@@ -47,7 +47,7 @@ async function adminOp(store, body) {
 
   if (body.op === "reset") {
     // 리허설 뒤 비우기 — 7주차 모음만
-    for (const name of ["hci7_people", "hci7_homes", "hci7_opinions"]) {
+    for (const name of ["hci7_people", "hci7_homes", "hci7_opinions", "hci7_notes"]) {
       const snap = await store.collection(name).get();
       await Promise.all(snap.docs.map(d => d.ref.delete()));
     }
