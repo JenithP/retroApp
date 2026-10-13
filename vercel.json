@@ -22,6 +22,26 @@
       "source": "/",
       "destination": "/time/",
       "permanent": false
+    },
+    {
+      "source": "/present",
+      "destination": "/present/",
+      "permanent": false
+    },
+    {
+      "source": "/newtech",
+      "destination": "/newtech/",
+      "permanent": false
+    },
+    {
+      "source": "/vrcard",
+      "destination": "/vrcard/",
+      "permanent": false
+    },
+    {
+      "source": "/appshop",
+      "destination": "/appshop/",
+      "permanent": false
     }
   ],
   "headers": [
