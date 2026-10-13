@@ -13,6 +13,19 @@ const S = { team: Number(store.get("team")) || null, sid: store.get("sid") || ""
             state: { locked: false, slots: {} }, picks: {}, files: {}, select: {}, myQ: {}, view: store.get("view") || "papers" };
 const person = () => ({ team: S.team, sid: S.sid, name: S.name });
 
+/* ── 미리보기 (?demo) — 실제 데이터는 그대로 두고, 10주차에 우리 조 + 다른 3개 조가 배정되어 질문 칸이 열린 화면을 보여 준다.
+      올리기 · 열기 · 질문 등록은 하지 않는다 */
+const DEMO = new URLSearchParams(location.search).has("demo");
+const demoTeams = () => [S.team, ...[1, 2, 3, 4, 5].filter(t => t !== S.team)].slice(0, 4);
+function demoState(st) {
+  const now = Date.now(), slots = {};
+  demoTeams().forEach((t, i) => slots[teamId(t)] = { week: 0, order: i + 1, open: new Date(now - 3600e3), close: new Date(now + 7 * 864e5) });
+  return { ...st, slots };
+}
+const demoPicks = () => Object.fromEntries(demoTeams().map((t, i) => [teamId(t), { team: t, paper: ["p01", "p03", "p06", "p08"][i] }]));
+const demoFiles = () => Object.fromEntries(demoTeams().slice(1).map(t => [teamId(t), { team: t, name: `${t}조_발표자료.pdf`, size: 4.2 * 1024 * 1024, at: Date.now() - 864e5 }]));
+const demoNo = () => { alert("미리보기 화면 — 실제로 열리거나 등록되지 않습니다"); return true; };
+
 /* ── 입장 ─────────────────────────────────────────── */
 const sidOf = v => v.replace(/[^0-9]/g, "");   // 공백 · 하이픈은 빼고 숫자만
 function renderJoin(first = true) {
@@ -42,15 +55,17 @@ async function start() {
   started = true;
   show("vMain");
   $("meChip").hidden = false;
-  $("meChip").textContent = `${teamLabel(S.team)} · ${S.name}`;
+  $("meChip").textContent = `${teamLabel(S.team)} · ${S.name}${DEMO ? " · 미리보기" : ""}`;
+  if (DEMO) { S.view = "w0"; S.state = demoState(S.state); S.picks = { ...S.picks, ...demoPicks() }; S.files = { ...S.files, ...demoFiles() }; }
   $("meChip").onclick = () => { if (confirm("조 · 학번 · 이름을 다시 입력하시겠습니까?")) { store.set("team", ""); location.reload(); } };
   renderTabs();
   renderAll();   // 문헌 목록은 데이터 없이도 바로 보이게
-  watchState(st => { S.state = st; renderAll(); });
-  watchPicks(p => { S.picks = p; renderAll(); });
-  watchFiles(f => { S.files = f; renderAll(); });
+  watchState(st => { S.state = DEMO ? demoState(st) : st; renderAll(); });
+  watchPicks(p => { S.picks = DEMO ? { ...p, ...demoPicks() } : p; renderAll(); });
+  watchFiles(f => { S.files = DEMO ? { ...f, ...demoFiles() } : f; renderAll(); });
   watchSelect(s => { S.select = s; if (S.view !== "papers") renderWeek(); });
   watchMyQuestions(q => { S.myQ = q; renderTabs(); });
+  if (DEMO) setInterval(() => { S.state = demoState(S.state); }, 25000);
   setInterval(renderAll, 30000);   // 열람 시각 · 마감이 지나면 화면이 바뀌도록
 }
 function show(id) { ["vJoin", "vMain"].forEach(v => $(v).hidden = v !== id); }
@@ -146,6 +161,7 @@ function renderWeek() {
   $("wBody").querySelectorAll("[data-send]").forEach(b => b.onclick = async () => {
     const t = Number(b.dataset.send), ta = $("wBody").querySelector(`textarea[data-q="${t}"]`), text = ta.value.trim();
     if (text.length < 10) { alert("질문을 10자 이상 써 주십시오"); return; }
+    if (DEMO) return demoNo();
     if (!confirm(`${t}조 발표에 이 질문을 등록합니다. 등록 후에는 고칠 수 없습니다.\n\n${text}`)) return;
     b.disabled = true;
     try { await addQuestion(t, person(), text); ta.blur(); renderWeek(); }
@@ -153,6 +169,7 @@ function renderWeek() {
   });
 }
 async function doUpload(file, team) {
+  if (DEMO) return demoNo();
   if (file.size > MAX_FILE_MB * 1024 * 1024) { alert(`${MAX_FILE_MB}MB 이하만 올릴 수 있습니다`); return; }
   if (!/\.pdf$/i.test(file.name)) { alert("PDF 파일만 올릴 수 있습니다"); return; }
   const CH = 3 * 1024 * 1024, total = Math.ceil(file.size / CH), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -170,11 +187,13 @@ async function doUpload(file, team) {
   setTimeout(() => { delete box.dataset.busy; renderWeek(); }, 1500);
 }
 async function openDeck(team) {
+  if (DEMO) return demoNo();
   const w = window.open("", "_blank");
   try { const { url } = await fileUrl(team); if (w) w.location = url; else location.href = url; }
   catch (e) { if (w) w.close(); alert(e.message); }
 }
 async function downDeck(team) {
+  if (DEMO) return demoNo();
   try { const { url } = await fileUrl(team, true); const a = document.createElement("a"); a.href = url; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); }
   catch (e) { alert(e.message); }
 }
