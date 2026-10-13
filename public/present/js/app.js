@@ -14,16 +14,21 @@ const S = { team: Number(store.get("team")) || null, sid: store.get("sid") || ""
 const person = () => ({ team: S.team, sid: S.sid, name: S.name });
 
 /* ── 입장 ─────────────────────────────────────────── */
-function renderJoin() {
+const sidOf = v => v.replace(/[^0-9]/g, "");   // 공백 · 하이픈은 빼고 숫자만
+function renderJoin(first = true) {
   $("teamPick").innerHTML = Array.from({ length: TEAM_COUNT }, (_, i) => i + 1).map(t => `<button type="button" class="tp${S.team === t ? " on" : ""}" data-t="${t}"><b>${t}조</b></button>`).join("");
-  $("teamPick").querySelectorAll(".tp").forEach(b => b.onclick = () => { S.team = Number(b.dataset.t); renderJoin(); });
-  $("mySid").value = S.sid; $("myName").value = S.name;
-  const check = () => $("joinBtn").disabled = !(S.team && /^\d{6,12}$/.test($("mySid").value.trim()) && $("myName").value.trim());
-  $("mySid").oninput = $("myName").oninput = check;
+  $("teamPick").querySelectorAll(".tp").forEach(b => b.onclick = () => { S.team = Number(b.dataset.t); renderJoin(false); });
+  if (first) { $("mySid").value = S.sid; $("myName").value = S.name; }   // 조를 고를 때 이미 쓴 학번 · 이름을 지우지 않는다
+  const check = () => {
+    const miss = [!S.team && "조 선택", !/^\d{6,12}$/.test(sidOf($("mySid").value)) && "학번(숫자 6~12자리)", !$("myName").value.trim() && "이름"].filter(Boolean);
+    $("joinBtn").disabled = miss.length > 0;
+    $("joinHint").textContent = miss.length ? `남은 항목: ${miss.join(" · ")}` : "";
+  };
+  $("mySid").oninput = $("myName").oninput = $("myName").oncompositionend = check;
   check();
 }
 $("joinBtn").onclick = async () => {
-  S.sid = $("mySid").value.trim(); S.name = $("myName").value.trim();
+  S.sid = sidOf($("mySid").value); S.name = $("myName").value.trim();
   store.set("team", S.team); store.set("sid", S.sid); store.set("name", S.name);
   start();
 };
