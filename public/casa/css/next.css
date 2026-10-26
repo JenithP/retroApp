@@ -1,0 +1,115 @@
+/* 1부 튜터링 화면 — 1994년 실험의 NeXT 워크스테이션(17인치 2비트 회색조)을 따른다.
+   2비트 회색조이므로 검정 · 짙은 회색 · 옅은 회색 · 흰색 네 가지만 쓴다. */
+
+:root {
+  --k: #000; --d: #555; --l: #aaa; --w: #fff;
+  --sans: Helvetica, Arial, "Noto Sans KR", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; background: var(--d); color: var(--k);
+  font-family: var(--sans); -webkit-font-smoothing: none; font-smooth: never;
+  user-select: none; -webkit-user-select: none;
+}
+
+/* 작업 공간 — 오른쪽 위 독, 왼쪽 위 메뉴 */
+.ws { position: fixed; inset: 0; }
+.dock { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; }
+.tile {
+  position: relative; width: 64px; height: 64px; background: var(--l); display: grid; place-items: center;
+  border-top: 1px solid var(--w); border-left: 1px solid var(--w);
+  border-right: 1px solid var(--k); border-bottom: 1px solid var(--k);
+}
+.tile svg { width: 40px; height: 40px; }
+.tile.on::after { content: ""; position: absolute; left: 6px; bottom: 5px; width: 3px; height: 3px; background: var(--k); }  /* 실행 중 표시 */
+
+.menu { position: absolute; top: 0; left: 0; width: 112px; border: 1px solid var(--k); background: var(--l); font-size: 12px; }
+.menu .mt { background: var(--k); color: var(--w); font-weight: 700; padding: 3px 6px; }
+.menu .mi {
+  padding: 3px 6px; display: flex; justify-content: space-between; color: var(--k);
+  border-top: 1px solid var(--w); border-bottom: 1px solid var(--d);
+}
+.menu .mi.off { color: var(--d); }
+.menu .mi i { font-style: normal; }
+
+/* 창 */
+.win {
+  position: absolute; left: 50%; top: 50%; width: 760px; height: 540px;
+  transform: translate(-50%, -50%) scale(var(--s, 1));
+  background: var(--l); border: 1px solid var(--k);
+  box-shadow: 1px 1px 0 var(--k);
+  display: flex; flex-direction: column;
+}
+.tb {
+  height: 24px; flex: none; background: var(--k); color: var(--w);
+  display: flex; align-items: center; justify-content: center; position: relative;
+  font-size: 13px; font-weight: 700; letter-spacing: .02em;
+}
+.tb .wb {
+  position: absolute; top: 4px; width: 15px; height: 15px; background: var(--l);
+  border-top: 1px solid var(--w); border-left: 1px solid var(--w);
+  border-right: 1px solid var(--d); border-bottom: 1px solid var(--d);
+}
+.tb .wb.min { left: 4px; } .tb .wb.close { right: 4px; }
+.tb .wb.min::after { content: ""; position: absolute; inset: 3px; border: 1px solid var(--k); }
+.tb .wb.close::before, .tb .wb.close::after {
+  content: ""; position: absolute; left: 6px; top: 1px; width: 1.5px; height: 11px; background: var(--k);
+}
+.tb .wb.close::before { transform: rotate(45deg); } .tb .wb.close::after { transform: rotate(-45deg); }
+
+.body {
+  flex: 1; display: flex; flex-direction: column; padding: 18px 22px 16px;
+  border-top: 1px solid var(--w); border-left: 1px solid var(--w);
+}
+.label { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+
+/* 출력 칸 — 흰 바탕, 안으로 들어간 테두리 */
+.out {
+  flex: 1; min-height: 0; background: var(--w); padding: 22px 26px; overflow: auto;
+  border-top: 2px solid var(--d); border-left: 2px solid var(--d);
+  border-right: 2px solid var(--w); border-bottom: 2px solid var(--w);
+  outline: 1px solid var(--k); outline-offset: -3px;
+  font-size: 21px; line-height: 1.6; word-break: keep-all; user-select: text;
+}
+.out p { margin: 0 0 12px; }
+.out .caret { display: inline-block; width: 9px; height: 1.1em; vertical-align: -3px; background: var(--k); animation: blink 1s steps(1) infinite; }
+
+/* 응답 칸 */
+.resp { margin-top: 14px; min-height: 78px; }
+.resp .q { font-size: 15px; margin-bottom: 8px; }
+.matrix { display: flex; gap: 0; }
+.ends { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; color: var(--k); }
+
+.btn {
+  font: 700 14px var(--sans); color: var(--k); background: var(--l); cursor: pointer;
+  border: 0; padding: 0; min-width: 44px; height: 32px;
+  border-top: 1px solid var(--w); border-left: 1px solid var(--w);
+  border-right: 1px solid var(--k); border-bottom: 1px solid var(--k);
+  box-shadow: inset -1px -1px 0 var(--d);
+}
+.btn:active, .btn.sel { background: var(--w); }
+.btn:focus-visible { outline: 1px dotted var(--k); outline-offset: -5px; }
+.btn[disabled] { color: var(--d); cursor: default; background: var(--l); }
+.matrix .btn { flex: 1; height: 38px; }
+
+.opts { display: flex; flex-direction: column; gap: 4px; }
+.opts .btn { text-align: left; padding: 0 12px; height: 34px; font-weight: 400; font-size: 15px; display: flex; gap: 12px; align-items: center; }
+.opts .btn b { width: 16px; }
+
+.foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.foot .btn { min-width: 116px; letter-spacing: .04em; }
+.foot .btn.go { box-shadow: inset -1px -1px 0 var(--d), 0 0 0 2px var(--l), 0 0 0 3px var(--k); }  /* 기본 단추 */
+
+/* 번호 입력 */
+.field {
+  font: 22px var(--sans); width: 160px; height: 40px; padding: 0 10px; background: var(--w); color: var(--k);
+  border-top: 2px solid var(--d); border-left: 2px solid var(--d); border-right: 2px solid var(--w); border-bottom: 2px solid var(--w);
+  outline: 1px solid var(--k); outline-offset: -3px; user-select: text;
+}
+.err { font-size: 14px; margin-top: 10px; min-height: 1.4em; }
+
+.demo { position: fixed; left: 0; right: 0; bottom: 0; background: var(--k); color: var(--w); text-align: center; font-size: 12px; padding: 3px; }
+
+@keyframes blink { 50% { opacity: 0; } }

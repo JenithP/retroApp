@@ -1,0 +1,18 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"x9":"./cues.js"}}</script>
+</head><body>
+<script type="module">
+// 단서 도구 확인용 견본 — 생성 결과가 이런 모양이 된다
+import { start } from "x9";
+const { dev, C } = start({ speed: 30 });
+C.name("토리");
+const face = C.face({ where: "top", eyes: "round", mouth: "smile" });
+C.move("breathe");
+dev.on("ready", async () => { await C.typing(900); C.say("안녕하세요, 저는 토리예요."); C.sound("chirp"); });
+dev.on("dial", m => { face.look(m > 5 ? 4 : -4, 0); C.say(`${m}분이요? 좋아요.`, { ms: 1400 }); });
+dev.on("start", () => { face.mood("happy"); C.move("nod"); C.say("같이 집중해 봐요!"); });
+dev.on("pause", () => { face.mood("surprised"); C.say("잠깐 쉬는 거죠?"); });
+dev.on("end", async () => { face.mood("happy"); C.move("bounce"); C.lamp("pulse"); C.sound("laugh"); C.say("끝났어요! 수고했어요.", { ms: 4000 }); });
+dev.on("clear", () => { face.mood("neutral"); C.lamp("off"); });
+C.idle(12000, () => { face.mood("sleepy"); C.say("음… 졸려요.", { ms: 1800 }); });
+</script></body></html>

@@ -8,8 +8,8 @@ rules_version = '2';
 //    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
 //    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
 //
-//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_* · hcipres_*
-//    지능형콘텐츠         icp_teams · icp3_* · icp5_*
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_* · hcipres_* · hci9_*
+//    지능형콘텐츠         icp_teams · icp3_* · icp5_* · icp7_*
 //
 //  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
 // ══════════════════════════════════════════════════════════════
@@ -294,6 +294,86 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /* ── 9주차 기계에 대한 사회적 반응 실험 (casa/) ──────────────
+       1부 예의 실험 재현 기록 — 문서 이름은 프린트물 표지 번호(N12). 학생은 읽을 수 없다(결과는 현황판이 함수로 읽음).
+         번호 잡기  — 처음 입력할 때 한 번. 조건은 번호로 정해지므로(넷씩 끊어 앞 둘 종이) 여기서도 같은 규칙으로 확인한다
+         세션 기록  — 번호를 잡은 사람이 한 번. 설문은 화면 조건만
+         옮겨 적기  — 종이 조건이고 세션이 끝난 뒤, 아직 설문이 없을 때 한 번 (휴대전화라 다른 익명 사용자다) */
+    match /hci9_p1/{id} {
+      allow read: if false;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['n', 'cond', 'by', 'startedAt'])
+                    && request.resource.data.n is int
+                    && request.resource.data.n >= 1 && request.resource.data.n <= 120
+                    && id == 'N' + string(request.resource.data.n)
+                    && request.resource.data.by == request.auth.uid
+                    && request.resource.data.cond == ((request.resource.data.n % 4 == 1 || request.resource.data.n % 4 == 2) ? 'paper' : 'screen');
+      allow update: if request.auth != null
+                    && resource.data.by == request.auth.uid
+                    && !('doneAt' in resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['know', 'test', 'correct', 'survey', 'doneAt'])
+                    && request.resource.data.know is list && request.resource.data.know.size() == 10
+                    && request.resource.data.test is list && request.resource.data.test.size() == 5
+                    && (resource.data.cond == 'screen'
+                        ? (request.resource.data.survey is map && request.resource.data.survey.size() == 19)
+                        : !('survey' in request.resource.data));
+      allow update: if request.auth != null
+                    && resource.data.cond == 'paper'
+                    && 'doneAt' in resource.data
+                    && !('survey' in resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['survey', 'surveyAt'])
+                    && request.resource.data.survey is map && request.resource.data.survey.size() == 19;
+      allow delete: if false;
+    }
+
+    /* 2부 장치 의인화 — 단계 · 장치 목록(hci9_state)과 장치(hci9_devices)는 버셀 함수(api/casa.js)만 쓴다.
+         조(people)    — 자기 것만
+         명세서(specs) — 제작 단계에서 자기 조 것만 쓴다. 평가가 끝나기 전에는 자기 조 것만 읽는다(단서를 세며 평가하지 않게)
+         평가(ratings) — 평가 단계에서, 자기 조가 아닌 장치만. 읽기는 현황판(함수)만 */
+    function hci9Phase() {
+      return get(/databases/$(database)/documents/hci9_state/current).data.phase;
+    }
+    function hci9Team() {
+      return get(/databases/$(database)/documents/hci9_people/$(request.auth.uid)).data.team;
+    }
+    match /hci9_state/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci9_people/{uid} {
+      allow read:  if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && request.resource.data.keys().hasOnly(['team', 'at'])
+                   && request.resource.data.team is int && request.resource.data.team >= 1 && request.resource.data.team <= 20;
+    }
+    match /hci9_specs/{id} {
+      allow read:  if request.auth != null
+                   && (hci9Phase() == 'result' || id == 'T' + (hci9Team() < 10 ? '0' : '') + string(hci9Team()));
+      allow write: if request.auth != null
+                   && hci9Phase() == 'build'
+                   && id == 'T' + (hci9Team() < 10 ? '0' : '') + string(hci9Team())
+                   && request.resource.data.keys().hasOnly(['cues', 'updatedAt', 'by'])
+                   && request.resource.data.by == request.auth.uid
+                   && request.resource.data.cues is list && request.resource.data.cues.size() <= 5;
+    }
+    match /hci9_devices/{id} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci9_ratings/{id} {
+      allow read:  if false;
+      allow create, update: if request.auth != null
+                    && hci9Phase() == 'rate'
+                    && id == request.resource.data.target_id + '_' + request.auth.uid
+                    && request.resource.data.keys().hasOnly(['target', 'target_id', 'from', 'scores', 'by', 'at'])
+                    && request.resource.data.by == request.auth.uid
+                    && request.resource.data.from == hci9Team()
+                    && request.resource.data.target is int
+                    && request.resource.data.target != request.resource.data.from
+                    && request.resource.data.scores is map && request.resource.data.scores.size() <= 20;
+      allow delete: if false;
+    }
+
     /* ══ 지능형콘텐츠 ════════════════════════════════════════ */
 
     // 2주차 · 모듈 조립대
@@ -322,6 +402,14 @@ service cloud.firestore {
     match /icp5_config/{id} { allow read, write: if request.auth != null; }  // 단계
     match /icp5_teams/{id}  { allow read, write: if request.auth != null; }  // 조와 프롬프트
     match /icp5_items/{id}  { allow read, write: if request.auth != null; }  // 콘텐츠와 변형
+
+    // 7주차 · 아이데이션 리뷰 (week07/)
+    //
+    // 조끼리 서로의 정리와 메모를 읽는다 (발표 화면, 동료 조언).
+    // 사진 판독과 진단은 버셀 함수(api/week07.js)가 하고, 키는 거기에만 있다.
+    match /icp7_config/{id} { allow read, write: if request.auth != null; }  // 단계와 발표 조
+    match /icp7_teams/{id}  { allow read, write: if request.auth != null; }  // 사진·워크시트·정리·도메인 리서치
+    match /icp7_memos/{id}  { allow read, write: if request.auth != null; }  // 동료 메모
 
     /* ═══════════════════════════════════════════════════════ */
 

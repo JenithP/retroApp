@@ -15,6 +15,9 @@
     },
     "api/present.js": {
       "maxDuration": 300
+    },
+    "api/casa.js": {
+      "maxDuration": 300
     }
   },
   "redirects": [
@@ -39,6 +42,11 @@
       "permanent": false
     },
     {
+      "source": "/casa",
+      "destination": "/casa/",
+      "permanent": false
+    },
+    {
       "source": "/appshop",
       "destination": "/appshop/",
       "permanent": false
@@ -47,6 +55,15 @@
   "headers": [
     {
       "source": "/vrcard/kit/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/casa/kit/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",

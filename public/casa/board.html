@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>9주차 실험 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/board.css">
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">HCI와 커뮤니케이션 · 9주차 오프라인</p>
+      <h1>기계에 대한 사회적 반응 실험</h1>
+    </div>
+    <div class="lock" id="lock">
+      <input type="password" id="code" placeholder="교수용 암호" autocomplete="off" aria-label="교수용 암호">
+      <button class="btn primary" id="unlock" type="button">열기</button>
+      <span class="err" id="lockErr" role="alert"></span>
+    </div>
+    <div class="tools" id="tools" hidden>
+      <span class="stamp" id="stamp"></span>
+      <button class="btn" id="refresh" type="button">새로고침</button>
+      <button class="btn" id="hide" type="button">결과 가리기</button>
+    </div>
+  </header>
+
+  <nav class="bar" id="bar" hidden>
+    <div class="seg" role="tablist" id="tabs">
+      <button class="btn" role="tab" type="button" data-tab="p1" aria-selected="true">1부 예의 실험</button>
+      <button class="btn" role="tab" type="button" data-tab="p2" aria-selected="false">2부 장치 의인화</button>
+    </div>
+    <div class="seg" id="phases" aria-label="학생 화면 단계"></div>
+  </nav>
+
+  <main id="main" hidden>
+   <div id="tab-p1">
+    <section class="grid g-counts" id="counts"></section>
+
+    <section id="results">
+      <div class="card">
+        <h2>1994년 결과와 비교</h2>
+        <p class="sub">Nass, Steuer &amp; Tauber (1994) Study 1 — 같은 컴퓨터가 평가를 물으면 더 후하고(평균), 응답이 더 몰린다(편차). 우리 반: 같은 컴퓨터 − 종이 설문.</p>
+        <table class="cmp" id="cmp"></table>
+      </div>
+
+      <div class="grid g-plots" id="plots"></div>
+
+      <div class="card" style="margin-top:14px">
+        <h2>「컴퓨터에게 예의를 지킬 필요가 있다」</h2>
+        <p class="sub">원 연구의 참가자들은 사후 면담에서 컴퓨터에는 예의가 필요 없다고 답했다. 그렇게 답한 사람만 따로 보면?</p>
+        <div id="belief"></div>
+      </div>
+
+      <details class="tbl card" id="tableView">
+        <summary>표로 보기</summary>
+        <div id="table"></div>
+      </details>
+    </section>
+
+    <div class="foot">
+      <span>수업이 끝나면 응답을 폐기합니다 (오프라인 덱 11번 안내).</span>
+      <input type="text" id="purgeWord" placeholder="폐기 라고 입력" aria-label="폐기 확인 단어">
+      <button class="btn danger" id="purge" type="button">응답 폐기</button>
+      <span id="purgeMsg"></span>
+    </div>
+   </div>
+
+   <div id="tab-p2" hidden>
+    <section class="grid g-counts" id="counts2"></section>
+    <section id="results2">
+      <div class="card">
+        <h2>장치별 점수</h2>
+        <p class="sub">의인화 평균 순. Godspeed 의인화 · 생동감 (1–5), 마음 지각 행위성 · 경험성 (1–7, 쌍 비교 대신 척도로 변형). 줄을 누르면 그 장치와 명세서를 아래에서 엽니다.</p>
+        <div id="rank"></div>
+      </div>
+      <div class="grid g-plots">
+        <div class="card">
+          <h2>단서 개수와 의인화</h2>
+          <p class="sub">점 하나가 장치 하나. 단서를 많이 넣을수록 더 사람처럼 느껴졌는가?</p>
+          <div class="plot" id="scatter"></div>
+        </div>
+        <div class="card">
+          <h2>분류별 단서 사용과 의인화</h2>
+          <p class="sub">그 분류의 단서를 넣은 장치와 넣지 않은 장치의 의인화 평균.</p>
+          <div id="catTable"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="row-between"><h2 id="demoTitle">1위 장치 시연</h2><button class="btn" id="demoReload" type="button">다시 켜기</button></div>
+        <div class="split2">
+          <div class="frame"><iframe id="demoFrame" sandbox="allow-scripts" title="시연 장치"></iframe></div>
+          <div id="demoSpec"></div>
+        </div>
+      </div>
+    </section>
+    <div class="foot">
+      <span>리허설 뒤 2부 비우기 — 조 · 명세서 · 장치 · 평가를 지우고 단계를 1부로 되돌립니다.</span>
+      <input type="text" id="resetWord" placeholder="초기화 라고 입력" aria-label="초기화 확인 단어">
+      <button class="btn danger" id="reset" type="button">2부 비우기</button>
+      <span id="resetMsg"></span>
+    </div>
+   </div>
+  </main>
+</div>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

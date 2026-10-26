@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>장치 의인화</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/p2.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="eyebrow">HCI와 커뮤니케이션 · 9주차 오프라인 2부</p>
+    <h1>장치 의인화</h1>
+  </div>
+  <div class="chips">
+    <button class="chip" id="teamChip" type="button" hidden></button>
+    <span class="chip phase" id="phaseChip">연결 중</span>
+  </div>
+</header>
+
+<main>
+  <!-- 조 고르기 -->
+  <section id="pickTeam" class="card" hidden>
+    <h2>우리 조</h2>
+    <p class="sub">조 번호를 고르십시오. 잘못 골랐으면 위의 조 표시를 눌러 다시 고를 수 있습니다.</p>
+    <div class="teams" id="teams"></div>
+  </section>
+
+  <!-- 대기 -->
+  <section id="wait" class="card" hidden>
+    <h2>2부 대기</h2>
+    <p class="sub">2부가 시작되면 이 화면이 저절로 바뀝니다.</p>
+  </section>
+
+  <!-- 제작 -->
+  <section id="build" hidden>
+    <div class="split">
+      <div>
+        <div class="card">
+          <h2>단서 분류 — Feine 외 (2019)</h2>
+          <p class="sub">네 분류에서 사람처럼 느끼게 할 단서를 검색해 찾고, 최대 5개를 명세서에 적습니다. 단서마다 근거 출처를 적습니다.</p>
+          <table class="cats" id="cats"></table>
+        </div>
+        <div class="card">
+          <div class="row-between">
+            <h2>단서 명세서</h2>
+            <span class="saved" id="saved"></span>
+          </div>
+          <p class="sub"><b>명세서에 적힌 단서만</b> 장치에 들어갑니다. 적지 않은 것은 들어가지 않습니다. 조에서 한 사람이 입력하십시오.</p>
+          <div id="cues"></div>
+          <div class="row">
+            <button class="btn" id="addCue" type="button">단서 추가</button>
+            <button class="btn primary" id="saveSpec" type="button">명세서 저장</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card sticky">
+          <div class="row-between">
+            <h2>우리 조 장치</h2>
+            <span class="muted" id="genLeft"></span>
+          </div>
+          <div class="frame"><iframe id="myFrame" sandbox="allow-scripts" title="우리 조 장치"></iframe></div>
+          <div class="row">
+            <button class="btn primary" id="gen" type="button">장치 만들기</button>
+            <button class="btn" id="reload" type="button">다시 켜기</button>
+          </div>
+          <p class="msg" id="genMsg" role="status"></p>
+          <p class="sub">저장된 명세서로 만듭니다. 생성은 조당 2번이고, 마지막에 만든 장치가 평가에 쓰입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 평가 -->
+  <section id="rate" hidden>
+    <div class="card">
+      <h2>다른 조 장치 평가</h2>
+      <p class="sub">장치마다 1분쯤 직접 다이얼을 돌리고 버튼을 눌러 본 뒤 평가하십시오. 각자 평가합니다. 명세서는 평가가 끝난 뒤에 공개됩니다.</p>
+      <div class="tabs" id="rateTabs" role="tablist"></div>
+    </div>
+    <div class="split" id="rateBody">
+      <div class="card sticky">
+        <h2 id="rateTitle"></h2>
+        <div class="frame"><iframe id="rateFrame" sandbox="allow-scripts" title="평가할 장치"></iframe></div>
+        <button class="btn" id="rateReload" type="button">다시 켜기</button>
+      </div>
+      <div class="card">
+        <h3>이 장치는 어떻습니까? <span class="muted">(1–5)</span></h3>
+        <div id="godspeed"></div>
+        <h3>이 장치는… <span class="muted">(1 전혀 아니다 – 7 매우 그렇다)</span></h3>
+        <div id="mind"></div>
+        <div class="row">
+          <button class="btn primary" id="sendRate" type="button" disabled>평가 보내기</button>
+          <span class="muted" id="rateCount"></span>
+        </div>
+        <p class="msg" id="rateMsg" role="status"></p>
+      </div>
+    </div>
+    <div class="card" id="rateDone" hidden>
+      <h2>평가를 모두 마쳤습니다</h2>
+      <p class="sub">결과는 앞 화면에서 함께 봅니다.</p>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section id="result" hidden>
+    <div class="card">
+      <h2>결과는 앞 화면에서 함께 봅니다</h2>
+      <p class="sub">이제 모든 조의 명세서가 공개되었습니다. 우리 조 명세서와 장치를 다시 볼 수 있습니다.</p>
+    </div>
+    <div class="split">
+      <div class="card"><h2>우리 조 명세서</h2><div id="mySpec"></div></div>
+      <div class="card"><h2>우리 조 장치</h2><div class="frame"><iframe id="resFrame" sandbox="allow-scripts" title="우리 조 장치"></iframe></div></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="js/p2.js"></script>
+</body>
+</html>
