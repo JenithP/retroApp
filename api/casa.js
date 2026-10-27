@@ -173,6 +173,8 @@ async function report({ db }, body) {
     db.doc("hci9_state/current").get(), db.doc(`hci9_specs/${teamId(team)}`).get(),
     db.collection("hci9_devices").get(), db.collection("hci9_ratings").get(),
   ]);
+  // 명세서는 평가가 끝난 뒤 공개 — 평가 중에 다른 조 명세서를 보면 평가가 흔들린다
+  if ((st.data()?.phase || "p1") !== "result") return [403, { error: "현황판이 「2부 결과」로 바뀐 뒤에 열립니다" }];
   const scaleOf = Object.fromEntries([...GODSPEED, ...MIND].map(it => [it.id, it.scale]));
   const scales = ["anthro", "animacy", "agency", "experience"];
   // 평가 한 건마다 하위 척도 평균, 장치마다 그 평균의 평균 (현황판과 같은 방식)
