@@ -190,7 +190,15 @@ export function mount(host, opts = {}) {
     get state() { return state; },
     get minutes() { return value; },
     on(name, fn) { (handlers[name] ||= []).push(fn); return dev; },
+    // 부품 위치를 dev.layer 기준 px 로 (장치 확대 · 축소와 무관)
+    box(name) {
+      const s = root.getBoundingClientRect().width / W || 1;
+      const L = dev.layer.getBoundingClientRect(), r = parts[name].getBoundingClientRect();
+      return { x: (r.left - L.left) / s, y: (r.top - L.top) / s, w: r.width / s, h: r.height / s };
+    },
   };
-  queueMicrotask(() => emit("ready"));
+  // 스타일이 다 적용되고 배치가 끝난 뒤에 알린다 — 그 전에 위치를 재면 엉뚱한 값이 나온다
+  const ready = () => requestAnimationFrame(() => requestAnimationFrame(() => { fit(); emit("ready"); }));
+  if (document.readyState === "complete") ready(); else addEventListener("load", ready, { once: true });
   return dev;
 }

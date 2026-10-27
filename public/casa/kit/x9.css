@@ -53,6 +53,7 @@
 }
 .x9-display {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px;
+  color: var(--vfd);   /* 화면 글자색 = 숫자 색 — 장치가 이 색을 가져다 쓴다 */
   filter: drop-shadow(0 0 6px rgba(116, 240, 198, .55));
 }
 .x9-digit { width: 52px; height: 88px; }

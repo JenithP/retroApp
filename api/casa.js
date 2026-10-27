@@ -42,7 +42,7 @@ Device events — dev.on(name, fn):
 - "start" (minutes), "pause" (secondsLeft), "resume" (secondsLeft)
 - "tick" (secondsLeft) about ten times per second while running — check the value yourself; do not react on every tick
 - "end" when time is up, "clear" when the user presses the button after the end
-- dev.state is "idle" | "running" | "paused" | "done"; dev.minutes is the dial value; dev.layer is an empty overlay div on the device (560 x 400 px, origin top-left) for anything the tools below do not cover; dev.parts has move, plate, body, window, display, lamp, button, grille, dial elements.
+- dev.state is "idle" | "running" | "paused" | "done"; dev.minutes is the dial value; dev.layer is an empty overlay div on the device (560 x 400 px, origin top-left) for anything the tools below do not cover; dev.parts has move, plate, body, window, display, lamp, button, grille, dial elements. To place something on dev.layer next to a part, use dev.box(partName), which returns { x, y, w, h } in dev.layer px (call it in "ready" or later); do not use getBoundingClientRect, because the device is scaled. Prefer C.face for faces.
 
 Cue tools — C:
 - Verbal: C.say(text, { voice: false, ms: 2600 }) shows a speech bubble above the device (voice: true also speaks it). C.bubble(text, { ms }) bubble only. C.name(text) replaces the "X-9" label on the name plate.
