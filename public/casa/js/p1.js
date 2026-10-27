@@ -7,7 +7,7 @@
 // 진행 중 새로고침해도 이어서 할 수 있게 이 탭(sessionStorage)에 위치와 답을 둔다.
 // 번호는 처음 입력할 때 서버에 잡아 두므로, 같은 번호로 처음부터 다시 시작할 수는 없다.
 import * as D from "./data.js";
-import { ready, claimNumber, saveSession, isDemoMode } from "./fb.js";
+import { ready, claimNumber, saveSession, watchState, isDemoMode } from "./fb.js";
 
 const $body = document.getElementById("body");
 const $title = document.getElementById("title");
@@ -229,8 +229,13 @@ function end() {
   clearInterval(typing);
   $title.textContent = "Tutor";
   const paras = S.cond === "paper" ? D.PAPER_END : D.SCREEN_END;
-  $body.innerHTML = `<div class="label">Session Complete</div><div class="out" id="out"></div>`;
+  $body.innerHTML = `<div class="label">Session Complete</div><div class="out" id="out"></div>
+    <div class="foot"><button class="btn go" id="go" type="button" hidden>PART 2</button></div>`;
   type($body.querySelector("#out"), paras);
+  // 현황판이 2부로 넘기면 2부 화면으로 가는 단추를 띄운다
+  const go = $body.querySelector("#go");
+  go.onclick = () => { location.href = "p2.html" + location.search; };
+  ready().then(() => watchState(st => { go.hidden = (st.phase || "p1") === "p1"; }));
 }
 
 render();
