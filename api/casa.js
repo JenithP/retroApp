@@ -15,7 +15,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { PHASE_ORDER, TEAM_COUNT, GEN_LIMIT, CUE_CATS, teamId } from "../public/casa/js/data.js";
+import { PHASE_ORDER, TEAM_COUNT, GEN_LIMIT, CUE_CATS, GODSPEED, MIND, teamId } from "../public/casa/js/data.js";
 
 const ALLOW = ["https://gccrc-crae.web.app", "https://gccrc-crae.firebaseapp.com"];
 const MODEL = process.env.CASA_MODEL || "claude-opus-5-5";
@@ -164,6 +164,46 @@ async function wipe(db, name, sub) {
   return snap.size;
 }
 
+// 조별 결과 내려받기 — 조 번호만으로. 명세서와 받은 평가의 집계만 돌려주고 개별 평가는 보내지 않는다
+const avg = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
+async function report({ db }, body) {
+  const team = Number(body.team);
+  if (!(team >= 1 && team <= TEAM_COUNT)) return [400, { error: "조 번호 오류" }];
+  const [st, spec, devs, rates] = await Promise.all([
+    db.doc("hci9_state/current").get(), db.doc(`hci9_specs/${teamId(team)}`).get(),
+    db.collection("hci9_devices").get(), db.collection("hci9_ratings").get(),
+  ]);
+  const scaleOf = Object.fromEntries([...GODSPEED, ...MIND].map(it => [it.id, it.scale]));
+  const scales = ["anthro", "animacy", "agency", "experience"];
+  // 평가 한 건마다 하위 척도 평균, 장치마다 그 평균의 평균 (현황판과 같은 방식)
+  const by = {};
+  rates.docs.forEach(d => {
+    const r = d.data(), o = by[r.target] ||= { n: 0, sc: Object.fromEntries(scales.map(s => [s, []])), items: {} };
+    o.n += 1;
+    for (const s of scales) {
+      const v = Object.keys(scaleOf).filter(id => scaleOf[id] === s).map(id => r.scores?.[id]).filter(Number.isFinite);
+      if (v.length) o.sc[s].push(avg(v));
+    }
+    for (const [id, v] of Object.entries(r.scores || {})) if (Number.isFinite(v)) (o.items[id] ||= []).push(v);
+  });
+  const teams = devs.docs.map(d => d.data()).filter(d => d.html).map(d => d.team);
+  const score = t => Object.fromEntries(scales.map(s => [s, avg(by[t]?.sc[s] || [])]));
+  const all = teams.map(t => ({ team: t, ...score(t) }));
+  const mine = score(team);
+  const rank = Object.fromEntries(scales.map(s => {
+    const vals = all.filter(x => x[s] != null).sort((a, b) => b[s] - a[s]);
+    const i = vals.findIndex(x => x.team === team);
+    return [s, i < 0 ? null : { rank: i + 1, of: vals.length }];
+  }));
+  const classAvg = Object.fromEntries(scales.map(s => [s, avg(all.map(x => x[s]).filter(v => v != null))]));
+  const items = Object.fromEntries(Object.entries(by[team]?.items || {}).map(([id, v]) => [id, avg(v)]));
+  const dev = devs.docs.find(d => d.id === teamId(team))?.data();
+  return [200, {
+    team, phase: st.data()?.phase || "p1", cues: spec.data()?.cues || [], hasDevice: !!dev?.html,
+    n: by[team]?.n || 0, scores: mine, classAvg, rank, items, devices: teams.length, at: Date.now(),
+  }];
+}
+
 async function adminOp({ db }, body) {
   const code = process.env.CASA_ADMIN_CODE || process.env.HCI4_ADMIN;
   if (!code) return [503, { error: "버셀에 HCI4_ADMIN(또는 CASA_ADMIN_CODE) 이 없습니다" }];
@@ -253,6 +293,10 @@ export default async function handler(req, res) {
     const fb = admin();
     if (body.action === "admin") {
       const [s, out] = await adminOp(fb, body);
+      return res.status(s).json(out);
+    }
+    if (body.action === "report") {
+      const [s, out] = await report(fb, body);
       return res.status(s).json(out);
     }
     if (body.action === "generate") {

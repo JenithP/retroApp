@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조별 결과</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/p2.css">
+<style>
+  table.rep { border-collapse: collapse; width: 100%; font-size: 14px; }
+  table.rep th, table.rep td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  table.rep th { color: var(--soft); font-weight: 500; }
+  table.rep td.num, table.rep th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .note { font-size: 13px; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="eyebrow">HCI와 커뮤니케이션 · 9주차 오프라인 2부</p>
+    <h1>조별 결과 내려받기</h1>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>우리 조</h2>
+    <p class="sub">조 번호를 고르면 우리 조 명세서와 다른 조에게 받은 평가 점수를 볼 수 있습니다. 토론 과제에 그대로 인용해도 됩니다.</p>
+    <div class="teams" id="teams"></div>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <div id="out" hidden>
+    <section class="card">
+      <div class="row-between">
+        <h2 id="title"></h2>
+        <button class="btn primary" id="dl" type="button">워드 파일로 내려받기</button>
+      </div>
+      <p class="note" id="meta"></p>
+    </section>
+    <section class="card">
+      <h2>받은 평가</h2>
+      <div class="wrap" id="scores"></div>
+      <h3>문항별 평균</h3>
+      <div class="wrap" id="items"></div>
+      <p class="note">평가 한 건마다 하위 척도의 평균을 내고, 그 평균을 다시 평균함 (현황판과 같은 방식). 순위는 장치를 만든 조 가운데 순위. 누가 몇 점을 줬는지는 공개하지 않음.<br>
+        Godspeed: Bartneck, Kulić, Croft &amp; Zoghbi (2009) · 마음 지각: Gray, Gray &amp; Wegner (2007), 7점 척도로 변형</p>
+    </section>
+    <section class="card">
+      <h2>우리 조 명세서</h2>
+      <div class="wrap" id="spec"></div>
+    </section>
+  </div>
+</main>
+
+<script type="module" src="js/report.js"></script>
+</body>
+</html>
