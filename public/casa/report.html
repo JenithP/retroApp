@@ -33,6 +33,20 @@
     <p class="msg" id="msg"></p>
   </section>
 
+  <section class="card">
+    <div class="row-between">
+      <h2>1부 반 전체 설문</h2>
+      <button class="btn" id="p1load" type="button">불러오기</button>
+    </div>
+    <p class="sub">1부 실험(같은 컴퓨터 vs 종이 설문)에서 반 전체가 답한 설문입니다. 번호 · 이름은 들어 있지 않습니다. 엑셀에서 열리는 CSV 파일로 내려받을 수 있습니다.</p>
+    <p class="msg" id="p1msg"></p>
+    <div id="p1out" hidden>
+      <div class="wrap" id="p1sum"></div>
+      <p class="note">지수는 원문처럼 친근함 5문항 · 유능함 4문항의 평균 (10점 척도). 전체 평가 점수는 18문항 평균. 근거: Nass, Steuer &amp; Tauber (1994), Study 1.</p>
+      <p><button class="btn primary" id="p1dl" type="button">CSV 파일로 내려받기</button></p>
+    </div>
+  </section>
+
   <div id="out" hidden>
     <section class="card">
       <div class="row-between">

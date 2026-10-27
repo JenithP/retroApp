@@ -206,6 +206,17 @@ async function report({ db }, body) {
   }];
 }
 
+// 1부 반 전체 설문 — 1부가 끝난 뒤 공개. 번호 · 계정 id · 시각은 빼고, 설문이 다 채워진 응답만
+async function p1data({ db }) {
+  const [st, snap] = await Promise.all([db.doc("hci9_state/current").get(), db.collection("hci9_p1").get()]);
+  if ((st.data()?.phase || "p1") === "p1") return [403, { error: "1부가 끝난 뒤에 열립니다" }];
+  const rows = snap.docs.map(d => d.data())
+    .filter(r => r.survey && Object.keys(r.survey).length >= 19 && (r.cond === "screen" || r.cond === "paper"))
+    .map(r => ({ cond: r.cond, survey: r.survey, know: r.know || [], correct: r.correct ?? null }))
+    .sort((a, b) => a.cond.localeCompare(b.cond));
+  return [200, { rows, at: Date.now() }];
+}
+
 async function adminOp({ db }, body) {
   const code = process.env.CASA_ADMIN_CODE || process.env.HCI4_ADMIN;
   if (!code) return [503, { error: "버셀에 HCI4_ADMIN(또는 CASA_ADMIN_CODE) 이 없습니다" }];
@@ -299,6 +310,10 @@ export default async function handler(req, res) {
     }
     if (body.action === "report") {
       const [s, out] = await report(fb, body);
+      return res.status(s).json(out);
+    }
+    if (body.action === "p1data") {
+      const [s, out] = await p1data(fb);
       return res.status(s).json(out);
     }
     if (body.action === "generate") {
