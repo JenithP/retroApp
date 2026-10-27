@@ -134,5 +134,6 @@ dev.on("start", async () => { await C.typing(1000); C.say("시작할게요"); })
   };
   document.title = "[미리보기] " + document.title;
 } else {
-  signInAnonymously(auth).catch(e => console.error(e));
+  // 저장된 로그인을 먼저 되살린다 — 바로 새로 로그인하면 새로고침마다 다른 사람이 된다
+  auth.authStateReady().then(() => auth.currentUser || signInAnonymously(auth)).catch(e => console.error(e));
 }

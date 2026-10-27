@@ -81,8 +81,10 @@ $("saveSpec").onclick = async () => {
   const cues = S.cues.filter(c => c.name.trim() || c.detail.trim());
   try {
     await ready();
-    await saveSpec(S.team, cues);
+    // 막히면 조를 다시 등록하고 한 번 더 쓴다
+    await saveSpec(S.team, cues).catch(async () => { await setTeam(S.team); await saveSpec(S.team, cues); });
     S.dirty = false; S.specAt = Date.now(); renderCues();
+    subscribeTeam();
   } catch (e) { console.error(e); $("saved").textContent = "저장 실패 — 제작 단계인지 확인"; }
 };
 
@@ -206,11 +208,14 @@ function render() {
   if (p === "result") { $("result").hidden = false; renderMySpec(); }
 }
 
-watchState(st => {
-  const was = S.phase;
-  S.phase = st.phase || "p1";
-  if (was !== S.phase) { S.shown = -1; subscribeTeam(); }
-  render();
+// 로그인과 조 등록이 끝난 뒤에 구독한다 — 규칙이 조 등록으로 명세서 읽기 · 쓰기를 가린다
+ready().then(async () => {
+  if (S.team) await setTeam(S.team).catch(e => console.error(e));
+  watchState(st => {
+    const was = S.phase;
+    S.phase = st.phase || "p1";
+    if (was !== S.phase) { S.shown = -1; subscribeTeam(); }
+    render();
+  });
+  watchDeviceList(list => { S.list = list; if (S.phase === "rate") { renderRate(); if (S.cur && !stopTarget) loadTarget(); } });
 });
-watchDeviceList(list => { S.list = list; if (S.phase === "rate") { renderRate(); if (S.cur && !stopTarget) loadTarget(); } });
-if (S.team) ready().then(() => setTeam(S.team).catch(() => {}));
