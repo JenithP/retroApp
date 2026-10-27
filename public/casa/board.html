@@ -99,6 +99,12 @@
       </div>
     </section>
     <div class="foot">
+      <span>장치 생성 1회 돌려주기 — 명세서와 지금 장치는 그대로 둡니다.</span>
+      <input type="number" id="refundTeam" min="1" max="20" placeholder="조" aria-label="돌려줄 조 번호" style="width:70px">
+      <button class="btn" id="refund" type="button">1회 돌려주기</button>
+      <span id="refundMsg"></span>
+    </div>
+    <div class="foot">
       <span>리허설 뒤 2부 비우기 — 조 · 명세서 · 장치 · 평가를 지우고 단계를 1부로 되돌립니다.</span>
       <input type="text" id="resetWord" placeholder="초기화 라고 입력" aria-label="초기화 확인 단어">
       <button class="btn danger" id="reset" type="button">2부 비우기</button>

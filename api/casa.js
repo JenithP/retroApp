@@ -212,6 +212,20 @@ async function adminOp({ db }, body) {
     return [200, { ok: true, deleted: snap.size }];
   }
 
+  if (body.op === "refund") {
+    // 실수로 다 쓴 조에 생성 1회 돌려주기 — 명세서와 지금 장치는 그대로
+    const team = Number(body.team);
+    if (!(team >= 1 && team <= TEAM_COUNT)) return [400, { error: "조 번호 오류" }];
+    const ref = db.doc(`hci9_devices/${teamId(team)}`);
+    const gens = await db.runTransaction(async tx => {
+      const d = (await tx.get(ref)).data() || {};
+      const g = Math.max(0, (d.gens || 0) - 1);
+      tx.set(ref, { team, gens: g, generating: false }, { merge: true });
+      return g;
+    });
+    return [200, { ok: true, team, left: GEN_LIMIT - gens }];
+  }
+
   if (body.op === "reset") {
     // 리허설 뒤 2부 비우기 — 조 · 명세서 · 장치 · 평가, 단계는 1부로
     const n = (await wipe(db, "hci9_people")) + (await wipe(db, "hci9_specs")) + (await wipe(db, "hci9_devices", "versions")) + (await wipe(db, "hci9_ratings"));

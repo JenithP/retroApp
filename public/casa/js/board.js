@@ -368,6 +368,15 @@ $("rank").onclick = e => {
   $("demoFrame").scrollIntoView({ behavior: "smooth", block: "center" });
 };
 $("demoReload").onclick = () => { const f = $("demoFrame"); f.srcdoc = f.srcdoc; };
+$("refund").onclick = async () => {
+  const team = Number($("refundTeam").value);
+  if (!(team >= 1 && team <= TEAM_COUNT)) { $("refundMsg").textContent = "조 번호를 입력해 주십시오."; return; }
+  try {
+    const d = await call("refund", { team });
+    $("refundMsg").textContent = `${d.team}조 — 남은 생성 ${d.left}회`;
+    $("refundTeam").value = "";
+  } catch (e) { $("refundMsg").textContent = e.message; }
+};
 $("reset").onclick = async () => {
   if ($("resetWord").value.trim() !== "초기화") { $("resetMsg").textContent = "확인 칸에 「초기화」라고 입력해 주십시오."; return; }
   try {
@@ -385,6 +394,7 @@ function demoCall(op, extra) {
   if (op === "phase") { demoPhase = extra.phase; return Promise.resolve({ ok: true, phase: demoPhase }); }
   if (op === "p2") return Promise.resolve({ phase: demoPhase, ...(demoP2 ||= fakeP2()), at: Date.now() });
   if (op === "reset") { const k = demoP2 ? demoP2.ratings.length : 0; demoP2 = { devices: [], specs: {}, ratings: [] }; demoPhase = "p1"; return Promise.resolve({ ok: true, deleted: k }); }
+  if (op === "refund") return Promise.resolve({ ok: true, team: extra.team, left: 1 });
   if (op === "purge") { const k = demoRows.length; demoRows = []; return Promise.resolve({ ok: true, deleted: k }); }
   if (!demoRows) {
     let seed = 11;
