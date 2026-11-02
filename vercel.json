@@ -50,6 +50,11 @@
       "source": "/appshop",
       "destination": "/appshop/",
       "permanent": false
+    },
+    {
+      "source": "/botlab",
+      "destination": "/botlab/",
+      "permanent": false
     }
   ],
   "headers": [

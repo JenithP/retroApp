@@ -1,0 +1,101 @@
+/* 챗봇 전환 실습 — 앱 공방과 같은 밝은 작업대. 왼쪽 작업 칸, 오른쪽 폰. 좁으면 위아래로. */
+:root{
+  --bg:#F4F1EA; --card:#FFFFFF; --line:#DDD6C8; --ink:#22211E; --soft:#6B665C; --faint:#8A8478;
+  --accent:#1F6F63; --accent-2:#E3F0EC; --warm:#C8612F; --warm-2:#FBE9DA; --warn:#B3261E;
+  --sans:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  padding:16px 24px 12px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:5}
+.eyebrow{margin:0;font-size:.75rem;letter-spacing:.08em;color:var(--accent);font-weight:700}
+h1{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.step{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 13px;font-size:.85rem;font-weight:500;color:var(--soft)}
+.step:hover{border-color:var(--ink)}
+.step.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.step:focus-visible,.btn:focus-visible,.fn:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+
+.view{padding:20px 24px 48px;max-width:1240px;margin:0 auto}
+.lead{color:var(--soft);margin:6px 0 16px;max-width:72ch}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.card + .card{margin-top:14px}
+.card h3{font-size:1.02rem;margin-bottom:8px}
+
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 16px;font-weight:500;color:var(--ink)}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.btn.primary:hover:not(:disabled){background:#185A50}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.hint{font-size:.85rem;color:var(--soft)}
+.hint.warn{color:var(--warn);font-weight:500}
+
+/* 기능별 입력 */
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:.92rem}
+.field small{font-weight:400;font-size:.78rem;color:var(--faint)}
+.field input,.field textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-weight:400;resize:vertical;width:100%}
+.field input:focus,.field textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+
+/* 시험 점수 */
+.scores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+.score{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#FBFAF6}
+.score b{display:block;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}
+.score span{font-size:.78rem;color:var(--soft)}
+.total{font-weight:700;margin-top:10px}
+
+/* 학습 진행 */
+.bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s linear}
+
+/* 폰 */
+.phone{background:#1E1D1B;border-radius:30px;padding:12px;position:sticky;top:96px}
+.screen{background:#fff;border-radius:20px;height:560px;display:flex;flex-direction:column;overflow:hidden}
+.appbar{padding:12px 16px;background:var(--accent);color:#fff;font-weight:700}
+.appbar small{display:block;font-weight:400;font-size:.75rem;opacity:.85}
+.fnlist{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.fn{border:1px solid var(--line);border-radius:12px;background:#FBFAF6;padding:20px 8px;font-weight:700}
+.fn:hover{border-color:var(--accent)}
+.fn.on{background:var(--accent-2);border-color:var(--accent)}
+.apparea{padding:0 16px 16px;color:var(--soft);font-size:.92rem}
+.log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#F7F6F2}
+.msg{max-width:84%;padding:8px 11px;border-radius:13px;font-size:.9rem;word-break:keep-all;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--accent);color:#fff}
+.msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--line)}
+.why{display:block;font-size:.74rem;color:var(--warm);margin-top:4px}
+.chatin{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}
+.chatin input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:8px 13px}
+.chatin input:focus{outline:2px solid var(--accent)}
+
+/* 결과 표 */
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.compare .big{font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{font-size:.8rem;color:var(--soft);font-weight:700}
+tr.cat td{background:#F7F4EC;font-weight:700;font-size:.82rem}
+.pass{color:var(--accent);font-weight:700}
+.fail{color:var(--warn);font-weight:700}
+
+/* 답변 */
+.who{display:grid;grid-template-columns:repeat(3,minmax(0,220px));gap:12px;margin-bottom:12px}
+.q{margin-top:14px}
+.q textarea{min-height:130px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .phone{position:static;max-width:380px;margin:0 auto}
+  .fields,.compare{grid-template-columns:minmax(0,1fr)}
+  .scores{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .who{grid-template-columns:minmax(0,1fr)}
+  .view,.top{padding-left:16px;padding-right:16px}
+}
