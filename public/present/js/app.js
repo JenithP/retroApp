@@ -144,14 +144,14 @@ function renderWeek() {
     if (own) {
       part = now > UPLOAD_DEADLINE.getTime() ? `<p class="note">업로드 마감</p>`
         : `<div class="uprow"><label class="btn primary small">${f ? "다시 올리기" : "PDF 올리기"}<input type="file" data-up="${t}" accept="application/pdf,.pdf" hidden></label>
-           <span class="muted small">PDF만 · ${MAX_FILE_MB}MB 이하 · 마감 ${fmt(UPLOAD_DEADLINE)} · 다시 올리면 바뀜 · AI가 이 PDF를 읽고 질문을 고름</span></div><div class="upprog" id="prog${t}"></div>`;
+           <span class="muted small">PDF만 · ${MAX_FILE_MB}MB 이하 · 마감 ${fmt(UPLOAD_DEADLINE)} · 다시 올리면 바뀜</span></div><div class="upprog" id="prog${t}"></div>`;
     } else if (!opened) part = `<p class="muted small">자료 공개 전 — ${fmt(s.open)}에 열림</p>`;
     else if (q) part = `<div class="myq"><small>내 질문 · ${fmt(new Date(q.at))}</small><p>${esc(q.text)}</p></div>`;
     else if (closed) part = `<p class="muted small">질문 마감 (${fmt(s.close)})</p>`;
     else part = `<div class="qform"><textarea rows="3" maxlength="300" data-q="${t}" placeholder="발표 자료를 읽고 질문 하나 — 핵심 주장 · 방법 · 한계 · 수업 개념과의 연결"></textarea>
         <div class="qfoot"><span class="muted small">마감 ${fmt(s.close)} · 등록 후 수정 불가</span><button class="btn primary small" data-send="${t}" type="button">질문 등록</button></div></div>`;
     const sel = S.select[id], shown = sel ? sel.picks.slice(0, sel.revealed || 0) : [];
-    const picked = shown.length ? `<div class="picked"><b>채택된 질문</b><ol>${shown.map(x => `<li class="${x.sid === S.sid ? "me" : ""}"><p>${esc(x.text)}</p><small>${esc(x.reason)}${x.sid === S.sid ? " · <b>내 질문 채택 — 보너스 1점</b>" : ""}</small></li>`).join("")}</ol></div>` : "";
+    const picked = shown.length ? `<div class="picked"><b>채택된 질문</b><ol>${shown.map(x => `<li class="${x.sid === S.sid ? "me" : ""}"><p>${esc(x.text)}</p>${x.sid === S.sid ? "<small><b>내 질문 채택 — 보너스 1점</b></small>" : ""}</li>`).join("")}</ol></div>` : "";
     return `<article class="ask${own ? " own" : ""}"><div class="ahead"><div><b>${s.order}. ${t}조</b>${own ? ` <span class="ptag">우리 조</span>` : ""}
         <h3>${p ? esc(p.ko || p.title) : "문헌 미신청"}</h3><div>${fileLine}</div></div><div class="dacts">${fileBtns}</div></div>${part}${picked}</article>`;
   }).join("");

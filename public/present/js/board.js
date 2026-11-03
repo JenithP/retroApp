@@ -212,7 +212,7 @@ async function generate(team, btn) {
   try {
     if (!sel) {
       btn.disabled = true;
-      box.innerHTML = `<div class="stage"><p class="muted">AI가 ${team}조 발표 자료와 질문 ${B.qcount[teamId(team)] || ""}개를 읽고 고르는 중… (30초 안팎)</p></div>`;
+      box.innerHTML = `<div class="stage"><p class="muted">사전 선정된 질문 추출 중…</p></div>`;
       sel = await adminCall(B.code, "select", { team });
       btn.disabled = false;
     }
@@ -222,8 +222,8 @@ async function generate(team, btn) {
 }
 function showStage(team, sel) {
   const n = sel.revealed || 0, q = sel.picks[n - 1];
-  $("stageBox").innerHTML = `<div class="stage"><p class="sno">${team}조 발표 · 질문 ${n} / ${sel.picks.length} <small>등록 질문 ${sel.total}개 중 AI 선정</small></p>
-    <h2 class="sq">${esc(q.text)}</h2><p class="sr">${esc(q.reason)}</p><p class="sw">질문 ${esc(q.name)} (${q.team}조)</p>
+  $("stageBox").innerHTML = `<div class="stage"><p class="sno">${team}조 발표 · 질문 ${n} / ${sel.picks.length}</p>
+    <h2 class="sq">${esc(q.text)}</h2><p class="sw">질문 ${esc(q.name)} (${q.team}조)</p>
     <div class="dacts">${n < sel.picks.length ? `<button class="btn primary big" id="nextQ" type="button">다음 질문</button>` : `<span class="muted">세 질문 모두 공개</span>`}
       <button class="btn ghost small" id="reSel" type="button">다시 선정</button></div></div>`;
   $("nextQ")?.addEventListener("click", () => generate(team, $("nextQ")));

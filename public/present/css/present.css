@@ -60,7 +60,7 @@
 .stage .muted{color:#bbb}
 .sno{margin:0;color:#9DC7BC;font-weight:700}.sno small{color:#aaa;font-weight:400;margin-left:8px}
 .sq{font-size:2rem;line-height:1.4;margin:0}
-.sr{margin:0;color:#E0B354}.sw{margin:0;color:#ccc}
+.sw{margin:0;color:#ccc}
 @media (max-width:1000px){
   .paper{grid-template-columns:2em minmax(0,1fr)}.pside{grid-column:2;align-items:flex-start}
   .phead{flex-direction:column}.teampick{grid-template-columns:repeat(5,minmax(0,1fr))}
