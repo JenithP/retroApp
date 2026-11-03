@@ -16,6 +16,11 @@ export const funcName = id => FUNCS.find(f => f.id === id)?.name ?? "답변 안 
 
 export const CATEGORIES = ["그대로 말하기", "돌려 말하기", "오타 · 줄임말", "앱에 없는 요청"];
 
+export const QUESTIONS = [
+  "규칙 기반과 학습 기반 챗봇을 직접 만들어 보면서 두 방식의 차이를 어떻게 느꼈는지 쓰십시오.",
+  "규칙 기반과 학습 기반을 구분할 때 어떤 점을 기준으로 삼아야 한다고 생각하는지 쓰십시오.",
+];
+
 // want 이 null 이면 「모르겠다」고 답해야 통과
 export const TESTS = [
   { cat: 0, text: "메뉴 보여 주세요", want: "menu" },

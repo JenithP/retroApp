@@ -1,17 +1,13 @@
 // 챗봇 전환 실습 — 기본 앱 → 규칙 기반 → 학습 기반 → 결과 비교 → 개인 답변(.docx).
-// 서버 없이 브라우저에서만 돈다. 입력 내용은 이 기기의 localStorage 에 남긴다.
-import { APP_NAME, FUNCS, FALLBACK, IDS, CATEGORIES, TESTS, funcName } from "./data.js";
+// 실습은 브라우저에서만 돈다. 입력 내용은 이 기기의 localStorage 에 남긴다.
+// 답변 파일을 내려받을 때 학번 · 이름 · 조 · 점수 · 답변을 현황판용으로 서버에 저장한다 (api/botlab.js).
+import { APP_NAME, FUNCS, FALLBACK, IDS, CATEGORIES, TESTS, QUESTIONS, funcName } from "./data.js";
 import { ruleMatch, train, classify, splitKeywords, splitExamples } from "./engine.js";
 import { htmlToDocx, saveBlob } from "../../js/docx.js";
 
 const KEY = "hci10_botlab";
 const STEPS = ["기본 앱", "규칙 기반", "학습 기반", "결과 비교", "개인 답변"];
 const MIN_EXAMPLES = 3;
-
-const QUESTIONS = [
-  "규칙 기반과 학습 기반 챗봇을 직접 만들어 보면서 두 방식의 차이를 어떻게 느꼈는지 쓰십시오.",
-  "규칙 기반과 학습 기반을 구분할 때 어떤 점을 기준으로 삼아야 한다고 생각하는지 쓰십시오.",
-];
 
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
 const saved = load();
@@ -21,6 +17,8 @@ const S = {
   examples: saved.examples || {},
   id: saved.id || "", name: saved.name || "", team: saved.team || "",
   a1: saved.a1 || "", a2: saved.a2 || "",
+  cid: saved.cid || Array.from(crypto.getRandomValues(new Uint8Array(10)), b => b.toString(36).padStart(2, "0")).join(""),
+  ruleResult: saved.ruleResult || null, learnResult: saved.learnResult || null,
 };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* 저장이 막혀도 실습은 계속된다 */ } };
 
@@ -248,7 +246,7 @@ function viewCompare() {
 function viewAnswer() {
   $("view").innerHTML = `
     <h2>개인 답변</h2>
-    <p class="lead">조별 활동이 끝나면 각자 답을 적고 파일을 내려받아 제출합니다.</p>
+    <p class="lead">조별 활동이 끝나면 각자 답을 적고 파일을 내려받아 제출합니다. 내려받을 때 학번, 이름, 조, 시험 점수, 답변이 교수용 현황판에 저장됩니다.</p>
     <div class="card">
       <div class="who">
         <label class="field">학번<input id="sid" value="${esc(S.id)}" autocomplete="off"></label>
@@ -266,9 +264,16 @@ function viewAnswer() {
   for (const [el, key] of [["sid", "id"], ["sname", "name"], ["steam", "team"], ["a1", "a1"], ["a2", "a2"]]) {
     $(el).oninput = () => { S[key] = $(el).value; save(); refresh(); };
   }
-  $("down").onclick = () => {
+  $("down").onclick = async () => {
     saveBlob(htmlToDocx(reportHtml()), `10주차_${S.id.trim()}_${S.name.trim()}.docx`.replace(/[\\/:*?"<>|]/g, "_"));
-    $("downHint").textContent = "내려받기 완료 · 파일을 제출하십시오";
+    save();
+    $("downHint").textContent = "내려받기 완료 · 현황판 저장 중";
+    const brief = res => res ? { pass: res.pass, byCat: res.byCat.map(c => c.pass) } : undefined;
+    const stored = await fetch("/api/botlab", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "submit", cid: S.cid, id: S.id, name: S.name, team: S.team, a1: S.a1, a2: S.a2, rule: brief(S.ruleResult), learn: brief(S.learnResult) }),
+    }).then(r => r.ok).catch(() => false);
+    $("downHint").textContent = stored ? "내려받기 완료 · 현황판 저장 완료 · 파일을 제출하십시오" : "내려받기 완료 · 현황판 저장 실패 · 파일을 제출하십시오";
   };
   refresh();
 }

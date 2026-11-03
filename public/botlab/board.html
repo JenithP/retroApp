@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>챗봇 전환 실습 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../appshop/css/appshop.css">
+<link rel="stylesheet" href="../appshop/css/board.css">
+<style>
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.bgrid{grid-template-columns:minmax(0,1fr)}
+.avg,.subs{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums}
+.avg th,.avg td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right}
+.avg th:first-child,.avg td:first-child{text-align:left}
+.avg tr:last-child td{font-weight:700;border-bottom:0}
+.subs th,.subs td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.subs th{white-space:nowrap}
+.subs td.n{white-space:nowrap}
+.subs td.a{min-width:260px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+.empty{color:var(--faint);font-size:.9rem}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body class="board">
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 10주차 오프라인</p>
+    <h1>챗봇 전환 실습 <span class="sub">현황판</span></h1>
+  </div>
+  <div class="status">
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">잠김</span></span>
+  </div>
+</header>
+
+<section class="control">
+  <div class="lock" id="lock">
+    <label>교수용 암호 <input id="code" type="password" autocomplete="off"></label>
+    <button class="btn primary" id="unlock">열기</button>
+    <span class="msg" id="lockMsg"></span>
+  </div>
+  <div class="steps" id="tools" hidden>
+    <button class="btn ghost danger" id="reset" type="button">전체 초기화</button>
+    <span class="msg" id="toolMsg"></span>
+  </div>
+</section>
+
+<section class="kpis" id="kpis" aria-label="요약"></section>
+
+<main class="bgrid">
+  <section class="panel">
+    <h2>유형별 평균 통과 수 <small>답변을 저장한 학생 기준</small></h2>
+    <div id="avg"></div>
+  </section>
+  <section class="panel">
+    <h2>저장된 답변 <small>조 · 학번 순</small></h2>
+    <div class="tablewrap" id="subs"></div>
+  </section>
+</main>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

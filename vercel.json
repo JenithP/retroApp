@@ -18,6 +18,9 @@
     },
     "api/casa.js": {
       "maxDuration": 300
+    },
+    "api/botlab.js": {
+      "maxDuration": 15
     }
   },
   "redirects": [
