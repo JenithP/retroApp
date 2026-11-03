@@ -250,6 +250,14 @@ async function adminOp(F, body) {
     return [200, { ...cur, revealed }];
   }
   if (body.op === "confirm") return confirmPicks(F, Number(body.team), body.qids);
+  if (body.op === "unreveal") {
+    // 확정한 질문은 그대로 두고 공개 수만 되돌린다 (공개된 질문의 보너스도 빠짐)
+    const ref = db.doc(`hcipres_select/${teamId(Number(body.team))}`);
+    const cur = (await ref.get()).data();
+    if (!cur?.picks) return [404, { error: "아직 선정하지 않았습니다" }];
+    await ref.set({ revealed: 0, confirmed: true }, { merge: true });
+    return [200, { ...cur, revealed: 0, confirmed: true }];
+  }
   if (body.op === "reselect") {
     // 선정 기록은 두고 공개와 확정만 되돌린다 — 확정 화면에서 다시 고른다
     const ref = db.doc(`hcipres_select/${teamId(Number(body.team))}`);

@@ -198,7 +198,7 @@ function renderDay() {
     return `<div class="dcard"><b>${s.order}. ${t}조</b><span>${p ? esc(p.title) : "문헌 미신청"}</span>
       <small>자료 ${B.files[id] ? "있음" : "없음"} · 질문 ${B.qcount[id] || 0}개 · ${ok ? `확정 · ${sel.revealed || 0}/${sel.picks.length} 공개` : "미확정"}</small>
       <div class="dacts">${B.files[id] ? `<button class="btn small" data-file="${t}" type="button">자료</button>` : ""}
-        ${ok ? `<button class="btn primary" data-gen="${t}" type="button">질문 보기</button>${sel.revealed ? "" : `<button class="btn small" data-conf="${t}" type="button">확정 수정</button>`}`
+        ${ok ? `<button class="btn primary" data-gen="${t}" type="button">질문 보기</button>${sel.revealed ? `<button class="btn small" data-unrev="${t}" type="button">공개 초기화</button>` : `<button class="btn small" data-conf="${t}" type="button">확정 수정</button>`}`
         : `<button class="btn primary" data-conf="${t}" type="button">질문 확정</button>`}</div></div>`;
   }).join("") : `<p class="muted">이 주에 배정된 조 없음 — 「발표 순서」에서 입력</p>`;
   $("dayGrid").querySelectorAll("[data-file]").forEach(b => b.onclick = async () => {
@@ -207,6 +207,14 @@ function renderDay() {
   });
   $("dayGrid").querySelectorAll("[data-gen]").forEach(b => b.onclick = () => generate(Number(b.dataset.gen), b));
   $("dayGrid").querySelectorAll("[data-conf]").forEach(b => b.onclick = () => openConfirm(Number(b.dataset.conf), b));
+  $("dayGrid").querySelectorAll("[data-unrev]").forEach(b => b.onclick = async () => {
+    const team = Number(b.dataset.unrev);
+    if (!confirm(`${team}조 공개를 초기화합니다 (확정한 질문은 유지, 공개된 질문의 보너스는 취소됨)`)) return;
+    try {
+      B.select[teamId(team)] = await adminCall(B.code, "unreveal", { team });
+      $("stageBox").hidden = true; renderDay(); renderBonus();
+    } catch (e) { alert(e.message); }
+  });
 }
 // 확정 표시가 없어도 이미 공개를 시작한 선정은 확정으로 본다 (확정 단계를 넣기 전의 기록)
 const isConfirmed = s => !!s && (!!s.confirmed || (s.revealed || 0) > 0);
