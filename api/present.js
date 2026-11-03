@@ -187,6 +187,24 @@ ${qs.map(q => `<q id="${q.id}">${clip(q.text, 400)}</q>`).join("\n")}
   return [200, doc];
 }
 
+// 교수가 고른 질문으로 확정한다. 공개는 확정한 뒤에만 된다
+async function confirmPicks({ db }, team, qids) {
+  const ref = db.doc(`hcipres_select/${teamId(team)}`);
+  const cur = (await ref.get()).data();
+  if (cur?.revealed) return [409, { error: "이미 공개한 질문이 있습니다 — 「다시 선정」 후 확정" }];
+  const qs = (await db.collection("hcipres_questions").where("target", "==", teamId(team)).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+  const need = Math.min(3, qs.length);
+  if (!need) return [404, { error: "등록된 질문이 없습니다" }];
+  const byId = Object.fromEntries(qs.map(q => [q.id, q]));
+  const ids = [...new Set(qids || [])].filter(id => byId[id]);
+  if (ids.length !== need) return [400, { error: `질문 ${need}개를 골라야 합니다` }];
+  const reasons = Object.fromEntries((cur?.picks || []).map(p => [p.qid, p.reason]));
+  const picks = ids.map(id => ({ qid: id, text: byId[id].text, sid: byId[id].sid, name: byId[id].name, team: byId[id].team, reason: reasons[id] || "" }));
+  const doc = { team, picks, revealed: 0, confirmed: true, at: Date.now(), total: qs.length };
+  await ref.set(doc, { merge: true });
+  return [200, { ...cur, ...doc }];
+}
+
 /* ── 교수용 ───────────────────────────────────────────── */
 async function adminOp(F, body) {
   const code = process.env.PRESENT_ADMIN_CODE || process.env.HCI4_ADMIN;
@@ -226,11 +244,18 @@ async function adminOp(F, body) {
     const ref = db.doc(`hcipres_select/${teamId(Number(body.team))}`);
     const cur = (await ref.get()).data();
     if (!cur) return [404, { error: "아직 선정하지 않았습니다" }];
+    if (!cur.confirmed && !cur.revealed) return [409, { error: "먼저 질문을 확정해 주세요" }];
     const revealed = Math.min(cur.picks.length, (cur.revealed || 0) + 1);
     await ref.set({ revealed }, { merge: true });
     return [200, { ...cur, revealed }];
   }
-  if (body.op === "reselect") { await db.doc(`hcipres_select/${teamId(Number(body.team))}`).delete(); return [200, { ok: true }]; }
+  if (body.op === "confirm") return confirmPicks(F, Number(body.team), body.qids);
+  if (body.op === "reselect") {
+    // 선정 기록은 두고 공개와 확정만 되돌린다 — 확정 화면에서 다시 고른다
+    const ref = db.doc(`hcipres_select/${teamId(Number(body.team))}`);
+    if ((await ref.get()).exists) await ref.set({ confirmed: false, revealed: 0 }, { merge: true });
+    return [200, { ok: true }];
+  }
   if (body.op === "file") return fileUrl(F, null, body, true);
   if (body.op === "reset") {
     for (const name of ["hcipres_people", "hcipres_picks", "hcipres_files", "hcipres_questions", "hcipres_select"]) {

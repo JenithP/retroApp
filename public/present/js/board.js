@@ -194,31 +194,70 @@ $("daySel").onchange = () => { B.day = Number($("daySel").value); $("stageBox").
 function renderDay() {
   const rows = Object.entries(B.state.slots || {}).filter(([, s]) => s.week === B.day).sort((a, b) => a[1].order - b[1].order);
   $("dayGrid").innerHTML = rows.length ? rows.map(([id, s]) => {
-    const t = Number(id.slice(1)), p = paperOf(B.picks[id]?.paper), sel = B.select[id];
+    const t = Number(id.slice(1)), p = paperOf(B.picks[id]?.paper), sel = B.select[id], ok = isConfirmed(sel);
     return `<div class="dcard"><b>${s.order}. ${t}조</b><span>${p ? esc(p.title) : "문헌 미신청"}</span>
-      <small>자료 ${B.files[id] ? "있음" : "없음"} · 질문 ${B.qcount[id] || 0}개${sel ? ` · 선정 ${sel.revealed}/${sel.picks.length} 공개` : ""}</small>
+      <small>자료 ${B.files[id] ? "있음" : "없음"} · 질문 ${B.qcount[id] || 0}개 · ${ok ? `확정 · ${sel.revealed || 0}/${sel.picks.length} 공개` : "미확정"}</small>
       <div class="dacts">${B.files[id] ? `<button class="btn small" data-file="${t}" type="button">자료</button>` : ""}
-        <button class="btn primary" data-gen="${t}" type="button">질문 생성</button></div></div>`;
+        ${ok ? `<button class="btn primary" data-gen="${t}" type="button">질문 보기</button>${sel.revealed ? "" : `<button class="btn small" data-conf="${t}" type="button">확정 수정</button>`}`
+        : `<button class="btn primary" data-conf="${t}" type="button">질문 확정</button>`}</div></div>`;
   }).join("") : `<p class="muted">이 주에 배정된 조 없음 — 「발표 순서」에서 입력</p>`;
   $("dayGrid").querySelectorAll("[data-file]").forEach(b => b.onclick = async () => {
     const w = window.open("", "_blank");
     try { const { url } = await adminCall(B.code, "file", { team: Number(b.dataset.file) }); w.location = url; } catch (e) { w.close(); alert(e.message); }
   });
   $("dayGrid").querySelectorAll("[data-gen]").forEach(b => b.onclick = () => generate(Number(b.dataset.gen), b));
+  $("dayGrid").querySelectorAll("[data-conf]").forEach(b => b.onclick = () => openConfirm(Number(b.dataset.conf), b));
 }
-async function generate(team, btn) {
-  const box = $("stageBox"); box.hidden = false;
-  let sel = B.select[teamId(team)];
+// 확정 표시가 없어도 이미 공개를 시작한 선정은 확정으로 본다 (확정 단계를 넣기 전의 기록)
+const isConfirmed = s => !!s && (!!s.confirmed || (s.revealed || 0) > 0);
+async function openConfirm(team, btn) {
+  const box = $("stageBox"), id = teamId(team); box.hidden = false;
+  box.innerHTML = `<div class="stage"><p class="muted">사전 선정된 질문 추출 중…</p></div>`;
+  btn.disabled = true;
+  let sel = B.select[id], note = "";
   try {
     if (!sel) {
-      btn.disabled = true;
-      box.innerHTML = `<div class="stage"><p class="muted">사전 선정된 질문 추출 중…</p></div>`;
-      sel = await adminCall(B.code, "select", { team });
-      btn.disabled = false;
+      try { sel = await adminCall(B.code, "select", { team }); B.select[id] = sel; }
+      catch (e) { note = `추천 질문을 불러오지 못했습니다 — 직접 고를 수 있습니다 (${e.message})`; }
     }
-    if ((sel.revealed || 0) < sel.picks.length) sel = await adminCall(B.code, "reveal", { team });
+    const { questions } = await adminCall(B.code, "questions", { team });
+    if (!questions.length) { box.innerHTML = `<div class="stage"><p class="msg">등록된 질문이 없습니다</p></div>`; return; }
+    showConfirm(team, questions, sel, note);
+  } catch (e) { box.innerHTML = `<div class="stage"><p class="msg">${esc(e.message)}</p></div>`; }
+  finally { btn.disabled = false; }
+}
+function showConfirm(team, questions, sel, note) {
+  const box = $("stageBox"), id = teamId(team), need = Math.min(3, questions.length);
+  const picked = (sel?.picks || []).map(p => p.qid), rank = q => { const i = picked.indexOf(q.id); return i < 0 ? picked.length + 1 : i; };
+  const list = [...questions].sort((a, b) => rank(a) - rank(b) || a.at - b.at);
+  const open = Date.now() < questionCloseAt(B.day).getTime();
+  box.innerHTML = `<div class="cbox"><h3>${team}조 질문 확정</h3>
+    <p class="small">확정한 ${need}개만 발표 때 공개됩니다.${open ? ` 질문 마감 전입니다 (${fmt(questionCloseAt(B.day))}).` : ""}</p>${note ? `<p class="msg">${esc(note)}</p>` : ""}
+    <div class="clist">${list.map(q => `<label class="citem"><input type="checkbox" value="${esc(q.id)}"${picked.includes(q.id) ? " checked" : ""}><span>${esc(q.text)}<small>${esc(q.name)} (${q.team}조)</small></span></label>`).join("")}</div>
+    <div class="dacts"><button class="btn primary" id="confirmQ" type="button">확정</button><span class="small" id="confirmN"></span><span class="msg" id="confirmMsg"></span></div></div>`;
+  const checks = [...box.querySelectorAll("input[type=checkbox]")];
+  const sync = () => {
+    const n = checks.filter(c => c.checked).length;
+    $("confirmN").textContent = `${n} / ${need}개 선택`;
+    $("confirmQ").disabled = n !== need;
+  };
+  checks.forEach(c => c.onchange = sync); sync();
+  $("confirmQ").onclick = async () => {
+    $("confirmQ").disabled = true;
+    try {
+      B.select[id] = await adminCall(B.code, "confirm", { team, qids: checks.filter(c => c.checked).map(c => c.value) });
+      box.innerHTML = `<div class="cbox"><p>${team}조 질문 ${need}개 확정 — 발표 때 「질문 보기」</p></div>`;
+      renderDay();
+    } catch (e) { $("confirmMsg").textContent = e.message; sync(); }
+  };
+}
+async function generate(team, btn) {
+  const box = $("stageBox"), id = teamId(team); box.hidden = false;
+  let sel = B.select[id];
+  try {
+    if ((sel.revealed || 0) < sel.picks.length) { sel = await adminCall(B.code, "reveal", { team }); B.select[id] = sel; }
     showStage(team, sel);
-  } catch (e) { btn.disabled = false; box.innerHTML = `<div class="stage"><p class="msg">${esc(e.message)}</p></div>`; }
+  } catch (e) { box.innerHTML = `<div class="stage"><p class="msg">${esc(e.message)}</p></div>`; }
 }
 function showStage(team, sel) {
   const n = sel.revealed || 0, q = sel.picks[n - 1];
@@ -228,8 +267,13 @@ function showStage(team, sel) {
       <button class="btn ghost small" id="reSel" type="button">다시 선정</button></div></div>`;
   $("nextQ")?.addEventListener("click", () => generate(team, $("nextQ")));
   $("reSel").onclick = async () => {
-    if (!confirm(`${team}조 질문을 처음부터 다시 선정합니다 (이미 공개한 질문도 바뀔 수 있음)`)) return;
-    await adminCall(B.code, "reselect", { team }); delete B.select[teamId(team)]; generate(team, $("reSel"));
+    if (!confirm(`${team}조 질문을 다시 선정합니다 (공개한 질문과 그 보너스가 취소됨)`)) return;
+    try {
+      await adminCall(B.code, "reselect", { team });
+      B.select[teamId(team)] = { ...sel, confirmed: false, revealed: 0 };
+      renderDay(); renderBonus();
+      openConfirm(team, $("reSel"));
+    } catch (e) { $("stageBox").innerHTML = `<div class="stage"><p class="msg">${esc(e.message)}</p></div>`; }
   };
 }
 
