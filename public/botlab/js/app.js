@@ -1,6 +1,6 @@
 // 챗봇 전환 실습 — 기본 앱 → 규칙 기반 → 학습 기반 → 결과 비교 → 개인 답변(.docx).
 // 실습은 브라우저에서만 돈다. 입력 내용은 이 기기의 localStorage 에 남긴다.
-// 답변 파일을 내려받을 때 학번 · 이름 · 조 · 점수 · 답변을 현황판용으로 서버에 저장한다 (api/botlab.js).
+// 답변 파일을 내려받을 때 학번 · 이름 · 조 · 시험 결과 · 키워드 · 예시 문장 · 답변을 현황판용으로 서버에 저장한다 (api/botlab.js).
 import { APP_NAME, FUNCS, FALLBACK, IDS, CATEGORIES, TESTS, QUESTIONS, funcName } from "./data.js";
 import { ruleMatch, train, classify, splitKeywords, splitExamples } from "./engine.js";
 import { htmlToDocx, saveBlob } from "../../js/docx.js";
@@ -246,7 +246,7 @@ function viewCompare() {
 function viewAnswer() {
   $("view").innerHTML = `
     <h2>개인 답변</h2>
-    <p class="lead">조별 활동이 끝나면 각자 답을 적고 파일을 내려받아 제출합니다. 내려받을 때 학번, 이름, 조, 시험 점수, 답변이 교수용 현황판에 저장됩니다.</p>
+    <p class="lead">조별 활동이 끝나면 각자 답을 적고 파일을 내려받아 제출합니다. 내려받을 때 학번, 이름, 조, 시험 결과, 키워드, 예시 문장, 답변이 교수용 현황판에 저장됩니다.</p>
     <div class="card">
       <div class="who">
         <label class="field">학번<input id="sid" value="${esc(S.id)}" autocomplete="off"></label>
@@ -268,10 +268,10 @@ function viewAnswer() {
     saveBlob(htmlToDocx(reportHtml()), `10주차_${S.id.trim()}_${S.name.trim()}.docx`.replace(/[\\/:*?"<>|]/g, "_"));
     save();
     $("downHint").textContent = "내려받기 완료 · 현황판 저장 중";
-    const brief = res => res ? { pass: res.pass, byCat: res.byCat.map(c => c.pass) } : undefined;
+    const brief = res => res ? { pass: res.pass, byCat: res.byCat.map(c => c.pass), oks: res.rows.map(r => r.ok) } : undefined;
     const stored = await fetch("/api/botlab", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "submit", cid: S.cid, id: S.id, name: S.name, team: S.team, a1: S.a1, a2: S.a2, rule: brief(S.ruleResult), learn: brief(S.learnResult) }),
+      body: JSON.stringify({ action: "submit", cid: S.cid, id: S.id, name: S.name, team: S.team, a1: S.a1, a2: S.a2, rules: S.rules, examples: S.examples, rule: brief(S.ruleResult), learn: brief(S.learnResult) }),
     }).then(r => r.ok).catch(() => false);
     $("downHint").textContent = stored ? "내려받기 완료 · 현황판 저장 완료 · 파일을 제출하십시오" : "내려받기 완료 · 현황판 저장 실패 · 파일을 제출하십시오";
   };

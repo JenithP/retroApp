@@ -1,5 +1,5 @@
 // 챗봇 전환 실습 현황판 — 교수용 암호로 열고, 학생이 저장한 답변과 시험 점수를 5초마다 다시 읽는다.
-import { CATEGORIES, TESTS, QUESTIONS } from "./data.js";
+import { CATEGORIES, TESTS, QUESTIONS, FUNCS } from "./data.js";
 
 const POLL_MS = 5000;
 
@@ -9,7 +9,7 @@ const ss = {
   get() { try { return sessionStorage.getItem("botlab.code") || ""; } catch { return ""; } },
   set(v) { try { sessionStorage.setItem("botlab.code", v); } catch { /* 이 탭에서만 */ } },
 };
-let code = ss.get(), timer = null;
+let code = ss.get(), timer = null, lastData = "";
 
 async function adminCall(op) {
   const r = await fetch("/api/botlab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "admin", code, op }) });
@@ -25,31 +25,49 @@ const fmt = v => v == null ? "—" : v.toFixed(1);
 const total = TESTS.length;
 const inCat = CATEGORIES.map((_, c) => TESTS.filter(t => t.cat === c).length);
 
+const byId = (a, b) => String(a.id).localeCompare(String(b.id));
+const lines = s => String(s || "").split("\n").map(l => l.trim()).filter(Boolean);
+const who = p => `<b>${esc(p.name)}</b><small>${esc(p.id)}</small>`;
+
+function inputOf(key, p) {
+  if (key === "rule") return FUNCS.map(f => `<p><i>${f.name}</i>${esc(p.rules?.[f.id]) || "—"}</p>`).join("");
+  const n = FUNCS.reduce((a, f) => a + lines(p.examples?.[f.id]).length, 0);
+  return `<details><summary>예시 ${n}문장</summary>${FUNCS.map(f => `<p><i>${f.name}</i></p><pre>${esc(lines(p.examples?.[f.id]).join("\n")) || "—"}</pre>`).join("")}</details>`;
+}
+
+function panel(key, title, people) {
+  const done = people.filter(p => p[key]), withOks = done.filter(p => p[key].oks);
+  const rate = i => withOks.length ? `${Math.round(withOks.filter(p => p[key].oks[i]).length / withOks.length * 100)}%` : "—";
+  const rows = CATEGORIES.map((c, ci) => `<tr class="cat"><td>${c}</td><td>${fmt(mean(done, p => p[key].byCat[ci]))} / ${inCat[ci]}</td></tr>
+    ${TESTS.map((t, i) => t.cat === ci ? `<tr><td>${esc(t.text)}</td><td>${rate(i)}</td></tr>` : "").join("")}`).join("");
+  return `<h2>${title}</h2>
+    <p class="big">${fmt(mean(done, p => p[key].pass))} / ${total}<small>평균 · ${done.length}명</small></p>
+    <table class="avg"><thead><tr><th>시험 문장</th><th>통과율</th></tr></thead><tbody>${rows}</tbody></table>
+    <h2 style="margin-top:18px">학생별 입력</h2>
+    ${[...done].sort(byId).map(p => `<div class="who"><span class="pt">${p[key].pass} / ${total}</span>${who(p)}${inputOf(key, p)}</div>`).join("") || `<p class="empty">아직 없음</p>`}`;
+}
+
 function render(people) {
   const rule = people.filter(p => p.rule), learn = people.filter(p => p.learn);
   $("kpis").innerHTML = [
-    [people.length, "답변 저장 인원"],
-    [new Set(people.map(p => p.team).filter(Boolean)).size, "저장한 조"],
+    [people.length, "완료 인원"],
     [`${fmt(mean(rule, p => p.rule.pass))} / ${total}`, "규칙 기반 평균"],
     [`${fmt(mean(learn, p => p.learn.pass))} / ${total}`, "학습 기반 평균"],
   ].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("rulePanel").innerHTML = panel("rule", "규칙 기반 챗봇", people);
+  $("learnPanel").innerHTML = panel("learn", "학습 기반 챗봇", people);
 
-  const row = (label, of, all) => `<tr><td>${label}</td><td>${fmt(mean(rule, p => of(p.rule)))} / ${all}</td><td>${fmt(mean(learn, p => of(p.learn)))} / ${all}</td></tr>`;
-  $("avg").innerHTML = `<table class="avg"><thead><tr><th>유형</th><th>규칙 기반 (${rule.length}명)</th><th>학습 기반 (${learn.length}명)</th></tr></thead><tbody>
-    ${CATEGORIES.map((c, i) => row(c, r => r.byCat[i], inCat[i])).join("")}
-    ${row("합계", r => r.pass, total)}</tbody></table>`;
-
-  const sorted = [...people].sort((a, b) => (a.team ?? 99) - (b.team ?? 99) || String(a.id).localeCompare(String(b.id)));
-  const pts = r => r ? `${r.pass} / ${total}` : "미실시";
-  $("subs").innerHTML = sorted.length ? `<table class="subs"><thead><tr><th>조</th><th>학번</th><th>이름</th><th>규칙</th><th>학습</th>${QUESTIONS.map((q, i) => `<th title="${esc(q)}">질문 ${i + 1}</th>`).join("")}</tr></thead><tbody>
-    ${sorted.map(p => `<tr><td class="n">${p.team ? `${p.team}조` : "—"}</td><td class="n">${esc(p.id)}</td><td class="n">${esc(p.name)}</td><td class="n">${pts(p.rule)}</td><td class="n">${pts(p.learn)}</td><td class="a">${esc(p.a1)}</td><td class="a">${esc(p.a2)}</td></tr>`).join("")}
+  $("subs").innerHTML = people.length ? `<table class="subs"><thead><tr><th>학번</th><th>이름</th>${QUESTIONS.map((q, i) => `<th title="${esc(q)}">질문 ${i + 1}</th>`).join("")}</tr></thead><tbody>
+    ${[...people].sort(byId).map(p => `<tr><td class="n">${esc(p.id)}</td><td class="n">${esc(p.name)}</td><td class="a">${esc(p.a1)}</td><td class="a">${esc(p.a2)}</td></tr>`).join("")}
     </tbody></table>` : `<p class="empty">아직 없음</p>`;
 }
 
 async function refresh() {
   try {
     const { people } = await adminCall("list");
-    render(people);
+    // 펼쳐 둔 예시 문장이 닫히지 않도록 내용이 바뀔 때만 다시 그린다
+    const data = JSON.stringify(people);
+    if (data !== lastData) { lastData = data; render(people); }
     net("ok", `${new Date().toLocaleTimeString("ko-KR")} 기준`);
   } catch (e) { net("bad", e.message); }
 }

@@ -4,16 +4,16 @@
 //   FIREBASE_SERVICE_ACCOUNT   서비스 계정 JSON 전체
 //   HCI4_ADMIN                 현황판 교수용 암호 — 10주차만 다른 암호를 쓰려면 BOTLAB_ADMIN_CODE
 //
-// 학생이 답변 파일을 내려받을 때 한 번 저장한다. 다시 내려받으면 덮어쓴다. 키워드와 예시 문장은 보내지 않는다.
+// 학생이 답변 파일을 내려받을 때 한 번 저장한다. 다시 내려받으면 덮어쓴다.
 // 모음 hci10_bot 은 이 함수만 읽고 쓴다.
-//   submit  cid · id · name · team · a1 · a2 · rule · learn
+//   submit  cid · id · name · team · a1 · a2 · rules · examples · rule · learn
 //   admin   check · list · reset
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 const ALLOW = ["https://gccrc-crae.web.app", "https://gccrc-crae.firebaseapp.com"];
-const TEAMS = 40, TESTS = 16, CATS = 4;
+const TEAMS = 40, TESTS = 16, CATS = 4, FUNC_IDS = ["menu", "order", "cancel", "hours"];
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 
 const SA_NAMES = ["FIREBASE_SERVICE_ACCOUNT", "FIREBASE_SERVICE_ACCOUNT_KEY", "GOOGLE_SERVICE_ACCOUNT",
@@ -38,7 +38,9 @@ const count = (v, max) => Number.isInteger(v) && v >= 0 && v <= max;
 function score(r) {
   if (!r || !count(r.pass, TESTS)) return null;
   if (!Array.isArray(r.byCat) || r.byCat.length !== CATS || !r.byCat.every(n => count(n, TESTS))) return null;
-  return { pass: r.pass, byCat: r.byCat };
+  const out = { pass: r.pass, byCat: r.byCat };
+  if (Array.isArray(r.oks) && r.oks.length === TESTS && r.oks.every(v => typeof v === "boolean")) out.oks = r.oks;
+  return out;
 }
 
 /** 학생이 보낸 값에서 저장할 칸만 남긴다. cid 가 틀리거나 필수 칸이 비면 null. */
@@ -48,6 +50,9 @@ export function clean(body) {
   if (!out.id || !out.name || !out.a1 || !out.a2) return null;
   const team = Number(clip(body.team, 10).replace(/조/g, ""));
   out.team = Number.isInteger(team) && team >= 1 && team <= TEAMS ? team : null;
+  const texts = (src, n) => Object.fromEntries(FUNC_IDS.map(k => [k, clip(src?.[k], n)]));
+  out.rules = texts(body.rules, 300);
+  out.examples = texts(body.examples, 3000);
   out.rule = score(body.rule);
   out.learn = score(body.learn);
   return out;

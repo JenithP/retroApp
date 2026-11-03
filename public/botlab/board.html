@@ -10,19 +10,29 @@
 <link rel="stylesheet" href="../appshop/css/appshop.css">
 <link rel="stylesheet" href="../appshop/css/board.css">
 <style>
-.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
 .bgrid{grid-template-columns:minmax(0,1fr)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
 .avg,.subs{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums}
-.avg th,.avg td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right}
-.avg th:first-child,.avg td:first-child{text-align:left}
-.avg tr:last-child td{font-weight:700;border-bottom:0}
+.avg th,.avg td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.avg th:first-child,.avg td:first-child{text-align:left;white-space:normal}
+.avg .cat td{background:#FBFAF6;font-weight:700}
+.big{font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums;margin:0 0 10px}
+.big small{font-size:.8rem;font-weight:400;color:var(--soft);margin-left:6px}
+.who{padding:9px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.who b{margin-right:6px}
+.who .pt{float:right;font-weight:700;font-variant-numeric:tabular-nums}
+.who p{margin:3px 0 0;color:var(--soft);overflow-wrap:anywhere}
+.who p i{font-style:normal;color:var(--ink);font-weight:500;margin-right:4px}
+.who summary{cursor:pointer;color:var(--accent);margin-top:3px}
+.who pre{margin:2px 0 0;font:inherit;white-space:pre-wrap;color:var(--soft);overflow-wrap:anywhere}
 .subs th,.subs td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .subs th{white-space:nowrap}
 .subs td.n{white-space:nowrap}
 .subs td.a{min-width:260px;white-space:pre-wrap;overflow-wrap:anywhere}
 .tablewrap{overflow-x:auto}
 .empty{color:var(--faint);font-size:.9rem}
-@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body class="board">
@@ -52,12 +62,12 @@
 <section class="kpis" id="kpis" aria-label="요약"></section>
 
 <main class="bgrid">
+  <div class="two">
+    <section class="panel" id="rulePanel"></section>
+    <section class="panel" id="learnPanel"></section>
+  </div>
   <section class="panel">
-    <h2>유형별 평균 통과 수 <small>답변을 저장한 학생 기준</small></h2>
-    <div id="avg"></div>
-  </section>
-  <section class="panel">
-    <h2>저장된 답변 <small>조 · 학번 순</small></h2>
+    <h2>개인 답변 <small>학번 순</small></h2>
     <div class="tablewrap" id="subs"></div>
   </section>
 </main>
