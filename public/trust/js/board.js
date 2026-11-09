@@ -51,7 +51,7 @@ async function act(op, extra, confirmText) {
   busy = true; $("#toolMsg").textContent = "처리하는 중…";
   try {
     const r = await call(op, extra);
-    $("#toolMsg").textContent = op === "next" ? `${r.round}판 시작 · 짝 ${r.pairs}개${r.rest ? " · 한 명 쉼" : ""}` : "완료";
+    $("#toolMsg").textContent = op === "next" ? `${r.round}판 시작 · 짝 ${r.pairs}개${r.ai ? " · 한 명은 AI 상대" : ""}` : "완료";
     await poll();
   } catch (e) { $("#toolMsg").textContent = e.message; }
   busy = false;
@@ -103,7 +103,7 @@ function render() {
   // 이번 판 짝
   $("#now").innerHTML = `<h3>이번 판 짝 <span class="muted">${cur.length ? "" : "아직 판을 시작하지 않았습니다"}</span></h3>
     <div class="pairs">${cur.map(p => `<div class="pc">
-      <b>${p.id.split("_")[1]}${detail && p.mission ? ` · ${MISSIONS[p.mission].label}` : ""}</b>
+      <b>${p.id.split("_")[1]}${p.bot ? " · AI 상대" : ""}${detail && p.mission ? ` · ${MISSIONS[p.mission].label}` : ""}</b>
       투자 ${esc(p.invNick)} ${who(p.inv)}<br>수탁 ${esc(p.truNick)} ${who(p.tru)}
       <div class="st"><span class="${p.invDone ? "done" : "wait"}">투자 ${p.invDone ? "✓" : "…"}</span><span class="${p.truDone ? "done" : "wait"}">비율 ${p.truDone ? "✓" : "…"}</span>
       <span class="${p.invRated && p.truRated ? "done" : "wait"}">문항 ${(p.invRated ? 1 : 0) + (p.truRated ? 1 : 0)}/2</span></div>
@@ -116,6 +116,7 @@ function render() {
     ${conds.map(c => { const v = S.byCond[c]; return `<tr><td>${CONDS[c].label}</td><td>${v.n}</td><td>${f1(v.send)}</td><td>${v.retPct === null ? "–" : Math.round(v.retPct) + "%"}</td><td>${f1(v.presence)}</td><td>${f1(v.trust)}</td></tr>`; }).join("")}
     </table></div>
     <div class="bars">${conds.map(c => bar(CONDS[c].label, S.byCond[c].send, 10, f1(S.byCond[c].send))).join("")}</div>
+    ${S.botPairs ? `<p class="hint">AI 상대와 한 판 ${S.botPairs}개는 통계에서 뺐습니다.</p>` : ""}
     <p class="hint">보낸 돈 0~10점 · 함께 있음과 신뢰 1~7점. 함께 있음은 두 사람 평균, 신뢰는 투자자의 답. 막대는 평균 보낸 돈.</p>` : `<p class="muted">공개한 판이 아직 없습니다.</p>`}`;
 
   $("#hit-panel").innerHTML = `<h3>상대의 비밀 역할을 맞힌 비율</h3>${conds.some(c => S.byCond[c].guessedN) ? `
@@ -184,7 +185,7 @@ function demoCall() {
       });
       if (m.rest) byUid[m.rest].restN++;
       st = { phase: "talk", round, cond: x.cond, talkSec: x.talkSec, endsAt: Date.now() + x.talkSec * 1000 };
-      return { ok: true, round, pairs: m.pairs.length, rest: !!m.rest };
+      return { ok: true, round, pairs: m.pairs.length, ai: !!m.rest };
     }
     if (op === "decide") { if (st.phase !== "talk") throw new Error("대화 단계가 아닙니다"); st = { ...st, phase: "decide" }; return { ok: true }; }
     if (op === "reveal") {

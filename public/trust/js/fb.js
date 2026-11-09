@@ -21,7 +21,7 @@ const waiters = [];
 const gotUid = uid => { me.uid = uid; waiters.splice(0).forEach(f => f()); };
 export let ready = () => me.uid ? Promise.resolve() : new Promise(r => waiters.push(r));
 
-export let watchState, watchPerson, watchSeat, watchPair, watchMsgs, sendMsg, join, ping, move, reflect, myRounds;
+export let watchState, watchPerson, watchSeat, watchPair, watchMsgs, sendMsg, join, ping, move, reflect, myRounds, botTurn;
 export let demoTools = null;
 
 if (!isDemo) {
@@ -60,6 +60,7 @@ if (!isDemo) {
   ping = () => call({ action: "ping" });
   move = v => call({ action: "move", ...v });
   reflect = v => call({ action: "reflect", ...v });
+  botTurn = (pairId, nudge = false) => call({ action: "bot", pairId, nudge });
   // 1판부터 n판까지 내 자리 (결과가 붙은 것) — .docx 에 넣는다
   myRounds = async n => (await Promise.all(Array.from({ length: n }, (_, i) =>
     getDoc(doc(db, "hci11_seats", seatId(me.uid, i + 1))).then(s => s.data() || null).catch(() => null)))).filter(Boolean);
@@ -108,6 +109,7 @@ if (!isDemo) {
     D.people.me = { ...(D.people.me || { score: 0, trusteeN: 0, restN: 0, partners: [] }), uid: "me", sid, name, nick }; emit();
   };
   ping = async () => ({ ok: true });
+  botTurn = async () => ({ ok: true });            // 미리보기의 상대는 이미 봇이다
   reflect = async v => { D.people.me.reflect = { ...v, at: Date.now() }; console.info("[미리보기] 생각", v); };
   myRounds = async n => Array.from({ length: n }, (_, i) => clone(D.seats[seatId("me", i + 1)])).filter(Boolean);
   move = async v => {

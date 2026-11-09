@@ -55,6 +55,14 @@ const ANIMALS = ["여우", "고래", "수달", "펭귄", "올빼미", "다람쥐
 export const ALL_NICKS = COLORS.flatMap(c => ANIMALS.map(a => `${c} ${a}`));
 
 export const pairId = (round, i) => `R${round}_P${String(i + 1).padStart(2, "0")}`;
+// 인원이 홀수일 때 남는 한 사람의 상대 — AI. 공개 전까지는 사람처럼 보이고, 통계에서는 뺀다
+export const botId = round => `ai_R${round}`;
+export const isBot = uid => String(uid || "").startsWith("ai_");
+export const BOT_CALLS = 40;      // AI 상대가 한 판에 응답하는 최대 횟수
+/** AI 수탁자가 정할 반환율 — 비밀 역할을 따른다 */
+export const botRet = (mission, rng = Math.random) => mission === "betray" ? 5 * Math.floor(rng() * 4) : 50 + 5 * Math.floor(rng() * 5);
+/** AI 투자자의 결정 */
+export const botInvest = (rng = Math.random) => ({ send: 4 + Math.floor(rng() * 5), predict: 50, guess: rng() < 0.5 ? "honest" : "betray", presence: 4, trust: 4 });
 export const seatId = (uid, round) => `${uid}_${round}`;
 
 /** 판의 점수. send 는 0~ENDOW 정수, retPct 는 0~100 정수. */
@@ -182,7 +190,7 @@ const nums = a => a.filter(v => typeof v === "number" && Number.isFinite(v));
 
 /** 현황판 통계. pairs: [{ round, cond, mission, result }] — result 가 있는 것만 센다 */
 export function summarize(pairs) {
-  const done = pairs.filter(p => p.result);
+  const done = pairs.filter(p => p.result && !p.bot);       // AI 상대와 한 판은 통계에서 뺀다
   const byCond = {};
   for (const c of Object.keys(CONDS)) {
     const ps = done.filter(p => p.cond === c);
@@ -217,5 +225,5 @@ export function summarize(pairs) {
       cues: Object.fromEntries(CUE_IDS.map(id => [id, mean(cuePs.map(p => p.result.truCues?.cues?.[id] || 0))])),
     };
   }
-  return { byCond, byMission, pairs: done.length };
+  return { byCond, byMission, pairs: done.length, botPairs: pairs.filter(p => p.result && p.bot).length };
 }

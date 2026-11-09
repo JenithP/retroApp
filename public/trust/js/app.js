@@ -38,8 +38,8 @@ function followPair() {
   if (id === pairOf) return;
   unPair?.(); unMsgs?.(); unPair = unMsgs = null; pairOf = id; S.pair = null; S.msgs = [];
   if (!id) return;
-  unPair = F.watchPair(id, p => { S.pair = p; render(); });
-  unMsgs = F.watchMsgs(id, ms => { S.msgs = ms; drawMsgs(); });
+  unPair = F.watchPair(id, p => { S.pair = p; render(); botCheck(); });
+  unMsgs = F.watchMsgs(id, ms => { S.msgs = ms; drawMsgs(); botCheck(); });
 }
 
 /* ── 틀 고르기 ── */
@@ -385,6 +385,7 @@ function resultCard(seat, r, inv) {
       <div class="box"><b>${r.pot}</b><span>수탁자가 받은 돈</span></div><span class="arr">→ ${r.retPct}% →</span>
       <div class="box"><b>${r.ret}</b><span>돌려준 돈</span></div>
     </div>
+    ${r.ai ? `<div class="verdict">이번 판 상대 <b>${esc(seat.partnerNick)}</b>는 AI였습니다. 인원이 홀수라 남는 한 명은 AI와 짝이 됩니다.</div>` : ""}
     ${r.missing?.length ? `<p class="hint warn">${r.missing.includes("send") ? "투자자가 결정을 내지 않아 0점을 보낸 것으로 계산했습니다. " : ""}${r.missing.includes("ret") ? "수탁자가 비율을 정하지 않아 0%로 계산했습니다." : ""}</p>` : ""}
     <p>이번 판 내 점수 <span class="score">${mine}</span>점 <span class="hint">(누적 <span id="score">${S.person?.score ?? ""}</span>점)</span></p>
     ${inv && r.predict !== null ? `<p class="hint">나는 ${r.predict}%를 돌려줄 것으로 예상했습니다.</p>` : ""}
@@ -429,6 +430,32 @@ function drawMsgs() {
   }
   seen = S.msgs.length;
   if (stage3d) stage3d.seen = seen;
+}
+
+/* ── AI 상대 ──
+   인원이 홀수라 AI 와 짝이 되면, 이 화면이 AI 에게 차례를 넘긴다 (서버가 Claude 로 답을 만든다).
+   처음 한 번 말을 걸고, 내가 말하거나 단서를 보내면 조금 뒤에 답하고, 한동안 조용하면 먼저 말한다. */
+let botTimer = null, botBusy = false, botOpened = null;
+function botCheck() {
+  const p = S.pair, seat = S.seat;
+  if (!p?.bot || !seat?.pairId || S.state?.phase !== "talk") return;
+  const ai = p.bot === "inv" ? p.inv : p.tru;
+  const last = S.msgs[S.msgs.length - 1];
+  clearTimeout(botTimer);
+  if (botOpened !== seat.pairId && !S.msgs.some(m => m.by === ai)) {
+    botOpened = seat.pairId;
+    botTimer = setTimeout(() => botCall(true), 2500 + Math.random() * 2000);
+  } else if (last && last.by !== ai) {
+    botTimer = setTimeout(() => botCall(false), 1500 + Math.random() * 1500);
+  } else {
+    botTimer = setTimeout(() => botCall(true), 18000 + Math.random() * 6000);
+  }
+}
+async function botCall(nudge) {
+  if (botBusy || S.state?.phase !== "talk" || !S.seat?.pairId) return;
+  botBusy = true;
+  try { await F.botTurn(S.seat.pairId, nudge); } catch { /* 다음 차례에 다시 */ }
+  botBusy = false;
 }
 
 /* ── 아바타 무대 ── */
