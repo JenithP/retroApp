@@ -1,6 +1,6 @@
 // 아바타 신뢰 게임 — 교수 현황판. 암호를 붙여 함수(api/trust.js)를 2.5초마다 읽는다.
 // ?demo — 가짜 학생 24명으로 판을 돌려 본다 (파이어베이스를 건드리지 않음)
-import { CONDS, CUE_GROUPS, MISSIONS, PHASE_LABEL, summarize, matchRound, pairId, settle, CUE_IDS } from "./game.js";
+import { CONDS, CUE_GROUPS, MISSIONS, PHASE_LABEL, summarize, matchRound, pairId, settle, CUE_IDS, REFLECT } from "./game.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -141,11 +141,20 @@ function render() {
     }).join("")}</tr>`).join("")).join("")}
   </table></div>` : `<p class="muted">아바타 단서가 있는 판을 공개하면 나타납니다.</p>`}`;
 
+  drawReflect(people, detail);
   const ranked = people.slice().sort((a, b) => b.score - a.score);
   $("#rank-panel").innerHTML = `<h3>점수 ${detail ? "" : `<span class="muted">이름은 「이름 · 비밀 역할 보기」를 켜면 보입니다</span>`}</h3>
     ${detail ? `<div class="tablewrap"><table class="t"><tr><th>순위</th><th>학번</th><th>이름</th><th>닉네임</th><th>점수</th><th>수탁자</th><th>쉼</th><th>접속</th></tr>
     ${ranked.map((p, i) => `<tr><td>${i + 1}</td><td class="l">${esc(p.sid)}</td><td class="l">${esc(p.name)}</td><td class="l">${esc(p.nick)}</td><td>${p.score}</td><td>${p.trusteeN}</td><td>${p.restN}</td><td>${p.online ? `<span class="ok">●</span>` : `<span class="no">○</span>`}</td></tr>`).join("")}</table></div>`
     : `<p class="muted">최고 점수 ${ranked[0]?.score ?? 0}점 · 평균 ${people.length ? f1(people.reduce((s, p) => s + p.score, 0) / people.length) : "–"}점</p>`}`;
+}
+
+function drawReflect(people, detail) {
+  const done = people.filter(p => p.reflect).sort((a, b) => (b.reflect.at || 0) - (a.reflect.at || 0));
+  $("#reflect-panel").innerHTML = `<h3>나의 생각 <span class="muted">${done.length}/${people.length}명 저장 · 이름은 「이름 · 비밀 역할 보기」를 켜면 보입니다</span></h3>
+    ${done.length ? done.map(p => `<div class="rf"><b>${esc(p.nick || "")}${detail ? ` · ${esc(p.name)} (${esc(p.sid)})` : ""}</b>
+      ${REFLECT.map((r, i) => `<p><i>문제</i>${esc(p.reflect[r.id])}</p>`.replace("<i>문제</i>", `<i>${i ? "해결" : "문제"}</i>`)).join("")}</div>`).join("")
+      : `<p class="muted">게임이 끝나면 학생들이 적은 생각이 여기에 나타납니다.</p>`}`;
 }
 
 function bar(label, v, max, text, cls = "") {
@@ -155,7 +164,7 @@ function bar(label, v, max, text, cls = "") {
 
 /* ── 미리보기: 가짜 학생 24명. 배신 역할은 웃기 · 끄덕이기를 더 많이 쓰게 해 둔다 ── */
 function demoCall() {
-  const people = Array.from({ length: 24 }, (_, i) => ({ uid: "u" + i, sid: "2026" + String(10000 + i), name: "학생" + (i + 1), nick: "닉" + (i + 1), score: 0, trusteeN: 0, restN: 0, partners: [], online: true }));
+  const people = Array.from({ length: 24 }, (_, i) => ({ uid: "u" + i, sid: "2026" + String(10000 + i), name: "학생" + (i + 1), nick: "닉" + (i + 1), reflect: i < 3 ? { a1: "웃기 버튼만 누르면 믿을 만해 보여서 속기 쉽다.", a2: "단서를 직접 눌렀는지 표정 추적인지 표시해 준다.", at: Date.now() - i * 1000 } : null, score: 0, trusteeN: 0, restN: 0, partners: [], online: true }));
   let st = { phase: "lobby", round: 0 };
   const pairs = [], moves = {};
   const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));

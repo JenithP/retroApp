@@ -43,6 +43,10 @@ table.t{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric
 .pc .st{display:flex;gap:8px;margin-top:4px}
 .pc .done{color:var(--accent);font-weight:700}
 .pc .wait{color:var(--faint)}
+.rf{border-top:1px solid var(--line);padding:10px 0;font-size:.9rem}
+.rf b{font-size:.85rem}
+.rf p{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--soft)}
+.rf p i{font-style:normal;color:var(--ink);font-weight:700;margin-right:6px}
 @media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -90,6 +94,7 @@ table.t{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric
     <section class="card" id="cue-panel"></section>
   </div>
   <section class="card" id="rank-panel" style="margin-top:14px"></section>
+  <section class="card" id="reflect-panel" style="margin-top:14px"></section>
 </main>
 
 <script type="module" src="js/board.js"></script>

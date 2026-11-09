@@ -37,6 +37,13 @@ export const MISSIONS = {
   betray: { label: "배신", text: "상대가 많이 보내도록 만든 뒤, 20% 이하만 돌려주세요." },
 };
 
+// 게임이 끝난 뒤 각자 적는 생각 (.docx 로 내려받는다)
+export const REFLECT = [
+  { id: "a1", q: "메타버스에서 비언어 단서를 골라서 보낼 수 있을 때 어떤 문제가 생길 수 있나요?", hint: "오늘 게임에서 겪은 일을 예로 들어도 됩니다" },
+  { id: "a2", q: "그 문제를 줄이려면 어떻게 하면 좋을까요?", hint: "서비스 설계, 사용하는 사람의 태도 등 자기 생각" },
+];
+export const REFLECT_MAX = 2000;
+
 // 결정 단계 문항 (1~7)
 export const RATINGS = [
   { id: "presence", text: "상대가 나와 함께 있다고 느꼈다" },

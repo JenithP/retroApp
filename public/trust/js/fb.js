@@ -6,7 +6,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { initializeAuth, browserLocalPersistence, inMemoryPersistence, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, collection, addDoc, onSnapshot, query, orderBy }
+import { getFirestore, doc, collection, addDoc, onSnapshot, query, orderBy, getDoc }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { matchRound, nicks, pairId, seatId, cleanMove, settle, cleanNick, CUE_IDS, TALK_SEC } from "./game.js";
 
@@ -21,7 +21,7 @@ const waiters = [];
 const gotUid = uid => { me.uid = uid; waiters.splice(0).forEach(f => f()); };
 export let ready = () => me.uid ? Promise.resolve() : new Promise(r => waiters.push(r));
 
-export let watchState, watchPerson, watchSeat, watchPair, watchMsgs, sendMsg, join, ping, move;
+export let watchState, watchPerson, watchSeat, watchPair, watchMsgs, sendMsg, join, ping, move, reflect, myRounds;
 export let demoTools = null;
 
 if (!isDemo) {
@@ -59,6 +59,10 @@ if (!isDemo) {
   join = (sid, name, nick) => call({ action: "join", sid, name, nick });
   ping = () => call({ action: "ping" });
   move = v => call({ action: "move", ...v });
+  reflect = v => call({ action: "reflect", ...v });
+  // 1판부터 n판까지 내 자리 (결과가 붙은 것) — .docx 에 넣는다
+  myRounds = async n => (await Promise.all(Array.from({ length: n }, (_, i) =>
+    getDoc(doc(db, "hci11_seats", seatId(me.uid, i + 1))).then(s => s.data() || null).catch(() => null)))).filter(Boolean);
 } else {
   /* ── 미리보기: 나 + 봇 셋. 아래 도구 막대로 단계를 넘긴다 ── */
   gotUid("me");
@@ -104,6 +108,8 @@ if (!isDemo) {
     D.people.me = { ...(D.people.me || { score: 0, trusteeN: 0, restN: 0, partners: [] }), uid: "me", sid, name, nick }; emit();
   };
   ping = async () => ({ ok: true });
+  reflect = async v => { D.people.me.reflect = { ...v, at: Date.now() }; console.info("[미리보기] 생각", v); };
+  myRounds = async n => Array.from({ length: n }, (_, i) => clone(D.seats[seatId("me", i + 1)])).filter(Boolean);
   move = async v => {
     const seat = D.seats[seatId("me", D.state.round)];
     const c = cleanMove(seat?.role, v);

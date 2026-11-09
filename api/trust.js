@@ -12,12 +12,12 @@
 //   hci11_pairs/{짝}/msgs      채팅 · 단서 — 두 사람만, 대화 단계에서만 씀
 //   hci11_moves/{짝}           결정과 비밀 역할 — 이 함수만 읽고 씀
 //
-// 학생  join · ping · move
+// 학생  join · ping · move · reflect(게임 뒤 생각 — 사람 문서에 덮어씀)
 // 교수  admin: check · list · next · decide · reveal · end · reset
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { CONDS, TALK_SEC, SEEN_MS, matchRound, nicks, pairId, seatId, cleanMove, settle, cleanNick, nickKey } from "../public/trust/js/game.js";
+import { CONDS, TALK_SEC, SEEN_MS, matchRound, nicks, pairId, seatId, cleanMove, settle, cleanNick, nickKey, REFLECT, REFLECT_MAX } from "../public/trust/js/game.js";
 
 const ALLOW = ["https://gccrc-crae.web.app", "https://gccrc-crae.firebaseapp.com"];
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
@@ -85,6 +85,19 @@ async function move(db, uid, body) {
   if (!okPhase) return [409, { error: st.phase === "talk" ? "결정 단계에서 정할 수 있습니다" : "결정이 마감되었습니다" }];
   const key = role === "investor" ? "inv" : "tru";
   await db.doc(`hci11_moves/${seat.pairId}`).set({ [key]: { ...v, at: Date.now() } }, { merge: true });
+  return [200, { ok: true }];
+}
+
+async function reflect(db, uid, body) {
+  const ref = db.doc(`hci11_people/${uid}`);
+  if (!(await ref.get()).exists) return [404, { error: "접속 정보가 없습니다 — 다시 입장해 주세요" }];
+  const out = {};
+  for (const r of REFLECT) {
+    const v = String(body[r.id] ?? "").trim().slice(0, REFLECT_MAX);
+    if (!v) return [400, { error: "두 질문에 모두 답해 주세요" }];
+    out[r.id] = v;
+  }
+  await ref.update({ reflect: { ...out, at: Date.now() } });
   return [200, { ok: true }];
 }
 
@@ -165,7 +178,7 @@ async function list(db) {
     state: st, now,
     people: people.docs.map(d => {
       const p = d.data();
-      return { uid: p.uid, sid: p.sid, name: p.name, nick: p.nick || "", score: p.score || 0, online: now - (p.seen || 0) < SEEN_MS, trusteeN: p.trusteeN || 0, restN: p.restN || 0 };
+      return { uid: p.uid, sid: p.sid, name: p.name, nick: p.nick || "", reflect: p.reflect || null, score: p.score || 0, online: now - (p.seen || 0) < SEEN_MS, trusteeN: p.trusteeN || 0, restN: p.restN || 0 };
     }),
     // 이번 판은 누가 결정을 냈는지만, 지난 판은 결과까지. 결정 값 자체는 공개 전에 보내지 않는다
     pairs: pairs.docs.map(d => {
@@ -242,7 +255,7 @@ export default async function handler(req, res) {
     let uid;
     try { uid = (await fb.auth.verifyIdToken(token)).uid; }
     catch { return res.status(401).json({ error: "접속 확인 실패 — 새로고침해 주세요" }); }
-    const fn = { join, ping, move }[body.action];
+    const fn = { join, ping, move, reflect }[body.action];
     if (!fn) return res.status(400).json({ error: "모르는 요청입니다" });
     const [s, out] = await fn(fb.db, uid, body);
     return res.status(s).json(out);

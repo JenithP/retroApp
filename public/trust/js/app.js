@@ -1,8 +1,9 @@
 // 아바타 신뢰 게임 — 학생 화면.
 // 화면은 단계 · 판 · 역할로 정해지는 「틀」을 바꿀 때만 다시 그리고, 그 밖에는 바뀐 칸만 고친다 (입력 중인 글이 지워지지 않게).
 import * as F from "./fb.js";
-import { CONDS, CUE_GROUPS, cueById, MISSIONS, RATINGS, ENDOW, MULT, PHASE_LABEL, payoff, cleanNick, NICK_MAX } from "./game.js";
+import { CONDS, CUE_GROUPS, cueById, MISSIONS, RATINGS, ENDOW, MULT, PHASE_LABEL, payoff, cleanNick, NICK_MAX, REFLECT, REFLECT_MAX } from "./game.js";
 import { makeAvatar, LOOKS } from "./avatar.js";
+import { htmlToDocx, saveBlob } from "../../js/docx.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -137,10 +138,54 @@ function rest() {
 }
 
 function end() {
+  const saved = S.person.reflect || {};
+  const draft = loadDraft();
   view.innerHTML = `<div class="card narrow center"><h2>게임 끝</h2>
-  <p class="lead">${esc(S.person.name)} 님의 최종 점수</p>
-  <p class="score"><span id="score">${S.person.score || 0}</span>점</p>
-  <p class="hint">결과는 앞 화면의 현황판에서 함께 봅니다.</p></div>`;
+  <p class="lead">${esc(S.person.nick || S.person.name)} 님의 최종 점수</p>
+  <p class="score"><span id="score">${S.person.score || 0}</span>점</p></div>
+  <div class="card narrow reflect">
+    <h2>나의 생각</h2>
+    <p class="lead">짧게 적고 저장하면 교수 현황판에 남고, 같은 내용이 워드 파일(.docx)로 내려받아집니다. 다시 저장하면 덮어씁니다.</p>
+    ${REFLECT.map((r, i) => `<label class="field">질문 ${i + 1}. ${r.q}<small>${r.hint}</small>
+      <textarea id="${r.id}" rows="5" maxlength="${REFLECT_MAX}">${esc(draft[r.id] ?? saved[r.id] ?? "")}</textarea></label>`).join("")}
+    <div class="actions"><button class="btn primary" id="rsave">저장하고 내려받기 (.docx)</button><span class="hint" id="rmsg">${saved.at ? "저장한 답이 있습니다" : ""}</span></div>
+  </div>`;
+  const msg = (t, c = "hint") => { $("#rmsg").textContent = t; $("#rmsg").className = c; };
+  REFLECT.forEach(r => { $("#" + r.id).oninput = () => saveDraft(); });
+  $("#rsave").onclick = async () => {
+    const v = Object.fromEntries(REFLECT.map(r => [r.id, $("#" + r.id).value.trim()]));
+    if (REFLECT.some(r => !v[r.id])) return msg("두 질문에 모두 답해 주세요", "hint warn");
+    $("#rsave").disabled = true; msg("저장하는 중…");
+    let stored = true;
+    try { await F.reflect(v); } catch { stored = false; }
+    const rounds = await F.myRounds(S.state.round || 0).catch(() => []);
+    saveBlob(htmlToDocx(reportHtml(v, rounds)), `11주차_${S.person.sid}_${S.person.name}.docx`.replace(/[\\/:*?"<>|]/g, "_"));
+    msg(stored ? "저장 완료 · 파일을 내려받았습니다" : "현황판 저장 실패 · 파일은 내려받았습니다 (다시 눌러 주세요)", stored ? "hint ok" : "hint warn");
+    $("#rsave").disabled = false;
+  };
+}
+const DRAFT_KEY = "hci11_reflect";
+function loadDraft() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}"); } catch { return {}; } }
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.fromEntries(REFLECT.map(r => [r.id, $("#" + r.id)?.value || ""])))); } catch { /* 저장 불가 */ }
+}
+
+function reportHtml(v, rounds) {
+  const para = t => esc(t).replace(/\n/g, "<br>");
+  const role = s => s.role === "investor" ? "투자자" : s.role === "trustee" ? "수탁자" : "쉼";
+  const row = s => {
+    const r = s.result, inv = s.role === "investor";
+    if (!r) return `<tr><td>${s.round}판</td><td>${esc(CONDS[s.cond]?.label || "")}</td><td>${role(s)}</td><td></td><td></td><td></td><td></td></tr>`;
+    return `<tr><td>${s.round}판</td><td>${esc(CONDS[s.cond]?.label || "")}</td><td>${role(s)}</td>
+      <td>${r.mission ? MISSIONS[r.mission].label : "–"}</td><td>${r.send}</td><td>${r.retPct}%</td><td>${inv ? r.inv : r.tru}</td></tr>`;
+  };
+  return `<h1>11주차 아바타 신뢰 게임 · 나의 생각</h1>
+    <p class="sub">학번 ${esc(S.person.sid)} · 이름 ${esc(S.person.name)} · 닉네임 ${esc(S.person.nick || "")} · 최종 점수 ${S.person.score || 0}점</p>
+    <h2>판별 결과</h2>
+    <table class="t"><tr><th>판</th><th>조건</th><th>내 역할</th><th>수탁자 비밀 역할</th><th>보낸 돈</th><th>반환율</th><th>내 점수</th></tr>
+      ${rounds.length ? rounds.map(row).join("") : `<tr><td>기록 없음</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`}</table>
+    <h2>나의 생각</h2>
+    ${REFLECT.map((r, i) => `<h3>질문 ${i + 1}. ${esc(r.q)}</h3><table class="ask"><tr><td>${para(v[r.id])}</td></tr></table>`).join("")}`;
 }
 function refreshScore() { const el = $("#score"); if (el && S.person) el.textContent = S.person.score || 0; }
 
