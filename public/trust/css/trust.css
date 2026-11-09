@@ -1,0 +1,210 @@
+/* 아바타 신뢰 게임 — 10주차와 같은 밝은 작업대. 넓으면 왼쪽 무대 · 오른쪽 결정, 좁으면 위아래로. */
+:root{
+  --bg:#F4F1EA; --card:#FFFFFF; --line:#DDD6C8; --ink:#22211E; --soft:#6B665C; --faint:#8A8478;
+  --accent:#1F6F63; --accent-2:#E3F0EC; --warm:#C8612F; --warm-2:#FBE9DA; --warn:#B3261E; --blue:#2F6FB5; --blue-2:#E4EEF8;
+  --sans:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer;color:inherit}
+input,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 20px 10px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:5}
+.eyebrow{margin:0;font-size:.75rem;letter-spacing:.08em;color:var(--accent);font-weight:700}
+h1{font-size:1.5rem;font-weight:900;letter-spacing:-.02em}
+.status{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.88rem}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 11px;font-weight:500;color:var(--soft)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.timer{font-variant-numeric:tabular-nums;font-weight:900;font-size:1.1rem;min-width:3.2em;text-align:right}
+.timer.low{color:var(--warn)}
+
+.view{padding:18px 20px 60px;max-width:1180px;margin:0 auto}
+.lead{color:var(--soft);margin:6px 0 14px;max-width:70ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.card + .card{margin-top:14px}
+.card h2{font-size:1.15rem;margin-bottom:6px}
+.card h3{font-size:1rem;margin-bottom:8px}
+.narrow{max-width:460px;margin:30px auto}
+.center{text-align:center}
+
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 16px;font-weight:500}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.btn.primary:hover:not(:disabled){background:#185A50}
+.btn:focus-visible,.cue:focus-visible,.pick:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.hint{font-size:.85rem;color:var(--soft);margin:6px 0 0}
+.hint.warn{color:var(--warn);font-weight:500}
+.hint.ok{color:var(--accent);font-weight:500}
+
+.field{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:.92rem;margin-top:12px}
+.field input{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fff;font-weight:400;width:100%}
+.field input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+
+/* 역할 카드 */
+.role{display:flex;gap:14px;align-items:flex-start}
+.role .tag{flex:none;border-radius:10px;padding:6px 12px;font-weight:900;font-size:.95rem;color:#fff;background:var(--blue)}
+.role .tag.tru{background:var(--warm)}
+.role p{margin:0}
+.mission{margin-top:12px;border:2px dashed var(--warm);background:var(--warm-2);border-radius:10px;padding:10px 12px}
+.mission b{color:var(--warm)}
+.mission small{display:block;color:var(--soft);margin-top:4px}
+.names{font-size:.88rem;color:var(--soft);margin-top:8px}
+.names b{color:var(--ink)}
+
+/* 무대 */
+.play{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:14px}
+.stage{background:linear-gradient(#EAF1F7,#F7F5F0);border:1px solid var(--line);border-radius:var(--r);padding:12px;
+  display:grid;grid-template-columns:1.35fr 1fr;gap:6px;align-items:end;position:relative;min-height:280px}
+.who{text-align:center;font-size:.85rem;font-weight:700;color:var(--soft)}
+.who .ticker{display:block;height:1.4em;font-weight:500;color:var(--accent);transition:opacity .4s}
+.av{position:relative;max-width:300px;margin:0 auto;width:100%}
+.av-svg{display:block;width:100%;height:auto;overflow:visible}
+.mine .av{max-width:180px}
+.av3d{position:relative;width:100%;margin:0 auto}
+.av3d canvas{display:block;width:100%;height:100%}
+.av3d.big{aspect-ratio:3/4;max-width:320px}
+.av3d.small{aspect-ratio:3/4;max-width:100%}
+.av3d.flat{aspect-ratio:auto}
+.avload{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-size:.82rem;color:var(--faint);text-align:center}
+
+.cues{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.cuegrp{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px}
+.cuegrp h4{margin:0 0 6px;font-size:.78rem;color:var(--faint);letter-spacing:.04em}
+.cuegrp .row{display:flex;flex-wrap:wrap;gap:5px}
+.cue{border:1px solid var(--line);background:#FBFAF6;border-radius:8px;padding:5px 9px;font-size:.85rem;font-weight:500}
+.cue:hover:not(:disabled){border-color:var(--accent);background:var(--accent-2)}
+.cue.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.cue:disabled{opacity:.4;cursor:not-allowed}
+
+/* 상대 화면 · 내 화면 */
+.wins{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;margin-top:14px;align-items:start}
+.win{border-radius:14px;overflow:hidden;border:2px solid #3A3833;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.win.me{border-color:var(--blue)}
+.win-head{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:.88rem;font-weight:500;color:#fff;background:#3A3833;min-height:40px}
+.win.me .win-head{background:var(--blue)}
+.win-head b{font-weight:900}
+.win-head .dot{width:9px;height:9px;border-radius:50%;background:#7BD88F;flex:none}
+.win-head .ticker{margin-left:auto;background:rgba(255,255,255,.2);border-radius:999px;padding:1px 10px;font-size:.8rem;opacity:0;transition:opacity .4s}
+.win-note{margin-left:auto;font-size:.76rem;opacity:.85}
+.win-body{background:linear-gradient(#EAF1F7,#F7F5F0);padding:10px}
+.win.you .win-body{display:grid;place-items:end center;min-height:300px}
+.me-body{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px;align-items:start;background:#EEF3FA}
+.me-av{background:linear-gradient(#E4EEF8,#F7F5F0);border-radius:10px;padding:4px}
+.ctrl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ctrl .cuegrp{padding:6px 7px}
+.ctrl .cuegrp h4{margin-bottom:4px}
+.ctrl .cue{padding:4px 8px;font-size:.82rem}
+.play.solo{grid-template-columns:minmax(0,1fr);max-width:640px}
+
+/* 채팅 */
+.chat{display:flex;flex-direction:column;height:340px}
+.chat.tall{height:460px}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:8px;background:#F6F3EC;border-radius:10px}
+.line{display:flex;flex-direction:column;max-width:80%}
+.line.you{align-self:flex-start;align-items:flex-start}
+.line.mine{align-self:flex-end;align-items:flex-end}
+.line .from{font-size:.72rem;color:var(--faint);margin:4px 6px 2px;font-weight:700}
+.msg{padding:7px 12px;border-radius:16px;overflow-wrap:anywhere}
+.line.you .msg{background:#fff;border:1px solid #CFC8BA;color:var(--ink);border-top-left-radius:4px}
+.line.mine .msg{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.msg.sys{align-self:center;background:none;color:var(--faint);font-size:.8rem;padding:0}
+.send{display:flex;gap:6px;margin-top:8px}
+.send input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;min-width:0}
+.send input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.empty{color:var(--faint);font-size:.88rem;text-align:center;margin:auto}
+
+/* 결정 */
+.range{display:flex;align-items:center;gap:10px;margin-top:6px}
+.range input{flex:1;accent-color:var(--accent)}
+.range output{font-weight:900;font-variant-numeric:tabular-nums;min-width:3.4em;text-align:right;font-size:1.1rem}
+.picks{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.pick{border:1px solid var(--line);background:#FBFAF6;border-radius:8px;min-width:38px;padding:6px 8px;font-weight:700;font-variant-numeric:tabular-nums}
+.pick.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pick:disabled{opacity:.45;cursor:not-allowed}
+.q{margin-top:14px}
+.q > b{display:block;font-size:.92rem}
+.q > small{display:block;color:var(--faint);font-size:.78rem}
+.scale{display:flex;justify-content:space-between;font-size:.72rem;color:var(--faint);margin-top:2px}
+.calc{margin-top:8px;font-size:.88rem;color:var(--soft);background:#FBFAF6;border-radius:8px;padding:8px 10px}
+.calc b{color:var(--ink);font-variant-numeric:tabular-nums}
+.locked{opacity:.6;pointer-events:none}
+
+/* 결과 */
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:.95rem}
+.flow .box{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#FBFAF6;text-align:center}
+.flow .box b{display:block;font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums}
+.flow .box span{font-size:.75rem;color:var(--soft)}
+.flow .arr{color:var(--faint)}
+.score{font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--accent-2)}
+.verdict.no{background:#F8E3E1}
+.cuelist{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.cuelist span{border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:.82rem;background:#fff}
+
+/* 미리보기 도구 막대 */
+.demo{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#22211E;color:#fff;border-radius:12px;
+  padding:8px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;z-index:20;font-size:.82rem;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.demo button{background:#3A3833;border:0;border-radius:8px;padding:5px 10px;color:#fff}
+.demo button:hover{background:#55524A}
+
+/* 아바타 움직임 */
+.av .av-all,.av .av-lean,.av .av-head,.av .av-pupils,.av .av-arm{transition:transform .35s ease}
+.av .av-head{transform-origin:100px 100px}
+.av .av-lean{transform-origin:100px 214px}
+.av .av-armL{transform-origin:51px 124px}
+.av .av-armR{transform-origin:149px 124px}
+.av .m-s,.av .m-f,.av .br-f{display:none}
+.av[data-face="smile"] .m-s{display:block}
+.av[data-face="smile"] .m-n,.av[data-face="frown"] .m-n{display:none}
+.av[data-face="frown"] .m-f,.av[data-face="frown"] .br-f{display:block}
+.av[data-face="frown"] .br-n{display:none}
+.av .av-cheeks{opacity:0;transition:opacity .3s}
+.av[data-face="smile"] .av-cheeks{opacity:1}
+.av[data-gaze="off"] .av-pupils{transform:translate(-5px,2px)}
+.av[data-gaze="off"] .av-head{transform:rotate(-9deg) translateX(-4px)}
+.av[data-body="wall"] .av-lean{transform:rotate(7deg) translateX(8px)}
+.av[data-body="sit"] .av-lean{transform:translateY(34px) scaleY(.86)}
+
+.av.do-nod .av-head{animation:nod 1.1s ease}
+@keyframes nod{0%,100%{transform:none}20%,60%{transform:translateY(7px) rotate(0)}40%,80%{transform:translateY(-1px)}}
+.av.do-shake .av-head{animation:shake 1.1s ease}
+@keyframes shake{0%,100%{transform:none}15%,55%{transform:rotate(-8deg)}35%,75%{transform:rotate(8deg)}}
+.av.do-look .av-pupils{animation:lookp 1.6s ease}
+.av.do-look .av-head{animation:lookh 1.6s ease}
+@keyframes lookp{0%,100%{transform:none}25%,40%{transform:translateX(-6px)}60%,80%{transform:translateX(6px)}}
+@keyframes lookh{0%,100%{transform:none}25%,40%{transform:rotate(-7deg)}60%,80%{transform:rotate(7deg)}}
+.av.do-wave .av-armR{animation:wave 1.5s ease}
+@keyframes wave{0%,100%{transform:none}15%{transform:rotate(-150deg)}30%,60%{transform:rotate(-170deg)}45%,75%{transform:rotate(-135deg)}85%{transform:rotate(-150deg)}}
+.av.do-clap .av-armL{animation:clapL 1.3s ease}
+.av.do-clap .av-armR{animation:clapR 1.3s ease}
+@keyframes clapL{0%,100%{transform:none}15%,45%,75%{transform:rotate(-62deg)}30%,60%,90%{transform:rotate(-48deg)}}
+@keyframes clapR{0%,100%{transform:none}15%,45%,75%{transform:rotate(62deg)}30%,60%,90%{transform:rotate(48deg)}}
+.av.do-heart .av-armL{animation:heartL 1.9s ease}
+.av.do-heart .av-armR{animation:heartR 1.9s ease}
+@keyframes heartL{0%,100%{transform:none}20%,80%{transform:rotate(-200deg)}}
+@keyframes heartR{0%,100%{transform:none}20%,80%{transform:rotate(200deg)}}
+.av.do-promise .av-armR{animation:promise 1.9s ease}
+@keyframes promise{0%,100%{transform:none}20%,80%{transform:rotate(-70deg)}}
+.av.do-jump .av-all{animation:jump 1s ease}
+@keyframes jump{0%,100%{transform:none}25%,75%{transform:translateY(-30px)}50%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.av *{animation-duration:.01s!important;transition:none!important}}
+
+@media (max-width:860px){
+  .play{grid-template-columns:minmax(0,1fr)}
+  .wins{grid-template-columns:minmax(0,1fr)}
+  .win.you .win-body{min-height:0;padding:6px}
+  .av3d.big{max-width:210px}
+  .wins{gap:10px}
+  .me-body{grid-template-columns:96px minmax(0,1fr)}
+  .win-note{display:none}
+  .cues{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chat{height:300px}
+  .view{padding:14px 14px 70px}
+  .top{padding:12px 14px 8px}
+}

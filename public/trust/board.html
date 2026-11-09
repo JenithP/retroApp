@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아바타 신뢰 게임 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/trust.css">
+<style>
+.view{max-width:1320px}
+.control{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line);background:#FBFAF6}
+.control label{font-size:.88rem;font-weight:500;display:flex;gap:6px;align-items:center}
+.control input[type=password],.control input[type=number],.control select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;font:inherit}
+.control input[type=number]{width:72px}
+.control .sep{width:1px;height:26px;background:var(--line)}
+.btn.danger{color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.kpi b{display:block;font-size:1.8rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi span{font-size:.82rem;color:var(--soft)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.grid2 > .card{margin-top:0}
+table.t{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums}
+.t th,.t td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left}
+.t th{font-size:.8rem;color:var(--soft);font-weight:500;white-space:normal}
+.t td.l{text-align:left}
+.ok{color:var(--accent);font-weight:700}
+.no{color:var(--faint)}
+.bars{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.bar{display:grid;grid-template-columns:130px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:.88rem}
+.bar .track{height:18px;background:#EFEBE3;border-radius:6px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:6px}
+.bar .fill.warm{background:var(--warm)}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.muted{color:var(--faint);font-size:.88rem}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.pc{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-size:.84rem}
+.pc b{display:block;font-size:.8rem;color:var(--faint);font-weight:500}
+.pc .st{display:flex;gap:8px;margin-top:4px}
+.pc .done{color:var(--accent);font-weight:700}
+.pc .wait{color:var(--faint)}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 11주차 오프라인</p>
+    <h1>아바타 신뢰 게임 <span style="font-weight:500;color:var(--soft);font-size:1rem">현황판</span></h1>
+  </div>
+  <div class="status" id="status"></div>
+</header>
+
+<section class="control" id="lock">
+  <label>교수용 암호 <input id="code" type="password" autocomplete="off"></label>
+  <button class="btn primary" id="unlock">열기</button>
+  <span class="hint" id="lockMsg"></span>
+</section>
+<section class="control" id="tools" hidden>
+  <label>다음 판 조건 <select id="cond"></select></label>
+  <label>대화 <input id="talkSec" type="number" min="30" max="600" step="10" value="120">초</label>
+  <label><input id="missions" type="checkbox" checked> 비밀 역할</label>
+  <button class="btn primary" id="next">다음 판 시작</button>
+  <span class="sep"></span>
+  <button class="btn" id="decide">결정으로</button>
+  <label><input id="auto" type="checkbox" checked> 시간이 끝나면 자동으로</label>
+  <button class="btn" id="reveal">공개</button>
+  <button class="btn" id="end">게임 끝</button>
+  <span class="sep"></span>
+  <label><input id="detail" type="checkbox"> 이름 · 비밀 역할 보기 (투영 금지)</label>
+  <button class="btn danger" id="reset">점수 초기화</button>
+  <button class="btn danger" id="wipe">전체 초기화</button>
+  <span class="hint" id="toolMsg"></span>
+</section>
+
+<main class="view" id="view">
+  <section class="kpis" id="kpis"></section>
+  <section class="card" id="now"></section>
+  <div class="grid2">
+    <section class="card" id="cond-panel"></section>
+    <section class="card" id="hit-panel"></section>
+  </div>
+  <div class="grid2">
+    <section class="card" id="mission-panel"></section>
+    <section class="card" id="cue-panel"></section>
+  </div>
+  <section class="card" id="rank-panel" style="margin-top:14px"></section>
+</main>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VRM 아바타 시제품</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="css/trust.css">
+<style>
+.proto{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}
+#stage3d{position:relative;aspect-ratio:4/3.4;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(ellipse at 50% 35%,#FDFCF9 0%,#E7EEF4 70%,#D9E3EC 100%)}
+#stage3d canvas{display:block;width:100%;height:100%}
+#load{position:absolute;inset:0;display:grid;place-items:center;color:var(--soft);font-size:.9rem}
+.cues{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}
+@media (max-width:860px){.proto{grid-template-columns:minmax(0,1fr)}}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+  "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.1.0/lib/three-vrm.module.min.js"
+} }
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">11주차 오프라인 · 시제품</p>
+    <h1>VRM 아바타 단서</h1>
+  </div>
+</header>
+<main class="view">
+  <p class="lead">three-vrm 공개 샘플 모델로 만든 시제품입니다. 버튼을 누르면 아바타가 그 단서를 보여 줍니다. 실제 게임에서는 상대가 누른 단서가 이렇게 나타납니다.</p>
+  <div class="proto">
+    <div id="stage3d"><div id="load">아바타 불러오는 중…</div></div>
+    <div class="cues" id="cues"></div>
+  </div>
+</main>
+<script type="module" src="js/vrm-avatar.js"></script>
+</body>
+</html>

@@ -8,7 +8,7 @@ rules_version = '2';
 //    맨 `firebase deploy` 는 치지 않는다 — 호스팅은 버셀이 맡는다.
 //    그냥 배포하면 이 파일에 없는 규칙이 전부 지워진다.
 //
-//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_* · hcipres_* · hci9_*
+//    HCI와 커뮤니케이션   runs · time · presence · hci4_* · hci5_* · hci6_* · hci7_* · hcipres_* · hci9_* · hci11_*
 //    지능형콘텐츠         icp_teams · icp3_* · icp5_* · icp7_*
 //
 //  수업을 새로 붙일 때는 접두사를 하나 정하고 블록을 여기에 덧붙인다.
@@ -372,6 +372,53 @@ service cloud.firestore {
                     && request.resource.data.target != request.resource.data.from
                     && request.resource.data.scores is map && request.resource.data.scores.size() <= 20;
       allow delete: if false;
+    }
+
+    /* ── 11주차 아바타 신뢰 게임 (trust/) ────────────────────────
+       단계 · 사람 · 자리 · 짝 · 결정은 버셀 함수(api/trust.js)만 쓴다.
+       학생은 자기 사람 문서와 자기 자리, 자기가 속한 짝만 읽는다 (상대의 비밀 역할은 자리 문서에만 있다).
+       채팅 · 단서는 짝의 두 사람만, 그 판의 대화 단계에서만, 조건이 허락하는 종류만 쓴다. */
+    function hci11State() {
+      return get(/databases/$(database)/documents/hci11_state/current).data;
+    }
+    match /hci11_state/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /hci11_people/{uid} {
+      allow read:  if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /hci11_seats/{id} {             // 문서 이름이 「uid_판」 — 아직 없는 자리도 읽기를 걸어 둘 수 있게 이름으로 확인한다
+      allow read:  if request.auth != null && id.matches(request.auth.uid + '_[0-9]+');
+      allow write: if false;
+    }
+    match /hci11_moves/{id} {
+      allow read, write: if false;
+    }
+    match /hci11_pairs/{pid} {
+      allow read:  if request.auth != null && request.auth.uid in resource.data.uids;
+      allow write: if false;
+      match /msgs/{mid} {
+        allow read:   if request.auth != null
+                      && request.auth.uid in get(/databases/$(database)/documents/hci11_pairs/$(pid)).data.uids;
+        allow create: if request.auth != null
+                      && request.resource.data.by == request.auth.uid
+                      && request.resource.data.keys().hasOnly(['by', 'kind', 'text', 'cue', 'at'])
+                      && request.resource.data.at is int
+                      && request.auth.uid in get(/databases/$(database)/documents/hci11_pairs/$(pid)).data.uids
+                      && hci11State().phase == 'talk'
+                      && hci11State().round == get(/databases/$(database)/documents/hci11_pairs/$(pid)).data.round
+                      && ((request.resource.data.kind == 'text'
+                            && request.resource.data.text is string
+                            && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200
+                            && hci11State().cond in ['text', 'both'])
+                       || (request.resource.data.kind == 'cue'
+                            && request.resource.data.cue is string
+                            && request.resource.data.cue.size() < 20
+                            && hci11State().cond in ['cue', 'both']));
+        allow update, delete: if false;
+      }
     }
 
     /* ══ 지능형콘텐츠 ════════════════════════════════════════ */

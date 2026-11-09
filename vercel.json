@@ -21,6 +21,9 @@
     },
     "api/botlab.js": {
       "maxDuration": 15
+    },
+    "api/trust.js": {
+      "maxDuration": 60
     }
   },
   "redirects": [
@@ -57,6 +60,11 @@
     {
       "source": "/botlab",
       "destination": "/botlab/",
+      "permanent": false
+    },
+    {
+      "source": "/trust",
+      "destination": "/trust/",
       "permanent": false
     }
   ],
