@@ -54,8 +54,10 @@ if (!isDemo) {
   watchSeat = (round, cb) => onSnapshot(doc(db, "hci11_seats", seatId(me.uid, round)), s => cb(s.data() || null), quiet(cb, null));
   watchPair = (id, cb) => onSnapshot(doc(db, "hci11_pairs", id), s => cb(s.data() || null), quiet(cb, null));
   watchMsgs = (id, cb) => onSnapshot(query(collection(db, "hci11_pairs", id, "msgs"), orderBy("at")),
-    s => cb(s.docs.map(d => d.data())), quiet(cb, []));
-  sendMsg = (id, m) => addDoc(collection(db, "hci11_pairs", id, "msgs"), { ...m, by: me.uid, at: Date.now() });
+    s => { const ms = s.docs.map(d => d.data()); lastAt = Math.max(lastAt, ms[ms.length - 1]?.at || 0); cb(ms); }, quiet(cb, []));
+  // 시계가 다른 기기(상대 · AI 서버)와 섞여도 순서가 뒤집히지 않게 — 받은 마지막 메시지보다 늦은 시각으로
+  let lastAt = 0;
+  sendMsg = (id, m) => addDoc(collection(db, "hci11_pairs", id, "msgs"), { ...m, by: me.uid, at: (lastAt = Math.max(Date.now(), lastAt + 1)) });
   join = (sid, name, nick) => call({ action: "join", sid, name, nick });
   ping = () => call({ action: "ping" });
   move = v => call({ action: "move", ...v });

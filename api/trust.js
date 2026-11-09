@@ -188,7 +188,8 @@ async function bot(db, uid, body) {
     const text = res.content.filter(b => b.type === "text").map(b => b.text).join("");
     const { say, cues } = parseBot(text, pair.cond);
     // 사람처럼 — 단서 먼저, 말은 조금 뒤에 (시각만 다르게 적는다)
-    const now = Date.now(), batch = db.batch(), col = pairSnap.ref.collection("msgs");
+    // 학생 기기와 서버의 시계가 달라도 순서가 뒤집히지 않게, 마지막 메시지보다 늦은 시각으로 적는다
+    const now = Math.max(Date.now(), (msgs[msgs.length - 1]?.at || 0) + 1), batch = db.batch(), col = pairSnap.ref.collection("msgs");
     cues.forEach((c, i) => batch.set(col.doc(), { by: me, kind: "cue", cue: c, at: now + i }));
     if (say) batch.set(col.doc(), { by: me, kind: "text", text: say, at: now + cues.length + 1 });
     await batch.commit();
