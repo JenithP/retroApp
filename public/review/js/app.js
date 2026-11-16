@@ -171,14 +171,32 @@ function apply(step, Q) {
   return null;
 }
 // 도우미 창에 남길 결과 한 줄 (덜 수상해 보이게 평범한 결과만)
-function info(step, Q) {
+function info(step, Q, before = Q.text) {
+  const t = Q.text, len = t.replace(/\s/g, "").length, ns = sentences(t).length;
   switch (step.kind) {
-    case "length": return `현재 ${Q.text.replace(/\s/g, "").length}자 · 권장 분량 충족`;
-    case "ref": return "답안 끝에 참고 슬라이드 번호 추가";
-    case "read": return PEERS.map(p => `${p.nick} · ${p.text.slice(0, 22)}…`).join("\n");
-    case "save": return "12주차 복습 노트에 저장됨";
-    case "submit": return "제출 목록 1건";
-    case "settings": return "알림 정리 완료";
+    case "hint": {
+      const has = step.cover.filter(c => c.kw.some(k => t.includes(k))).map(c => c.label);
+      const not = step.cover.map(c => c.label).filter(l => !has.includes(l));
+      return [
+        `답안 읽음 · ${sentences(t).length}문장 · ${len}자`,
+        has.length ? `답안에서 다룬 점 · ${has.join(", ")}` : "답안에서 다룬 점 · 아직 기준이 드러나지 않음",
+        not.length ? `더 다뤄 볼 만한 점 · ${not.join(", ")}` : "기준을 고루 다룸. 기준끼리 부딪치는 경우를 쓰면 더 깊어짐",
+        step.ask,
+        step.start,
+      ].join("\n");
+    }
+    case "spell": {
+      const n = (before.match(/ {2,}|\s+(?=[.,!?])/g) || []).length;
+      return n ? `겹친 띄어쓰기 · 문장부호 앞 공백 ${n}곳 정리` : "맞춤법 · 띄어쓰기 고칠 곳 없음\n문장 끝 마침표와 쉼표 위치 확인 완료";
+    }
+    case "rewrite": return "마지막 문장을 결론 문장으로 정리\n앞 문장과 이어지도록 접속 표현 추가";
+    case "ref": return "답안 끝에 참고 슬라이드 번호 추가\n나중에 복습할 때 해당 슬라이드로 바로 찾아갈 수 있음";
+    case "read": return "공개 답안 3개 읽음\n" + PEERS.map(p => `${p.nick} · ${p.text.slice(0, 26)}…`).join("\n") + "\n세 답안 모두 수준을 고른 이유를 함께 씀";
+    case "copy": return `보완 문장 1개 추가 · ${before.replace(/\s/g, "").length}자 → ${len}자\n고른 수준과 이유가 한 문장에 함께 드러나도록 보완`;
+    case "length": return `현재 ${len}자 · ${ns}문장 · 권장 분량(${MIN_CHARS}자 이상) 충족\n문장당 평균 ${Math.round(len / Math.max(ns, 1))}자 · 읽기에 알맞은 길이`;
+    case "save": return "12주차 복습 노트에 저장됨\n저장 시각 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    case "submit": return "제출 목록 1건 · 질문 3 답안\n마무리 단계에서 한꺼번에 제출됨";
+    case "settings": return "알림 정리 완료\n작업 중 알림 횟수를 줄여 화면이 덜 번잡해짐";
   }
   return "";
 }
@@ -357,8 +375,9 @@ async function run(n) {
         r.asked = true;
       }
     }
+    const before = Q.text;
     r.undo = apply(st, Q);
-    r.info = info(st, Q);
+    r.info = info(st, Q, before);
     Q.results.push(r); save(); log();
     $("slot").innerHTML = "";
     await sleep(250);
