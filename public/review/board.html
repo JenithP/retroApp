@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>복습 시뮬레이터 현황판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../appshop/css/appshop.css">
+<link rel="stylesheet" href="../appshop/css/board.css">
+<style>
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.bgrid{grid-template-columns:minmax(0,1fr)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+.t{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+.t th,.t td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left;white-space:normal}
+.t td.l{text-align:left;white-space:normal}
+.t .ref{color:var(--soft)}
+.t .hi{font-weight:900}
+.bar{display:inline-block;height:12px;border-radius:3px;vertical-align:middle;margin-left:6px;background:#B3261E}
+.bar.ok{background:#1F7A55}.bar.mid{background:#C58A1A}
+.note{font-size:.8rem;color:var(--soft);margin:8px 0 0}
+.subs{width:100%;border-collapse:collapse;font-size:.88rem}
+.subs th,.subs td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.subs td.n{white-space:nowrap}
+.subs td.a{min-width:240px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+.empty{color:var(--faint);font-size:.9rem}
+.reveal-on{background:#B3261E!important;border-color:#B3261E!important;color:#fff!important}
+@media (max-width:1100px){.two{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body class="board">
+
+<header class="top">
+  <div class="brand">
+    <p class="eyebrow">HCI와 커뮤니케이션 · 12주차 오프라인</p>
+    <h1>복습 시뮬레이터 <span class="sub">현황판 · 에이전트 감독 실험</span></h1>
+  </div>
+  <div class="status">
+    <span class="net"><span class="dot" id="netdot"></span><span id="netmsg">잠김</span></span>
+  </div>
+</header>
+
+<section class="control">
+  <div class="lock" id="lock">
+    <label>교수용 암호 <input id="code" type="password" autocomplete="off"></label>
+    <button class="btn primary" id="unlock">열기</button>
+    <span class="msg" id="lockMsg"></span>
+  </div>
+  <div class="steps" id="tools" hidden>
+    <button class="btn" id="reveal" type="button">사후 설명 공개</button>
+    <button class="btn ghost danger" id="reset" type="button">전체 초기화</button>
+    <span class="msg" id="toolMsg"></span>
+  </div>
+</section>
+
+<section class="kpis" id="kpis" aria-label="요약"></section>
+
+<main class="bgrid">
+  <section class="panel" id="verPanel"></section>
+  <div class="two">
+    <section class="panel" id="trapPanel"></section>
+    <section class="panel" id="actPanel"></section>
+  </div>
+  <section class="panel" id="oddPanel"></section>
+  <section class="panel" id="finalPanel"></section>
+</main>
+
+<script type="module" src="js/board.js"></script>
+</body>
+</html>

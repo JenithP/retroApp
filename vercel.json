@@ -24,6 +24,9 @@
     },
     "api/trust.js": {
       "maxDuration": 60
+    },
+    "api/review.js": {
+      "maxDuration": 15
     }
   },
   "redirects": [
@@ -65,6 +68,11 @@
     {
       "source": "/trust",
       "destination": "/trust/",
+      "permanent": false
+    },
+    {
+      "source": "/review",
+      "destination": "/review/",
       "permanent": false
     }
   ],
