@@ -84,20 +84,47 @@ function viewStart() {
 function viewPractice() {
   const p = S.practice, card = k => `
     <div class="sum"><small>출처 · ${esc(PRACTICE[k].src)}</small><p>${esc(PRACTICE[k].text)}</p></div>`;
+  const steps = k => `<ul class="log">${(k === "right"
+      ? ["요청 다시 확인 · " + PRACTICE.ask, "검색 범위 조정 · 12주차 온라인 슬라이드", "관련 슬라이드 1장 찾음 · 4장", "핵심 문장 2개로 요약"]
+      : ["요청 확인 · " + PRACTICE.ask, "학습한 강의 자료에서 관련 슬라이드 검색", "관련 슬라이드 1장 찾음", "핵심 문장 2개로 요약"])
+    .map(s => `<li class="ln done"><span class="tick" aria-hidden="true"></span><span class="tx">${esc(s)}</span><span class="tg">완료</span></li>`).join("")}</ul>`;
+  const memo = p.caught === null ? "" : PRACTICE[p.caught ? "right" : "wrong"];
   $("view").innerHTML = `
     <h2>도우미 사용해 보기</h2>
-    <p class="lead">본 질문에 앞서 도우미에게 슬라이드 요약을 한 번 요청해 봅니다.</p>
+    <p class="lead">본 질문에 앞서 도우미에게 슬라이드 요약을 한 번 요청해 봅니다. 도우미가 일하는 방식과 도우미 창 구성을 익히는 단계이며, 이 단계의 결과는 평가에 들어가지 않습니다.</p>
     <div class="layout">
-      <div class="card">
-        <h3>요청</h3>
-        <p>'${esc(PRACTICE.ask)}' 슬라이드 요약</p>
-        <div class="actions"><button class="btn primary" id="ask"${p.shown ? " disabled" : ""}>요약 요청</button></div>
+      <div>
+        <div class="card">
+          <h3>AI 도우미 소개</h3>
+          <ul class="plain">
+            <li>온라인 강의 자료(1–12주차 슬라이드)를 학습한 복습 도우미</li>
+            <li>답안을 쓰고 일을 맡기면 관련 슬라이드 찾기, 문장 다듬기, 저장 같은 작업을 단계별로 진행</li>
+            <li>진행 중인 단계와 결과는 오른쪽 도우미 창에 차례로 표시</li>
+            <li>인터페이스 버전에 따라 진행 중 확인 요청이나 작업 계획이 함께 나타남</li>
+            <li>도우미가 한 작업은 답안 칸과 화면 아래 설정 줄에 바로 반영</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>연습 요청 <small>슬라이드 요약</small></h3>
+          <div class="field"><span>찾을 내용</span><input value="${esc(PRACTICE.ask)}" readonly></div>
+          <div class="field q"><span>요청 방식</span><input value="관련 슬라이드를 찾아 핵심 문장 2개로 요약" readonly></div>
+          <div class="field q"><span>결과 저장 위치</span><input value="12주차 복습 노트 · 메모" readonly></div>
+          <div class="actions"><button class="btn primary" id="ask"${p.shown ? " disabled" : ""}>요약 요청</button>
+            <span class="hint">${p.shown ? "요약이 도우미 창에 표시됨" : "버튼을 누르면 도우미가 작업 시작"}</span></div>
+        </div>
+        <div class="card">
+          <h3>12주차 복습 노트 <small>메모</small></h3>
+          ${memo ? `<div class="sum"><small>출처 · ${esc(memo.src)}</small><p>${esc(memo.text)}</p></div>
+            <p class="hint">본 질문에서 쓴 답안도 이 복습 노트에 함께 저장됨</p>`
+            : `<p class="idle">아직 메모 없음. 도우미 요약을 메모하면 이곳에 표시됨</p>`}
+        </div>
       </div>
       <aside class="agent">
-        <div class="agenthead"><span class="bot" aria-hidden="true"></span>AI 도우미</div>
+        <div class="agenthead"><span class="bot" aria-hidden="true"></span>AI 도우미<small>슬라이드 요약</small></div>
         <div class="agentbody" id="pbody">
-          ${!p.shown ? `<p class="idle">요청을 기다리는 중</p>` : ""}
-          ${p.shown ? card(p.caught ? "right" : "wrong") : ""}
+          ${!p.shown ? `<p class="idle">요청을 기다리는 중</p>
+            <ul class="plain hint q"><li>요청 내용 확인</li><li>학습한 강의 자료에서 관련 슬라이드 검색</li><li>핵심 문장 요약</li><li>요약을 메모할지 사용자에게 확인</li></ul>` : ""}
+          ${p.shown ? steps(p.caught ? "right" : "wrong") + `<div class="q">${card(p.caught ? "right" : "wrong")}</div>` : ""}
           ${p.shown && p.caught === null ? `<div class="actions"><button class="btn primary" id="use">이 요약으로 메모</button><button class="btn" id="again">다시 찾기</button></div>` : ""}
           ${p.caught !== null ? `<p class="okline">메모에 추가됨</p>` : ""}
         </div>
@@ -106,8 +133,10 @@ function viewPractice() {
     <div class="actions end"><button class="btn primary" id="next"${p.caught === null ? " disabled" : ""}>질문 1로</button></div>`;
   if ($("ask")) $("ask").onclick = async () => {
     $("ask").disabled = true;
-    $("pbody").innerHTML = `<p class="working">슬라이드 찾는 중</p>`;
-    await sleep(900);
+    for (const s of ["요청 확인 중", "학습한 강의 자료에서 슬라이드 찾는 중", "핵심 문장 요약 중"]) {
+      $("pbody").innerHTML = `<p class="working">${s}</p>`;
+      await sleep(600);
+    }
     p.shown = "wrong"; save(); viewPractice();
   };
   if ($("use")) $("use").onclick = () => { p.caught = false; save(); viewPractice(); };
