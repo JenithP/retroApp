@@ -211,12 +211,12 @@ function info(step, Q, before = Q.text) {
         `답안을 읽었습니다. 지금 답안은 ${ss.length}문장 ${len}자이고, 첫 문장은 "${first.length > 60 ? first.slice(0, 60) + "…" : first}"입니다. ` +
           (len < 80 ? "주장은 드러나지만 그 주장을 받쳐 주는 근거와 예시가 아직 짧은 편입니다." : "주장과 근거가 함께 드러나 있어 흐름을 따라가기 쉽습니다."),
       ];
-      if (has.length) out.push(`【답안에 들어 있는 기준】 ${has.map(c => `'${c.label}'`).join(", ")}. 이 기준을 왜 중요하게 보는지 예를 하나 들어 주면 근거가 더 탄탄해집니다.`);
-      else out.push("【답안에 들어 있는 기준】 아직 판단 기준이 직접 드러나지 않습니다. 어떤 경우에 그렇게 판단하는지 기준을 하나 정해 써 보면 좋습니다.");
+      if (has.length) out.push(`【답안에 들어 있는 내용】 ${has.map(c => `'${c.label}'`).join(", ")}. 각 내용에 예를 하나씩 덧붙이면 근거가 더 탄탄해집니다.`);
+      else out.push("【답안에 들어 있는 내용】 질문과 직접 이어지는 내용이 아직 드러나지 않습니다. 아래 내용 가운데 하나를 골라 자기 생각을 써 보면 좋습니다.");
       if (not.length) {
-        out.push("【더 생각해 볼 기준】");
+        out.push("【더 생각해 볼 내용】");
         not.forEach(c => out.push(`· ${c.label} — ${c.why}`));
-      } else out.push("【더 생각해 볼 기준】 네 가지 기준을 고루 다뤘습니다. 기준끼리 부딪치는 경우를 하나 골라 어떻게 판단할지 쓰면 답이 더 깊어집니다.");
+      } else out.push("【더 생각해 볼 내용】 네 가지 내용을 고루 다뤘습니다. 서로 부딪치는 경우를 하나 골라 어떻게 판단할지 쓰면 답이 더 깊어집니다.");
       out.push(`【생각 넓히기 질문】 ${step.ask}`);
       out.push(`【예시 시작 문장】 '${step.start}'`);
       return out.join("\n");
@@ -232,7 +232,7 @@ function info(step, Q, before = Q.text) {
       "\n세 답안 모두 수준을 고른 이유를 함께 쓰고 있습니다. 구름 님은 함께 계획을 세우는 점을, 초코 님은 편리함과 통제감의 균형을, 바다 님은 과업에 따라 수준을 나누는 점을 근거로 들었습니다.";
     case "copy": return `공개 답안을 참고해 보완 문장 1개를 덧붙였습니다. 답안은 ${before.replace(/\s/g, "").length}자에서 ${len}자로 늘었고, 고른 수준과 그 이유가 한 문장 안에 함께 드러나도록 했습니다.`;
     case "length": return `현재 답안은 ${ns}문장 ${len}자로 권장 분량(${MIN_CHARS}자 이상)을 채웠습니다. 문장당 평균 ${Math.round(len / Math.max(ns, 1))}자라 읽기에 알맞은 길이입니다.`;
-    case "save": return `답안을 12주차 복습 노트에 저장했습니다. 저장 시각은 ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}이고, 다음 질문으로 넘어가도 내용은 유지됩니다.`;
+    case "save": return `답안을 12주차 복습 노트에 저장했습니다. 저장 시각은 ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}이고, 다음 단계로 넘어가도 내용은 유지됩니다.`;
     case "submit": return "질문 3 답안을 12주차 복습 제출 목록에 넣었습니다. 제출 목록에 있는 답안은 마무리 단계에서 한꺼번에 제출됩니다.";
     case "settings": return "도우미 설정을 정리했습니다. 작업 중 알림 횟수를 줄여 다음 작업부터는 화면이 덜 번잡해집니다.";
   }
