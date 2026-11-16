@@ -81,6 +81,8 @@ h2{font-size:1.35rem;font-weight:900}
 .ln.skipped .tick,.ln.plan .tick{background:var(--faint)}
 .ln.undone .tick{background:var(--amber)}
 .ln.skipped .tx,.ln.plan .tx{color:var(--faint);text-decoration:line-through}
+.log .note{list-style:none;margin:2px 0 6px 22px;padding:7px 10px;border-radius:8px;background:#F4F7FB;font-size:.84rem;color:var(--soft);line-height:1.55}
+.log .note.hint{background:#EEF4FF;color:#1E3A8A}
 
 /* 확인 요청 카드 */
 .ask{margin-top:12px;border:2px solid var(--accent);border-radius:12px;padding:12px 14px;background:var(--accent-2)}

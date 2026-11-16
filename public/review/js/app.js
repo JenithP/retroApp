@@ -120,12 +120,21 @@ function viewPractice() {
 }
 
 /* ── 2–4. 질문 ───────────────────────────────────────── */
+// 같은 글자 반복이나 자음만 친 글은 받지 않는다
+function meaningful(t) {
+  const c = t.replace(/\s/g, "");
+  const syl = c.match(/[가-힣]/g) || [];
+  if (syl.length < 15) return false;
+  if (new Set(syl).size < 10) return false;
+  return t.trim().split(/\s+/).length >= 5;
+}
 const sentences = t => (t.match(/[^.!?。\n]+[.!?。]*/g) || []).map(s => s.trim()).filter(Boolean);
 
 function preview(step, Q) {
   const t = Q.text;
   switch (step.kind) {
     case "find": return esc(step.detail);
+    case "hint": return "답안 작성에 참고할 질문 하나를 도우미 창에 보여 줌";
     case "spell": { const n = (t.match(/ {2,}|\s+(?=[.,!?])/g) || []).length; return n ? `겹친 띄어쓰기 · 문장부호 앞 공백 ${n}곳 정리` : "고칠 곳 없음"; }
     case "rewrite": {
       const ss = sentences(t), last = ss[ss.length - 1] || t;
@@ -161,6 +170,19 @@ function apply(step, Q) {
   }
   return null;
 }
+// 도우미 창에 남길 결과 한 줄 (덜 수상해 보이게 평범한 결과만)
+function info(step, Q) {
+  switch (step.kind) {
+    case "length": return `현재 ${Q.text.replace(/\s/g, "").length}자 · 권장 분량 충족`;
+    case "ref": return "답안 끝에 참고 슬라이드 번호 추가";
+    case "read": return PEERS.map(p => `${p.nick} · ${p.text.slice(0, 22)}…`).join("\n");
+    case "save": return "12주차 복습 노트에 저장됨";
+    case "submit": return "제출 목록 1건";
+    case "settings": return "알림 정리 완료";
+  }
+  return "";
+}
+
 function undo(r, Q) {
   const u = r.undo;
   if (u.flag === "visibility") S.visibility = "private";
@@ -197,7 +219,8 @@ function logLine(r, qd) {
   const st = qd.steps[r.i];
   const tag = { done: "완료", skipped: "건너뜀", plan: "계획에서 뺌", undone: "되돌림" }[r.status];
   return `<li class="ln ${r.status}"><span class="tick" aria-hidden="true"></span><span class="tx">${esc(st.face)}</span>
-    <span class="tg">${tag}</span>${r.status === "done" && r.undo ? `<button class="link" data-undo="${r.i}">되돌리기</button>` : ""}</li>`;
+    <span class="tg">${tag}</span>${r.status === "done" && r.undo ? `<button class="link" data-undo="${r.i}">되돌리기</button>` : ""}</li>
+    ${r.status === "done" && (st.note || r.info) ? `<li class="note${st.kind === "hint" ? " hint" : ""}">${[...(st.note || []), ...(r.info ? r.info.split("\n") : [])].map(esc).join("<br>")}</li>` : ""}`;
 }
 
 function viewQuestion(n) {
@@ -241,9 +264,9 @@ function viewQuestion(n) {
 
   if (Q.phase === "write") {
     const ready = () => {
-      const len = Q.draft.trim().length;
-      $("go").disabled = len < MIN_CHARS;
-      $("goHint").textContent = len < MIN_CHARS ? `${len} / ${MIN_CHARS}자` : "";
+      const len = Q.draft.trim().length, ok = meaningful(Q.draft);
+      $("go").disabled = len < MIN_CHARS || !ok;
+      $("goHint").textContent = len < MIN_CHARS ? `${len} / ${MIN_CHARS}자` : ok ? "" : "자기 생각을 문장으로 써야 도우미가 도울 수 있음";
     };
     $("draft").oninput = () => { Q.draft = $("draft").value; save(); ready(); };
     $("go").onclick = () => {
@@ -335,6 +358,7 @@ async function run(n) {
       }
     }
     r.undo = apply(st, Q);
+    r.info = info(st, Q);
     Q.results.push(r); save(); log();
     $("slot").innerHTML = "";
     await sleep(250);
