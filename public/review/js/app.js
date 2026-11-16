@@ -372,7 +372,10 @@ function showPlan(n) {
   };
 }
 
-function toBottom() { const b = $("abody"); if (b) b.scrollTop = b.scrollHeight; }
+function toBottom() {
+  const b = $("abody"); if (b) b.scrollTop = b.scrollHeight;
+  const s = $("slot"); if (s && s.firstElementChild) s.scrollIntoView({ block: "nearest" });
+}
 
 function askCard(step, Q, v) {
   return new Promise(resolve => {

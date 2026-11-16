@@ -66,7 +66,7 @@ h2{font-size:1.35rem;font-weight:900}
 .agenthead small{margin-left:auto;font-weight:400;font-size:.78rem;opacity:.8}
 .bot{width:20px;height:20px;border-radius:6px;background:#fff;position:relative;flex:none}
 .bot::after{content:"";position:absolute;left:4px;right:4px;top:7px;height:5px;border-radius:3px;background:#4C8BF5}
-.agentbody{padding:14px;min-height:260px;max-height:calc(100vh - 150px);overflow-y:auto}
+.agentbody{padding:14px;min-height:260px;max-height:calc(100vh - 170px);overflow-y:auto}
 .idle{color:var(--faint);font-size:.9rem;margin:0}
 .working{color:var(--soft);font-size:.9rem;margin:8px 0}
 .working::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:dots 1.2s steps(4) infinite}
