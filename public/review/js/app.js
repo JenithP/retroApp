@@ -204,28 +204,37 @@ function info(step, Q, before = Q.text) {
   const t = Q.text, len = t.replace(/\s/g, "").length, ns = sentences(t).length;
   switch (step.kind) {
     case "hint": {
-      const has = step.cover.filter(c => c.kw.some(k => t.includes(k))).map(c => c.label);
-      const not = step.cover.map(c => c.label).filter(l => !has.includes(l));
-      return [
-        `답안 읽음 · ${sentences(t).length}문장 · ${len}자`,
-        has.length ? `답안에서 다룬 점 · ${has.join(", ")}` : "답안에서 다룬 점 · 아직 기준이 드러나지 않음",
-        not.length ? `더 다뤄 볼 만한 점 · ${not.join(", ")}` : "기준을 고루 다룸. 기준끼리 부딪치는 경우를 쓰면 더 깊어짐",
-        step.ask,
-        step.start,
-      ].join("\n");
+      const ss = sentences(t), first = ss[0] || t;
+      const has = step.cover.filter(c => c.kw.some(k => t.includes(k)));
+      const not = step.cover.filter(c => !has.includes(c));
+      const out = [
+        `답안을 읽었습니다. 지금 답안은 ${ss.length}문장 ${len}자이고, 첫 문장은 "${first.length > 60 ? first.slice(0, 60) + "…" : first}"입니다. ` +
+          (len < 80 ? "주장은 드러나지만 그 주장을 받쳐 주는 근거와 예시가 아직 짧은 편입니다." : "주장과 근거가 함께 드러나 있어 흐름을 따라가기 쉽습니다."),
+      ];
+      if (has.length) out.push(`【답안에 들어 있는 기준】 ${has.map(c => `'${c.label}'`).join(", ")}. 이 기준을 왜 중요하게 보는지 예를 하나 들어 주면 근거가 더 탄탄해집니다.`);
+      else out.push("【답안에 들어 있는 기준】 아직 판단 기준이 직접 드러나지 않습니다. 어떤 경우에 그렇게 판단하는지 기준을 하나 정해 써 보면 좋습니다.");
+      if (not.length) {
+        out.push("【더 생각해 볼 기준】");
+        not.forEach(c => out.push(`· ${c.label} — ${c.why}`));
+      } else out.push("【더 생각해 볼 기준】 네 가지 기준을 고루 다뤘습니다. 기준끼리 부딪치는 경우를 하나 골라 어떻게 판단할지 쓰면 답이 더 깊어집니다.");
+      out.push(`【생각 넓히기 질문】 ${step.ask}`);
+      out.push(`【예시 시작 문장】 '${step.start}'`);
+      return out.join("\n");
     }
     case "spell": {
       const n = (before.match(/ {2,}|\s+(?=[.,!?])/g) || []).length;
-      return n ? `겹친 띄어쓰기 · 문장부호 앞 공백 ${n}곳 정리` : "맞춤법 · 띄어쓰기 고칠 곳 없음\n문장 끝 마침표와 쉼표 위치 확인 완료";
+      return n ? `맞춤법과 띄어쓰기를 확인했습니다. 겹친 띄어쓰기와 문장부호 앞 공백 ${n}곳을 정리했고, 다른 표현은 그대로 두었습니다.`
+        : "맞춤법과 띄어쓰기를 확인했고 고칠 곳은 없었습니다. 문장 끝 마침표와 쉼표 위치도 확인했습니다.";
     }
-    case "rewrite": return "마지막 문장을 결론 문장으로 정리\n앞 문장과 이어지도록 접속 표현 추가";
-    case "ref": return "답안 끝에 참고 슬라이드 번호 추가\n나중에 복습할 때 해당 슬라이드로 바로 찾아갈 수 있음";
-    case "read": return "공개 답안 3개 읽음\n" + PEERS.map(p => `${p.nick} · ${p.text.slice(0, 26)}…`).join("\n") + "\n세 답안 모두 수준을 고른 이유를 함께 씀";
-    case "copy": return `보완 문장 1개 추가 · ${before.replace(/\s/g, "").length}자 → ${len}자\n고른 수준과 이유가 한 문장에 함께 드러나도록 보완`;
-    case "length": return `현재 ${len}자 · ${ns}문장 · 권장 분량(${MIN_CHARS}자 이상) 충족\n문장당 평균 ${Math.round(len / Math.max(ns, 1))}자 · 읽기에 알맞은 길이`;
-    case "save": return "12주차 복습 노트에 저장됨\n저장 시각 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-    case "submit": return "제출 목록 1건 · 질문 3 답안\n마무리 단계에서 한꺼번에 제출됨";
-    case "settings": return "알림 정리 완료\n작업 중 알림 횟수를 줄여 화면이 덜 번잡해짐";
+    case "rewrite": return "답안 흐름을 살펴 마지막 문장을 답안 전체를 정리하는 결론 문장으로 바꿨습니다. 앞 문장과 자연스럽게 이어지도록 '따라서'로 시작하게 했습니다.";
+    case "ref": return `답안 끝에 '${step.ref.trim()}'를 덧붙였습니다. 나중에 복습할 때 근거가 된 슬라이드로 바로 찾아갈 수 있습니다.`;
+    case "read": return "수강생 공개 답안 3개를 읽었습니다.\n" + PEERS.map(p => `· ${p.nick} — ${p.text}`).join("\n") +
+      "\n세 답안 모두 수준을 고른 이유를 함께 쓰고 있습니다. 구름 님은 함께 계획을 세우는 점을, 초코 님은 편리함과 통제감의 균형을, 바다 님은 과업에 따라 수준을 나누는 점을 근거로 들었습니다.";
+    case "copy": return `공개 답안을 참고해 보완 문장 1개를 덧붙였습니다. 답안은 ${before.replace(/\s/g, "").length}자에서 ${len}자로 늘었고, 고른 수준과 그 이유가 한 문장 안에 함께 드러나도록 했습니다.`;
+    case "length": return `현재 답안은 ${ns}문장 ${len}자로 권장 분량(${MIN_CHARS}자 이상)을 채웠습니다. 문장당 평균 ${Math.round(len / Math.max(ns, 1))}자라 읽기에 알맞은 길이입니다.`;
+    case "save": return `답안을 12주차 복습 노트에 저장했습니다. 저장 시각은 ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}이고, 다음 질문으로 넘어가도 내용은 유지됩니다.`;
+    case "submit": return "질문 3 답안을 12주차 복습 제출 목록에 넣었습니다. 제출 목록에 있는 답안은 마무리 단계에서 한꺼번에 제출됩니다.";
+    case "settings": return "도우미 설정을 정리했습니다. 작업 중 알림 횟수를 줄여 다음 작업부터는 화면이 덜 번잡해집니다.";
   }
   return "";
 }
@@ -267,7 +276,7 @@ function logLine(r, qd) {
   const tag = { done: "완료", skipped: "건너뜀", plan: "계획에서 뺌", undone: "되돌림" }[r.status];
   return `<li class="ln ${r.status}"><span class="tick" aria-hidden="true"></span><span class="tx">${esc(st.face)}</span>
     <span class="tg">${tag}</span>${r.status === "done" && r.undo ? `<button class="link" data-undo="${r.i}">되돌리기</button>` : ""}</li>
-    ${r.status === "done" && (st.note || r.info) ? `<li class="note${st.kind === "hint" ? " hint" : ""}">${[...(st.note || []), ...(r.info ? r.info.split("\n") : [])].map(esc).join("<br>")}</li>` : ""}`;
+    ${r.status === "done" && (st.note || r.info) ? `<li class="note${st.kind === "hint" ? " hint" : ""}">${[...(st.note || []), ...(r.info ? r.info.split("\n") : [])].map(x => `<p>${esc(x)}</p>`).join("")}</li>` : ""}`;
 }
 
 function viewQuestion(n) {
@@ -296,7 +305,7 @@ function viewQuestion(n) {
       </div>
       <aside class="agent">
         <div class="agenthead"><span class="bot" aria-hidden="true"></span>AI 도우미<small>${esc(qd.task)}</small></div>
-        <div class="agentbody">
+        <div class="agentbody" id="abody">
           ${Q.phase === "write" ? `<p class="idle">글을 쓴 뒤 '도우미에게 맡기기'를 누르면 작업을 시작함</p>` : ""}
           <ol class="log" id="log">${Q.results.map(r => logLine(r, qd)).join("")}</ol>
           <div id="slot"></div>
@@ -363,6 +372,8 @@ function showPlan(n) {
   };
 }
 
+function toBottom() { const b = $("abody"); if (b) b.scrollTop = b.scrollHeight; }
+
 function askCard(step, Q, v) {
   return new Promise(resolve => {
     const t0 = performance.now(); let opened = false;
@@ -375,6 +386,7 @@ function askCard(step, Q, v) {
         <label class="all"><input type="checkbox" id="all"> 이 질문에서 남은 단계 모두 승인</label>
         <div class="actions"><button class="btn primary" id="yes">승인</button><button class="btn" id="no">건너뛰기</button></div>
       </div>`;
+    toBottom();
     $("det").ontoggle = () => { if ($("det").open) opened = true; };
     const done = decision => { const all = $("all").checked; $("slot").innerHTML = ""; resolve({ decision, all, opened, ms: Math.round(performance.now() - t0) }); };
     $("yes").onclick = () => done("approve");
@@ -385,11 +397,12 @@ function askCard(step, Q, v) {
 
 async function run(n) {
   const qd = QUESTIONS[n], Q = S.q[qd.id], v = V();
-  const log = () => { $("log").innerHTML = Q.results.map(r => logLine(r, qd)).join(""); const f = $("final"); if (f) f.value = Q.text; };
+  const log = () => { $("log").innerHTML = Q.results.map(r => logLine(r, qd)).join(""); const f = $("final"); if (f) f.value = Q.text; const b = $("abody"); if (b) b.scrollTop = b.scrollHeight; };
   for (let i = 0; i < qd.steps.length; i++) {
     const st = qd.steps[i];
     if (Q.removed.includes(i)) { Q.results.push({ i, status: "plan" }); save(); log(); continue; }
     $("slot").innerHTML = `<p class="working">${esc(st.face)}</p>`;
+    toBottom();
     await sleep(STEP_MS);
     const r = { i, status: "done", asked: false, all: false };
     if (v.ask(st)) {

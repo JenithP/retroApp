@@ -66,7 +66,7 @@ h2{font-size:1.35rem;font-weight:900}
 .agenthead small{margin-left:auto;font-weight:400;font-size:.78rem;opacity:.8}
 .bot{width:20px;height:20px;border-radius:6px;background:#fff;position:relative;flex:none}
 .bot::after{content:"";position:absolute;left:4px;right:4px;top:7px;height:5px;border-radius:3px;background:#4C8BF5}
-.agentbody{padding:14px;min-height:260px}
+.agentbody{padding:14px;min-height:260px;max-height:calc(100vh - 150px);overflow-y:auto}
 .idle{color:var(--faint);font-size:.9rem;margin:0}
 .working{color:var(--soft);font-size:.9rem;margin:8px 0}
 .working::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:dots 1.2s steps(4) infinite}
@@ -83,6 +83,8 @@ h2{font-size:1.35rem;font-weight:900}
 .ln.skipped .tx,.ln.plan .tx{color:var(--faint);text-decoration:line-through}
 .log .note{list-style:none;margin:2px 0 6px 22px;padding:7px 10px;border-radius:8px;background:#F4F7FB;font-size:.84rem;color:var(--soft);line-height:1.55}
 .log .note.hint{background:#EEF4FF;color:#1E3A8A}
+.log .note p{margin:0 0 7px}
+.log .note p:last-child{margin-bottom:0}
 
 /* 확인 요청 카드 */
 .ask{margin-top:12px;border:2px solid var(--accent);border-radius:12px;padding:12px 14px;background:var(--accent-2)}
@@ -125,6 +127,7 @@ th{font-size:.8rem;color:var(--soft)}
 @media (max-width:900px){
   .layout{grid-template-columns:minmax(0,1fr)}
   .agent{position:static}
+  .agentbody{max-height:none}
   .who{grid-template-columns:minmax(0,1fr)}
   .view,.top{padding-left:16px;padding-right:16px}
   .right{align-items:flex-start}
